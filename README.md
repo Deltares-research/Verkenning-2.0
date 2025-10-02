@@ -1,5 +1,8 @@
 This project was bootstrapped with the [VertiGIS Studio Web SDK](https://github.com/vertigis/vertigis-web-sdk).
 
+## `npm install`
+Will install all the node modules needed
+
 ## Available Scripts
 
 In the project directory, you can run:
