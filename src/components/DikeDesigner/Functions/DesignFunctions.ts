@@ -1215,6 +1215,25 @@ export function getPointAlongLine(
     });
 }
 
+export function locateDwpProfile(model){
+    console.log("Locate DWP Profile function called");
+    // check if input line is present
+
+    // prompt user to click point on input line
+    model.messages.commands.ui.displayNotification.execute({
+        title: "Klik",
+        message: "Klik op de lijn om het dwarsprofiel te lokaliseren. Deze tool is in ontwikkeling.",
+    });
+
+    // draw perpendicular line at that point
+
+    // get elevation data on that line
+
+    // show elevation data in cross section chart
+}
+
+
+
 function createTriangleGraphics(model, polygon, triangulationData) {
     const { triangles, vertices2D, vertices3D } = triangulationData;
     

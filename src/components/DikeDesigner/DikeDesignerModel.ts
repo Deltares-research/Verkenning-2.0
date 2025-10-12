@@ -125,6 +125,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
 
     overviewVisible: boolean = false
+    
 
     // New method to handle GeoJSON upload
     handleGeoJSONUpload(file: File): void {

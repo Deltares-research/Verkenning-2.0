@@ -1,2 +1,3 @@
-- add feature to click design without excel
-- update dev dependencies
+- create button to draw cross section in chartandtablepanel
+- draw cross section on given point on refline: user must define cross section length?
+- allow user to click the needed points

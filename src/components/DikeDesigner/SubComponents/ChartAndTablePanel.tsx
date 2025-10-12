@@ -7,6 +7,8 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator"; // Add this i
 import EditIcon from "@mui/icons-material/Edit";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import AdsClickIcon from '@mui/icons-material/AdsClick';
+import ControlPointIcon from '@mui/icons-material/ControlPoint';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import {
@@ -33,6 +35,8 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
+import { locateDwpProfile } from "../Functions/DesignFunctions";
+
 interface ChartAndTablePanelProps {
   setdesignPanelVisible: (visible: boolean) => void;
   activeTab: number;
@@ -45,6 +49,7 @@ interface ChartAndTablePanelProps {
   handleClearExcel: () => void;
   handleExcelUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
+
 
 const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   setdesignPanelVisible,
@@ -66,18 +71,18 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const [renameTabValue, setRenameTabValue] = useState(""); // Add this state
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
 
-  const handleSheetChange = (sheetName: string) => {
-    const currentSheet = model.activeSheet;
-    const currentData = model.chartData ? [...model.chartData] : [];
-    model.allChartData[currentSheet] = currentData;
+  // const handleSheetChange = (sheetName: string) => {
+  //   const currentSheet = model.activeSheet;
+  //   const currentData = model.chartData ? [...model.chartData] : [];
+  //   model.allChartData[currentSheet] = currentData;
 
-    model.activeSheet = sheetName;
+  //   model.activeSheet = sheetName;
 
-    const newChartData = model.allChartData[sheetName] ? [...model.allChartData[sheetName]] : [];
-    model.chartData = newChartData;
+  //   const newChartData = model.allChartData[sheetName] ? [...model.allChartData[sheetName]] : [];
+  //   model.chartData = newChartData;
 
-    console.log("Switched to sheet:", sheetName, model.chartData);
-  };
+  //   console.log("Switched to sheet:", sheetName, model.chartData);
+  // };
 
   const handleAddRow = () => {
     const newRow = {
@@ -374,7 +379,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           }}
         >
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <Button
+            {/* <Button
               variant="contained"
               size="medium"
               component="label"
@@ -390,7 +395,48 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                 onChange={handleExcelUpload}
                 
               />
+            </Button> */}
+
+              <Button
+              variant="contained"
+              size="medium"
+              component="label"
+              startIcon={<AdsClickIcon />}
+              color="primary"
+              onClick={() => locateDwpProfile(model)}
+              disabled={model.graphicsLayerLine?.graphics?.length === 0}
+              // sx={{ textTransform: "none" }}
+            >
+              Localiseer dwarsprofiel
             </Button>
+
+            <Button
+              variant="contained"
+              size="medium"
+              component="label"
+              startIcon={<ControlPointIcon />}
+              color="primary"
+              onClick={() => locateDwpProfile(model)}
+              disabled={model.graphicsLayerLine?.graphics?.length === 0}
+              // sx={{ textTransform: "none" }}
+            >
+              Teken profielpunt
+            </Button>
+
+            <Button
+              variant="contained"
+              size="medium"
+              component="label"
+              startIcon={<RemoveCircleOutlineIcon />}
+              color="primary"
+              onClick={() => locateDwpProfile(model)}
+              disabled={model.graphicsLayerLine?.graphics?.length === 0}
+              // sx={{ textTransform: "none" }}
+            >
+              Verwijder profielpunt
+            </Button>
+
+            
 
             {/* <Button
               disabled={!model.chartData?.length}
@@ -404,7 +450,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               Verwijder ontwerpen
             </Button> */}
 
-            <Button
+            {/* <Button
               variant="contained"
               size="medium"
               color="secondary"
@@ -413,11 +459,14 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               // sx={{ textTransform: "none" }}
             >
               Nieuw ontwerp toevoegen
-            </Button>
+            </Button> */}
+            
+
+
           </Box>
 
           {/* Tab action icons on the right for quick access */}
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+          {/* <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
             <IconButton
               onClick={handleRenameCurrentTab}
               size="medium"
@@ -445,40 +494,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             >
               <RemoveCircleOutlineIcon />
             </IconButton>
-          </Box>
+          </Box> */}
         </Box>
 
         {/* Tabs below the buttons */}
-        <Tabs
-          value={model.activeSheet}
-          onChange={(event, newValue: string) => handleSheetChange(newValue)}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            flexShrink: 0,
-            backgroundColor: "#fff",
-          }}
-        >
-          {Object.keys(model.allChartData as object || {}).map((sheetName) => (
-            <Tab
-              key={sheetName}
-              label={sheetName}
-              value={sheetName}
-              sx={{
-                fontSize: "11px",
-                backgroundColor:
-                  model.activeSheet === sheetName ? "#e0e0e0" : "#f5f5f5",
-                color: model.activeSheet === sheetName ? "#000" : "#555",
-                "&:hover": { backgroundColor: "#d6d6d6" },
-                textTransform: "none",
-                minHeight: 36,
-                px: 1.5,
-              }}
-            />
-          ))}
-        </Tabs>
+
 
         {/* Second Tab Bar: Content Type */}
         <Tabs
