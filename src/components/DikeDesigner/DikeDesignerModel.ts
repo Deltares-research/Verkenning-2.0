@@ -55,6 +55,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
 
     graphicsLayerLine: GraphicsLayer;
+    graphicsLayerPoint: GraphicsLayer;
     graphicsLayerCrossSection: GraphicsLayer;
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
@@ -67,6 +68,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     view: any;
     mapElement: HTMLElement | null = null;
     sketchViewModel: SketchViewModel | undefined;
+    drawnPoint: any;
     drawnLine: any;
     offsetGeometries: any[] = [];
     meshes: Mesh[] = [];
@@ -230,6 +232,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     }
     startDrawingLine(lineLayer: GraphicsLayer): Promise<__esri.Polyline> {
 
+        console.log("Starting line drawing...");
+
         if (lineLayer?.graphics?.length > 0) {
             // Clear existing graphics if any
             lineLayer.removeAll();
@@ -247,6 +251,36 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
                     handler.remove(); // Clean up the event listener
                     resolve(drawnLine);
+                }
+                // Optionally handle cancel/error states here
+                // else if (event.state === "cancel") {
+                //     handler.remove();
+                //     reject(new Error("Drawing cancelled"));
+                // }
+            });
+        });
+    }
+    startDrawingPoint(pointLayer: GraphicsLayer): Promise<__esri.Point> {
+
+        console.log("Starting point drawing...");
+
+        if (pointLayer?.graphics?.length > 0) {
+            // Clear existing graphics if any
+            pointLayer.removeAll();
+        }
+        this.sketchViewModel.layer = pointLayer;
+        this.sketchViewModel.create("point");
+
+        return new Promise((resolve, reject) => {
+            const handler = this.sketchViewModel.on("create", (event: any) => {
+                if (event.state === "complete") {
+                    const drawnPoint = event.graphic.geometry;
+                    this.drawnPoint = drawnPoint;
+                    this.sketchViewModel.set("state", "update");
+                    this.sketchViewModel.update(event.graphic);
+
+                    handler.remove(); // Clean up the event listener
+                    resolve(drawnPoint);
                 }
                 // Optionally handle cancel/error states here
                 // else if (event.state === "cancel") {
@@ -446,7 +480,14 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 } as any
             });
 
-
+            this.graphicsLayerPoint = new GraphicsLayer({
+                title: "Point Layer",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
 
             this.graphicsLayerLine = new GraphicsLayer({
                 title: "Temporary Layer",
@@ -488,6 +529,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.elevationLayer = new ElevationLayer({
                 url: this.elevationLayerUrl,
             });
+            this.map.add(this.graphicsLayerPoint);
             this.map.add(this.graphicsLayerLine);
             this.map.add(this.graphicsLayerCrossSection);
             this.map.add(this.graphicsLayerTemp);

@@ -4,6 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 /* eslint-disable import/order */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable import/order */
 
 import * as am5 from "@amcharts/amcharts5";
 import * as am5xy from "@amcharts/amcharts5/xy";
@@ -1215,7 +1217,7 @@ export function getPointAlongLine(
     });
 }
 
-export function locateDwpProfile(model){
+export async function locateDwpProfile(model){
     console.log("Locate DWP Profile function called");
     // check if input line is present
 
@@ -1225,7 +1227,13 @@ export function locateDwpProfile(model){
         message: "Klik op de lijn om het dwarsprofiel te lokaliseren. Deze tool is in ontwikkeling.",
     });
 
-    // draw perpendicular line at that point
+    // draw point on or near line
+    await model.startDrawingPoint(model.graphicsLayerPoint);
+
+    // create line perpendicular to input line at that point (model.graphicsLayerLine)
+    
+
+
 
     // get elevation data on that line
 

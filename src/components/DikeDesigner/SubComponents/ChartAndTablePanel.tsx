@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable import/order */
 import AddIcon from "@mui/icons-material/Add";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 // import ClearIcon from "@mui/icons-material/Clear";
@@ -66,9 +68,9 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const [isMaximized, setIsMaximized] = useState(false);
   const [showNewTabDialog, setShowNewTabDialog] = useState(false);
   const [showDeleteTabDialog, setShowDeleteTabDialog] = useState(false);
-  const [showRenameTabDialog, setShowRenameTabDialog] = useState(false); // Add this state
+  // const [showRenameTabDialog, setShowRenameTabDialog] = useState(false); // Add this state
   const [newTabName, setNewTabName] = useState("");
-  const [renameTabValue, setRenameTabValue] = useState(""); // Add this state
+  // const [renameTabValue, setRenameTabValue] = useState(""); // Add this state
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
 
   // const handleSheetChange = (sheetName: string) => {
@@ -200,71 +202,71 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   };
 
   // Add rename tab functionality
-  const handleRenameCurrentTab = () => {
-    setRenameTabValue(model.activeSheet as string); // Pre-fill with current name
-    setShowRenameTabDialog(true);
-  };
+  // const handleRenameCurrentTab = () => {
+  //   setRenameTabValue(model.activeSheet as string); // Pre-fill with current name
+  //   setShowRenameTabDialog(true);
+  // };
 
-  const handleConfirmRenameTab = () => {
-    if (renameTabValue.trim() === "") {
-      model.messages.commands.ui.displayNotification.execute({
-        title: "Hernoem tab",
-        message: "Voer een naam in voor de tab",
-        type: "error",
-      });
-      return;
-    }
+  // const handleConfirmRenameTab = () => {
+  //   if (renameTabValue.trim() === "") {
+  //     model.messages.commands.ui.displayNotification.execute({
+  //       title: "Hernoem tab",
+  //       message: "Voer een naam in voor de tab",
+  //       type: "error",
+  //     });
+  //     return;
+  //   }
 
-    // Check if the new name already exists (and it's not the current name)
-    if (renameTabValue !== model.activeSheet && model.allChartData[renameTabValue]) {
-      model.messages.commands.ui.displayNotification.execute({
-        title: "Hernoem tab",
-        message: "Er bestaat al een tab met deze naam",
-        type: "error",
-      });
-      return;
-    }
+  //   // Check if the new name already exists (and it's not the current name)
+  //   if (renameTabValue !== model.activeSheet && model.allChartData[renameTabValue]) {
+  //     model.messages.commands.ui.displayNotification.execute({
+  //       title: "Hernoem tab",
+  //       message: "Er bestaat al een tab met deze naam",
+  //       type: "error",
+  //     });
+  //     return;
+  //   }
 
-    // If the name hasn't changed, just close the dialog
-    if (renameTabValue === model.activeSheet) {
-      setShowRenameTabDialog(false);
-      setRenameTabValue("");
-      return;
-    }
+  //   // If the name hasn't changed, just close the dialog
+  //   if (renameTabValue === model.activeSheet) {
+  //     setShowRenameTabDialog(false);
+  //     setRenameTabValue("");
+  //     return;
+  //   }
 
-    const oldName = model.activeSheet;
-    const newName = renameTabValue.trim();
+  //   const oldName = model.activeSheet;
+  //   const newName = renameTabValue.trim();
 
-    // Save current data with the old name
-    const currentData = model.chartData ? [...model.chartData] : [];
-    model.allChartData[oldName] = currentData;
+  //   // Save current data with the old name
+  //   const currentData = model.chartData ? [...model.chartData] : [];
+  //   model.allChartData[oldName] = currentData;
 
-    // Create new entry with new name
-    model.allChartData[newName] = model.allChartData[oldName];
+  //   // Create new entry with new name
+  //   model.allChartData[newName] = model.allChartData[oldName];
 
-    // Delete old entry
-    delete model.allChartData[oldName];
+  //   // Delete old entry
+  //   delete model.allChartData[oldName];
 
-    // Update active sheet name
-    model.activeSheet = newName;
+  //   // Update active sheet name
+  //   model.activeSheet = newName;
 
-    // Close dialog and reset
-    setShowRenameTabDialog(false);
-    setRenameTabValue("");
+  //   // Close dialog and reset
+  //   setShowRenameTabDialog(false);
+  //   setRenameTabValue("");
 
-    model.messages.commands.ui.displayNotification.execute({
-      title: "Hernoem tab",
-      message: `Tab hernoemd van "${oldName}" naar "${newName}"`,
-      type: "success",
-    });
+  //   model.messages.commands.ui.displayNotification.execute({
+  //     title: "Hernoem tab",
+  //     message: `Tab hernoemd van "${oldName}" naar "${newName}"`,
+  //     type: "success",
+  //   });
 
-    console.log("Renamed tab from:", oldName, "to:", newName);
-  };
+  //   console.log("Renamed tab from:", oldName, "to:", newName);
+  // };
 
-  const handleCancelRenameTab = () => {
-    setShowRenameTabDialog(false);
-    setRenameTabValue("");
-  };
+  // const handleCancelRenameTab = () => {
+  //   setShowRenameTabDialog(false);
+  //   setRenameTabValue("");
+  // };
 
   // Simple drag and drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -694,7 +696,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
       </Dialog>
 
       {/* Rename Tab Dialog */}
-      <Dialog
+      {/* <Dialog
         open={showRenameTabDialog}
         onClose={handleCancelRenameTab}
         maxWidth="sm"
@@ -724,7 +726,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             Hernoemen
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* Delete Tab Confirmation Dialog */}
       <Dialog
