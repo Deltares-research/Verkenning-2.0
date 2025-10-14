@@ -278,6 +278,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                     this.drawnPoint = drawnPoint;
                     this.sketchViewModel.set("state", "update");
                     this.sketchViewModel.update(event.graphic);
+                    
 
                     handler.remove(); // Clean up the event listener
                     resolve(drawnPoint);
@@ -550,7 +551,13 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
                     this.sketchViewModel = new SketchViewModel({
                         view: this.view,
-                        // layer: this.graphicsLayerLine,
+                        snappingOptions: {
+                            enabled: true,
+                            featureSources: [{
+                                layer: this.graphicsLayerLine,
+                                enabled: true
+                            }]
+                        }
                     });
                 });
         });

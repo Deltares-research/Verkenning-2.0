@@ -1218,6 +1218,10 @@ export function getPointAlongLine(
 }
 
 export async function locateDwpProfile(model){
+
+    // clean up previous graphics
+    model.graphicsLayerPoint.removeAll();
+    model.graphicsLayerCrossSection.removeAll();
     console.log("Locate DWP Profile function called");
     // check if input line is present
 
@@ -1231,6 +1235,15 @@ export async function locateDwpProfile(model){
     await model.startDrawingPoint(model.graphicsLayerPoint);
 
     // create line perpendicular to input line at that point (model.graphicsLayerLine)
+    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, 50); // 50 meters length
+    model.graphicsLayerCrossSection.add(new Graphic({
+        geometry: perpendicularLine,
+        symbol: model.lineLayerSymbol,
+    }));
+
+
+
+
     
 
 
@@ -1240,6 +1253,67 @@ export async function locateDwpProfile(model){
     // show elevation data in cross section chart
 }
 
+function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = true) {
+  const paths = polyline.paths[0];
+  let minDist = Infinity;
+  let closestSegment = null;
+  let closestPoint = null;
+
+  // 1. Find closest segment
+  for (let i = 0; i < paths.length - 1; i++) {
+    const p1 = paths[i];
+    const p2 = paths[i + 1];
+
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+
+    // Projection of point onto segment
+    const t = ((point.x - p1[0]) * dx + (point.y - p1[1]) * dy) / (dx * dx + dy * dy);
+    const tClamped = Math.max(0, Math.min(1, t));
+
+    const projX = p1[0] + tClamped * dx;
+    const projY = p1[1] + tClamped * dy;
+
+    const dist2 = (point.x - projX) ** 2 + (point.y - projY) ** 2;
+
+    if (dist2 < minDist) {
+      minDist = dist2;
+      closestSegment = [p1, p2];
+      closestPoint = { x: projX, y: projY };
+    }
+  }
+
+  // 2. Compute perpendicular vector
+  const [p1, p2] = closestSegment;
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  
+  // Normalize the direction vector
+  const segmentLength = Math.sqrt(dx * dx + dy * dy);
+  const normalizedDx = dx / segmentLength;
+  const normalizedDy = dy / segmentLength;
+
+  // Perpendicular vector (rotated 90 degrees)
+  const perpX = -normalizedDy;
+  const perpY = normalizedDx;
+
+  // 3. Construct perpendicular line with specified length in meters
+  let start, end;
+  if (centerAtPoint) {
+    // Center the line at the point, extending in both directions
+    const halfLength = length / 2;
+    start = [closestPoint.x - perpX * halfLength, closestPoint.y - perpY * halfLength];
+    end = [closestPoint.x + perpX * halfLength, closestPoint.y + perpY * halfLength];
+  } else {
+    start = [closestPoint.x, closestPoint.y];
+    end = [closestPoint.x + perpX * length, closestPoint.y + perpY * length];
+  }
+
+  return new Polyline({
+    paths: [[start, end]],
+    spatialReference: polyline.spatialReference
+  });
+}
 
 
 function createTriangleGraphics(model, polygon, triangulationData) {
