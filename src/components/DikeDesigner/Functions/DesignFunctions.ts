@@ -559,14 +559,14 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
     });
 }
 
-export function initializeChart(model, activeTab, chartContainerRef, seriesRef, elevationSeriesRef): () => void {
-    if (activeTab !== 0 || !model.chartData || !chartContainerRef.current) {
-        console.log(activeTab, model.chartData, chartContainerRef.current, "Chart not initialized");
+export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef }): () => void {
+    if (activeTab !== 0 || !model.chartData || !refs.chartContainerRef.current) {
+        console.log(activeTab, model.chartData, refs.chartContainerRef.current, "Chart not initialized");
         return
     }
 
 
-    model.chartRoot = am5.Root.new(chartContainerRef.current);
+    model.chartRoot = am5.Root.new(refs.chartContainerRef.current);
     const root = model.chartRoot as am5.Root;
     root.setThemes([am5themes_Animated.new(root)]);
 
@@ -614,7 +614,7 @@ export function initializeChart(model, activeTab, chartContainerRef, seriesRef, 
     );
 
     series.data.setAll(model.chartData);
-    seriesRef.current = series
+    refs.seriesRef.current = series
 
     series.strokes.template.setAll({
         strokeWidth: 2,
@@ -689,7 +689,7 @@ export function initializeChart(model, activeTab, chartContainerRef, seriesRef, 
     );
 
     elevationSeries.data.setAll(model.crossSectionChartData);
-    elevationSeriesRef.current = elevationSeries
+    refs.elevationSeriesRef.current = elevationSeries
 
     elevationSeries.strokes.template.setAll({
         strokeWidth: 3,
