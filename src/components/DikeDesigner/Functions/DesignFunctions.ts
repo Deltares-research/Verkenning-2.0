@@ -1136,57 +1136,48 @@ export async function getElevationData(model){
                     hoogte: point[2]
                 }));
 
-                console.log(model.crossSectionChartData, "Cross section chart data");
-        
+                // Find intersection of perpendicular line with the reference line
+                const perpendicularLine = model.graphicsLayerCrossSection.graphics.items[0].geometry as Polyline;
+                const referenceLine = model.graphicsLayerLine.graphics.items[0].geometry as Polyline;
+                
+                const intersection = geometryEngine.intersectLinesToPoints(perpendicularLine, referenceLine);
+                
+                if (intersection) {
+                    // Find the geodesic distance along the perpendicular line to the intersection point
+                    let intersectionDistance = 0;
+                    
+                    // Calculate geodesic distance from start of perpendicular line to intersection point
+                    const perpStart = new Point({
+                        x: perpendicularLine.paths[0][0][0],
+                        y: perpendicularLine.paths[0][0][1],
+                        spatialReference: perpendicularLine.spatialReference
+                    });
+                    
+                    const intersectionPoint = Array.isArray(intersection) ? intersection[0] : intersection;
+                    
+                    // Create a line segment from start to intersection for geodesic measurement
+                    const lineToIntersection = new Polyline({
+                        paths: [[[perpStart.x, perpStart.y], [intersectionPoint.x, intersectionPoint.y]]],
+                        spatialReference: perpendicularLine.spatialReference
+                    });
+                    
+                    intersectionDistance = geometryEngine.geodesicLength(lineToIntersection, "meters");
+                    
+                    console.log("Geodesic intersection distance along perpendicular line:", intersectionDistance);
+                    
+                    // Adjust all distances to be relative to the intersection point (0,0)
+                    model.crossSectionChartData = model.crossSectionChartData.map(point => ({
+                        afstand: point.afstand - intersectionDistance, // Negative for one side, positive for the other
+                        hoogte: point.hoogte
+                    }));
+                    
+                    console.log("Adjusted cross-section chart data with intersection at 0:", model.crossSectionChartData);
+                } else {
+                    console.warn("No intersection found between perpendicular line and reference line");
+                }
 
+            })
 
-    
-           
-;
-
-
-                // console.log("Elevation query result:", elevationResult);
-
-                // if (model.meshes.length > 0) {
-
-                //     let elevationSampler = await meshUtils.createElevationSampler(
-                //         model.mergedMesh, {
-                //         noDataValue: -999
-                //     }
-                //     );
-
-
-
-                //     const meshElevationResult = elevationSampler.queryElevation(multipoint)
-                //     console.log("Mesh elevation result:", meshElevationResult);
-                //     if ("points" in meshElevationResult && Array.isArray(meshElevationResult.points)) {
-                //         model.meshSeriesData = meshElevationResult.points
-                //             .filter(point => point[2] !== -999)
-                //             .map((point, index) => ({
-                //                 afstand: point[3], // m value
-                //                 hoogte: point[2]
-                //             }));
-                //         console.log("Mesh series data:", model.meshSeriesData);
-                //     } else {
-                //         model.meshSeriesData = [];
-                //         console.warn("meshElevationResult does not have a 'points' property or is not an array.", meshElevationResult);
-                //     }
-
-                //     console.log("Mesh elevation result:", meshElevationResult);
-
-
-                // }
-
-                // model.messages.commands.ui.displayNotification.execute({
-
-                //     title: "Cross Section",
-                //     message: "Dwarsprofiel punten opgehaald en hoogtes berekend, deze worden straks getoond in de grafiek. Deze tool is in ontwikkeling.",
-                //     type: "success",
-                // });
-            });
-
-            // model.crossSectionLocations = offsetLocations;
-            // model.graphicsLayerTemp.removeAll();
         });
 }
 
@@ -1397,16 +1388,29 @@ function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = t
   const perpX = -normalizedDy;
   const perpY = normalizedDx;
 
-  // 3. Construct perpendicular line with specified length in meters
+  // 3. Construct perpendicular line with specified geodesic length in meters
+  // Create a test line to measure geodesic vs planar ratio
+  const testLine = new Polyline({
+    paths: [[[closestPoint.x, closestPoint.y], [closestPoint.x + perpX * 100, closestPoint.y + perpY * 100]]],
+    spatialReference: polyline.spatialReference
+  });
+  
+  const planarLength = geometryEngine.planarLength(testLine, "meters");
+  const geodesicLength = geometryEngine.geodesicLength(testLine, "meters");
+  const geodesicToPlanarRatio = planarLength / geodesicLength;
+  
+  // Calculate the coordinate offset needed for the desired geodesic length
+  const coordinateOffset = length * geodesicToPlanarRatio;
+
   let start, end;
   if (centerAtPoint) {
     // Center the line at the point, extending in both directions
-    const halfLength = length / 2;
-    start = [closestPoint.x - perpX * halfLength, closestPoint.y - perpY * halfLength];
-    end = [closestPoint.x + perpX * halfLength, closestPoint.y + perpY * halfLength];
+    const halfOffset = coordinateOffset / 2;
+    start = [closestPoint.x - perpX * halfOffset, closestPoint.y - perpY * halfOffset];
+    end = [closestPoint.x + perpX * halfOffset, closestPoint.y + perpY * halfOffset];
   } else {
     start = [closestPoint.x, closestPoint.y];
-    end = [closestPoint.x + perpX * length, closestPoint.y + perpY * length];
+    end = [closestPoint.x + perpX * coordinateOffset, closestPoint.y + perpY * coordinateOffset];
   }
 
   return new Polyline({
