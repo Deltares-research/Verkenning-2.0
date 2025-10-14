@@ -70,6 +70,7 @@ const DikeDesigner = (
     };
 
     const seriesRef = useRef<am5xy.LineSeries | null>(null);
+    const elevationSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const chartSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const meshSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const userSeriesRef = useRef<am5xy.LineSeries | null>(null);
@@ -100,14 +101,14 @@ const DikeDesigner = (
     }, ); 
 
     useEffect(() => {
-        initializeChart(model, activeTab, chartContainerRef, seriesRef);
+        initializeChart(model, activeTab, chartContainerRef, seriesRef, elevationSeriesRef );
         return () => {
             if (model.chartRoot) {
                 model.chartRoot.dispose();
                 console.log("Chart disposed");
             }
         }
-    }, [model.overviewVisible, model, activeTab, chartContainerRef, model.chartData]);
+    }, [model.overviewVisible, model, activeTab, chartContainerRef, model.chartData, model.crossSectionChartData]);
 
     useEffect(() => {
         // Compare and log changes

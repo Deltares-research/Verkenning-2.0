@@ -88,7 +88,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     chart: any = null
     chartSeries: any = null
 
-    crossSectionChartData: any[] = null
+    crossSectionChartData: any[] = []
     crossSectionChartRoot: any = null
     crossSectionChart: any = null
     meshSeriesData: any[] = null

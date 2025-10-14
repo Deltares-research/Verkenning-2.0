@@ -559,7 +559,7 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
     });
 }
 
-export function initializeChart(model, activeTab, chartContainerRef, seriesRef): () => void {
+export function initializeChart(model, activeTab, chartContainerRef, seriesRef, elevationSeriesRef): () => void {
     if (activeTab !== 0 || !model.chartData || !chartContainerRef.current) {
         console.log(activeTab, model.chartData, chartContainerRef.current, "Chart not initialized");
         return
@@ -672,6 +672,27 @@ export function initializeChart(model, activeTab, chartContainerRef, seriesRef):
         return am5.Bullet.new(root, {
             sprite: circle,
         });
+    });
+
+    const elevationSeries = chart.series.push(
+    am5xy.LineSeries.new(root, {
+            name: "Hoogte vs Afstand",
+            xAxis: xAxis as any,
+            yAxis: yAxis as any,
+            valueYField: "hoogte",
+            valueXField: "afstand",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "Grond hoogte: {valueY}",
+            }),
+            stroke: am5.color(0xff9900),
+        })
+    );
+
+    elevationSeries.data.setAll(model.crossSectionChartData);
+    elevationSeriesRef.current = elevationSeries
+
+    elevationSeries.strokes.template.setAll({
+        strokeWidth: 3,
     });
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
@@ -1085,6 +1106,90 @@ export async function createCrossSection(model) {
     });
 }
 
+export async function getElevationData(model){
+        getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
+            console.log(offsetLocations, "Offset locations for cross section");
+            const sRef = model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference;
+            const promises = offsetLocations.map(loc =>
+                getPointAlongLine(model.graphicsLayerCrossSection.graphics.items[0].geometry.paths[0], loc, sRef)
+            );
+
+            Promise.all(promises).then(async pointGraphics => {
+                console.log(pointGraphics, "Point graphics for cross section");
+                const multipoint = new Multipoint({
+                    hasM: true,
+                    points: pointGraphics.map(g => {
+                        const { x, y } = g.geometry as Point;
+                        const offset = g.attributes?.offset ?? 0;
+                        return [x, y, undefined, offset]; // [x, y, z, m]
+                    }),
+                    spatialReference: model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference
+                });
+                console.log(pointGraphics, "Point graphics for cross section");
+                console.log(multipoint, "Multipoint for cross section");
+
+                const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
+                console.log(elevationResult, "Elevation result for cross section");
+
+                model.crossSectionChartData = elevationResult.geometry.points.map((point, index) => ({
+                    afstand: point[3], // m value
+                    hoogte: point[2]
+                }));
+
+                console.log(model.crossSectionChartData, "Cross section chart data");
+        
+
+
+    
+           
+;
+
+
+                // console.log("Elevation query result:", elevationResult);
+
+                // if (model.meshes.length > 0) {
+
+                //     let elevationSampler = await meshUtils.createElevationSampler(
+                //         model.mergedMesh, {
+                //         noDataValue: -999
+                //     }
+                //     );
+
+
+
+                //     const meshElevationResult = elevationSampler.queryElevation(multipoint)
+                //     console.log("Mesh elevation result:", meshElevationResult);
+                //     if ("points" in meshElevationResult && Array.isArray(meshElevationResult.points)) {
+                //         model.meshSeriesData = meshElevationResult.points
+                //             .filter(point => point[2] !== -999)
+                //             .map((point, index) => ({
+                //                 afstand: point[3], // m value
+                //                 hoogte: point[2]
+                //             }));
+                //         console.log("Mesh series data:", model.meshSeriesData);
+                //     } else {
+                //         model.meshSeriesData = [];
+                //         console.warn("meshElevationResult does not have a 'points' property or is not an array.", meshElevationResult);
+                //     }
+
+                //     console.log("Mesh elevation result:", meshElevationResult);
+
+
+                // }
+
+                // model.messages.commands.ui.displayNotification.execute({
+
+                //     title: "Cross Section",
+                //     message: "Dwarsprofiel punten opgehaald en hoogtes berekend, deze worden straks getoond in de grafiek. Deze tool is in ontwikkeling.",
+                //     type: "success",
+                // });
+            });
+
+            // model.crossSectionLocations = offsetLocations;
+            // model.graphicsLayerTemp.removeAll();
+        });
+}
+
 // code for creating offset locations based on a start offset, segment length, step size, and segment number --> move to separate file if needed
 export function createOffsetLocations(
     startOffset: number,
@@ -1235,20 +1340,15 @@ export async function locateDwpProfile(model){
     await model.startDrawingPoint(model.graphicsLayerPoint);
 
     // create line perpendicular to input line at that point (model.graphicsLayerLine)
-    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, 50); // 50 meters length
+    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, 100); // 100 meters length
     model.graphicsLayerCrossSection.add(new Graphic({
         geometry: perpendicularLine,
         symbol: model.lineLayerSymbol,
     }));
 
-
-
-
-    
-
-
-
     // get elevation data on that line
+    getElevationData(model);
+
 
     // show elevation data in cross section chart
 }
