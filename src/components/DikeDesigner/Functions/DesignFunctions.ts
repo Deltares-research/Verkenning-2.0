@@ -695,6 +695,23 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         strokeWidth: 3,
     });
 
+    chart.plotContainer.events.on("click", (ev) => {
+        console.log(ev, "Plot container clicked", ev.point);
+        
+        // Convert pixel coordinates to axis values
+        const point = chart.plotContainer.toLocal(ev.point);
+        const afstand = xAxis.positionToValue(xAxis.coordinateToPosition(point.x));
+        const hoogte = yAxis.positionToValue(yAxis.coordinateToPosition(point.y));
+
+        // Check if dwpLocations exists and has options
+        if (model.dwpLocations && model.dwpLocations.length > 0) {
+            // Show dropdown menu - pass the root from model
+            showDropdownMenu(model, ev.point, afstand, hoogte, model.chartRoot);
+        } else {
+            console.log("No dwpLocations available or empty array");
+        }
+    });
+
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
 
     return () => {
@@ -1401,7 +1418,6 @@ function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = t
   
   // Calculate the coordinate offset needed for the desired geodesic length
   const coordinateOffset = length * geodesicToPlanarRatio;
-
   let start, end;
   if (centerAtPoint) {
     // Center the line at the point, extending in both directions
@@ -1447,10 +1463,12 @@ function createTriangleGraphics(model, polygon, triangulationData) {
         let fillColor = [0, 255, 0, 0.3]; // Green with transparency
         let outlineColor = [0, 255, 0, 1];
 
-        if (area < 1.0) { // Very small triangles in red
+        if (area < 1.0) // Very small triangles in red
+ {
             fillColor = [255, 0, 0, 0.5];
             outlineColor = [255, 0, 0, 1];
-        } else if (area < 5.0) { // Small triangles in yellow
+        } else if (area < 5.0) // Small triangles in yellow
+ {
             fillColor = [255, 255, 0, 0.4];
             outlineColor = [255, 255, 0, 1];
         }
@@ -1504,4 +1522,111 @@ function createTriangleGraphics(model, polygon, triangulationData) {
     }
 
     console.log(`Created ${triangles.length / 3} triangle graphics and ${vertices3D.length / 3} vertex markers`);
+}
+
+function showDropdownMenu(model, clickPoint, afstand, hoogte, root) {
+    // Remove any existing dropdown
+    const existingDropdown = document.getElementById('chart-dropdown-menu');
+    if (existingDropdown) {
+        existingDropdown.remove();
+    }
+
+    // Create dropdown container
+    const dropdown = document.createElement('div');
+    dropdown.id = 'chart-dropdown-menu';
+    dropdown.style.position = 'absolute';
+    dropdown.style.left = `${clickPoint.x}px`;
+    dropdown.style.top = `${clickPoint.y}px`;
+    dropdown.style.backgroundColor = 'white';
+    dropdown.style.border = '1px solid #ccc';
+    dropdown.style.borderRadius = '4px';
+    dropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    dropdown.style.zIndex = '1000';
+    dropdown.style.minWidth = '150px';
+    dropdown.style.maxHeight = '200px';
+    dropdown.style.overflowY = 'auto';
+
+    // Add title
+    const title = document.createElement('div');
+    title.textContent = 'Selecteer locatie:';
+    title.style.padding = '8px 12px';
+    title.style.fontWeight = 'bold';
+    title.style.borderBottom = '1px solid #eee';
+    title.style.fontSize = '12px';
+    dropdown.appendChild(title);
+
+    // Add options from model.dwpLocations
+    model.dwpLocations.forEach(location => {
+        const option = document.createElement('div');
+        option.textContent = location;
+        option.style.padding = '8px 12px';
+        option.style.cursor = 'pointer';
+        option.style.fontSize = '12px';
+        option.style.borderBottom = '1px solid #f5f5f5';
+
+        // Hover effects
+        option.addEventListener('mouseenter', () => {
+            option.style.backgroundColor = '#f0f0f0';
+        });
+        option.addEventListener('mouseleave', () => {
+            option.style.backgroundColor = 'white';
+        });
+
+        // Click handler
+        option.addEventListener('click', () => {
+            // Handle selection - you can customize this based on your needs
+            console.log(`Selected location: ${location} at afstand: ${afstand}, hoogte: ${hoogte}`);
+            
+            // Example: Add to some model property or trigger an action
+            // model.selectedDwpLocation = location;
+            // model.selectedCoordinates = { afstand, hoogte };
+            
+            // Remove dropdown
+            dropdown.remove();
+        });
+
+        dropdown.appendChild(option);
+    });
+
+    // Add cancel option
+    const cancelOption = document.createElement('div');
+    cancelOption.textContent = 'Annuleren';
+    cancelOption.style.padding = '8px 12px';
+    cancelOption.style.cursor = 'pointer';
+    cancelOption.style.fontSize = '12px';
+    cancelOption.style.fontStyle = 'italic';
+    cancelOption.style.color = '#666';
+    cancelOption.style.borderTop = '1px solid #eee';
+
+    cancelOption.addEventListener('mouseenter', () => {
+        cancelOption.style.backgroundColor = '#f0f0f0';
+    });
+    cancelOption.addEventListener('mouseleave', () => {
+        cancelOption.style.backgroundColor = 'white';
+    });
+
+    cancelOption.addEventListener('click', () => {
+        dropdown.remove();
+    });
+
+    dropdown.appendChild(cancelOption);
+
+    // Add to chart container - use the root DOM element
+    const chartContainer = root.dom;
+    console.log(chartContainer, "Chart container for dropdown");
+    chartContainer.style.position = 'relative';
+    chartContainer.appendChild(dropdown);
+
+    // Close dropdown when clicking outside
+    const closeDropdown = (event) => {
+        if (!dropdown.contains(event.target)) {
+            dropdown.remove();
+            document.removeEventListener('click', closeDropdown);
+        }
+    };
+    
+    // Delay adding the event listener to prevent immediate closure
+    setTimeout(() => {
+        document.addEventListener('click', closeDropdown);
+    }, 100);
 }
