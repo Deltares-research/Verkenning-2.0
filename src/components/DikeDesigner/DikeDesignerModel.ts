@@ -23,6 +23,7 @@ import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 
+import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import Graphic from "@arcgis/core/Graphic";
 
 import Polyline from "@arcgis/core/geometry/Polyline";
@@ -55,6 +56,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
 
     graphicsLayerLine: GraphicsLayer;
+    cursorLocationLayer: GraphicsLayer;
     graphicsLayerPoint: GraphicsLayer;
     graphicsLayerCrossSection: GraphicsLayer;
     graphicsLayerTemp: GraphicsLayer;
@@ -109,6 +111,16 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         width: 4
     };
 
+    cursorSymbol = new PointSymbol3D({
+        symbolLayers: [
+            {
+                type: "icon",
+                size: 10,
+                outline: { color: "#bcbcbcff", size: 1 },
+                material: { color: "#F76430" }
+            } as any
+        ]
+    });
     // data for analysis
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
@@ -490,6 +502,22 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "hide",
             });
 
+            this.cursorLocationLayer = new GraphicsLayer({
+                title: "Cursor Location Layer",
+                elevationInfo: {
+                    mode: "relative-to-scene",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+
+            this.cursorLocationLayer.add(
+                new Graphic({
+                    geometry: new Point({ x: 0, y: 0 }),
+                    symbol: this.cursorSymbol,
+                })
+            )
+
             this.graphicsLayerLine = new GraphicsLayer({
                 title: "Temporary Layer",
                 elevationInfo: {
@@ -536,6 +564,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.graphicsLayerTemp);
             this.map.add(this.graphicsLayerMesh);
             this.map.add(this.designLayer2D);
+            this.map.add(this.cursorLocationLayer);
 
 
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);
