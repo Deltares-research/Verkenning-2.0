@@ -363,7 +363,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               disabled={model.graphicsLayerLine?.graphics?.length === 0}
               // sx={{ textTransform: "none" }}
             >
-              Geneer dwarsprofiel
+              Genereer dwarsprofiel
             </Button>
 
             <Button
