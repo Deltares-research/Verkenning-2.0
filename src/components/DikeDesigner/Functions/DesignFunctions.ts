@@ -715,7 +715,8 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                 model.chartData = [...model.chartData, newRow];
             // convert point to coordinates in the map
             const item = xAxis.getSeriesItem(elevationSeries, afstand);
-
+        
+            // here we need to find the corresponding point on the ground profile, the code here doesnt work yet
             const cursorPoint = new Point({
                 x: item.dataContext["x"],
                 y: item.dataContext["y"],
@@ -725,7 +726,13 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             })
 
             // make new graphic and make new graphicslayer for cursorpoints
-            
+            const graphic = new Graphic({
+                geometry: cursorPoint,
+                symbol: model.dwpPointSymbol,
+            });
+
+            // model.graphicsLayerProfile.add(graphic);
+
         }
         // console.log(ev, "Plot container clicked", ev.point);
         

@@ -59,6 +59,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     cursorLocationLayer: GraphicsLayer;
     graphicsLayerPoint: GraphicsLayer;
     graphicsLayerCrossSection: GraphicsLayer;
+    graphicsLayerProfile: GraphicsLayer;
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
     elevationLayer: ElevationLayer;
@@ -109,8 +110,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     lineLayerSymbol = {
         type: "simple-line",
-        color: [255, 0, 255],
-        width: 4
+        color: [36, 161, 14],
+        width: 3
     };
 
     cursorSymbol = new PointSymbol3D({
@@ -120,6 +121,17 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 size: 10,
                 outline: { color: "#bcbcbcff", size: 1 },
                 material: { color: "#F76430" }
+            } as any
+        ]
+    });
+
+    dwpPointSymbol =  new PointSymbol3D({
+        symbolLayers: [
+            {
+                type: "icon",
+                size: 8,
+                outline: { color: "#bcbcbcff", size: 1 },
+                material: { color: "#575757ff" }
             } as any
         ]
     });
@@ -538,6 +550,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "hide",
             });
 
+            this.graphicsLayerProfile = new GraphicsLayer({
+                title: "Profiel - tijdelijk",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+
             this.graphicsLayerTemp = new GraphicsLayer({
                 title: "Ontwerpdata - tijdelijk",
                 elevationInfo: {
@@ -567,6 +588,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.graphicsLayerMesh);
             this.map.add(this.designLayer2D);
             this.map.add(this.cursorLocationLayer);
+            this.map.add(this.graphicsLayerProfile)
 
 
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);
