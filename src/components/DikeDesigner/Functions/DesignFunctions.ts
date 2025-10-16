@@ -704,8 +704,6 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             const afstand = Math.round(xAxis.positionToValue(xAxis.coordinateToPosition(point.x)) * 10) / 10; // round to one decimal
             const hoogte = Math.round(yAxis.positionToValue(yAxis.coordinateToPosition(point.y)) * 10) / 10; // round to one decimal
 
-            console.log(afstand, hoogte, "Clicked point in chart coordinates");
-
                 const newRow = {
                     oid: model.chartData.length + 1,
                     locatie: "",
@@ -713,30 +711,54 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                     hoogte,
                 };
                 model.chartData = [...model.chartData, newRow];
-            // convert point to coordinates in the map
-            const item = xAxis.getSeriesItem(elevationSeries, afstand);
-        
-            // here we need to find the corresponding point on the ground profile, the code here doesnt work yet
-            const cursorPoint = new Point({
-                x: item.dataContext["x"],
-                y: item.dataContext["y"],
-                spatialReference: new SpatialReference({
-                    wkid: 3857
-                })
-            })
+            
+            // Find the corresponding point on the ground profile
+            if (model.crossSectionChartData && model.crossSectionChartData.length > 0) {
+                // Find the closest point in the elevation data based on afstand
+                let closestPoint = model.crossSectionChartData[0];
+                let minDistance = Math.abs(closestPoint.afstand - afstand);
 
-            // make new graphic and make new graphicslayer for cursorpoints
-            const graphic = new Graphic({
-                geometry: cursorPoint,
-                symbol: model.dwpPointSymbol,
-            });
+                model.crossSectionChartData.forEach(dataPoint => {
+                    const distance = Math.abs(dataPoint.afstand - afstand);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestPoint = dataPoint;
+                    }
+                });
 
-            // model.graphicsLayerProfile.add(graphic);
+                console.log("Found closest elevation point:", closestPoint, "Distance:", minDistance);
 
+                // Create the map point using the closest elevation data point
+                const cursorPoint = new Point({
+                    x: closestPoint.x,
+                    y: closestPoint.y,
+                    spatialReference: new SpatialReference({
+                        wkid: 3857
+                    })
+                });
+
+                // Create new graphic and add to graphics layer
+                const graphic = new Graphic({
+                    geometry: cursorPoint,
+                    symbol: model.dwpPointSymbol,
+                    attributes: {
+                        afstand,
+                        hoogte,
+                        locatie: "",
+                        oid: newRow.oid
+                    }
+                });
+
+                // Add to the profile graphics layer
+                if (model.graphicsLayerProfile) {
+                    model.graphicsLayerProfile.add(graphic);
+                }
+
+                console.log("Added graphic to map at coordinates:", cursorPoint.x, cursorPoint.y);
+            } else {
+                console.warn("No cross section chart data available for point mapping");
+            }
         }
-        // console.log(ev, "Plot container clicked", ev.point);
-        
-
 
     });
 
@@ -1589,159 +1611,4 @@ function createTriangleGraphics(model, polygon, triangulationData) {
     }
 
     console.log(`Created ${triangles.length / 3} triangle graphics and ${vertices3D.length / 3} vertex markers`);
-}
-
-function showDropdownMenu({ model, clickPoint, afstand, hoogte, root }) {
-    // Remove any existing dropdown
-    const existingDropdown = document.getElementById('chart-dropdown-menu');
-    if (existingDropdown) {
-        existingDropdown.remove();
-    }
-
-    // Create dropdown container
-    const dropdown = document.createElement('div');
-    dropdown.id = 'chart-dropdown-menu';
-    dropdown.style.cssText = `
-        position: absolute;
-        left: ${clickPoint.x}px;
-        top: ${clickPoint.y}px;
-        background-color: white;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        min-width: 180px;
-        max-height: 250px;
-        overflow-y: auto;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        font-size: 14px;
-    `;
-
-    // Add title
-    const title = document.createElement('div');
-    title.textContent = 'Selecteer locatie:';
-    title.style.cssText = `
-        padding: 12px 16px 8px 16px;
-        font-weight: 600;
-        border-bottom: 1px solid #e0e0e0;
-        color: #333;
-        background-color: #f8f9fa;
-        margin: 0;
-        border-radius: 6px 6px 0 0;
-    `;
-    dropdown.appendChild(title);
-
-    // Add coordinate info
-    const coordInfo = document.createElement('div');
-    coordInfo.textContent = `Afstand: ${afstand.toFixed(1)}m, Hoogte: ${hoogte.toFixed(2)}m`;
-    coordInfo.style.cssText = `
-        padding: 8px 16px;
-        font-size: 12px;
-        color: #666;
-        border-bottom: 1px solid #e0e0e0;
-        background-color: #f8f9fa;
-    `;
-    dropdown.appendChild(coordInfo);
-
-    // Add options from model.dwpLocations
-    model.dwpLocations.forEach((location, index) => {
-        const option = document.createElement('div');
-        option.textContent = location;
-        option.style.cssText = `
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s ease;
-            color: #333;
-        `;
-
-        // Add hover effects
-        option.addEventListener('mouseenter', () => {
-            option.style.backgroundColor = '#e3f2fd';
-        });
-        option.addEventListener('mouseleave', () => {
-            option.style.backgroundColor = 'transparent';
-        });
-
-        // Click handler
-        option.addEventListener('click', () => {
-            console.log(`Selected location: ${location} at afstand: ${afstand.toFixed(2)}, hoogte: ${hoogte.toFixed(2)}`);
-            
-            // Store selection in model
-            model.selectedDwpLocation = location;
-            model.selectedCoordinates = { afstand: afstand.toFixed(2), hoogte: hoogte.toFixed(2) };
-            
-            // Visual feedback
-            option.style.backgroundColor = '#4caf50';
-            option.style.color = 'white';
-            
-            setTimeout(() => {
-                dropdown.remove();
-                document.removeEventListener('click', closeDropdown);
-            }, 150);
-        });
-
-        dropdown.appendChild(option);
-    });
-
-    // Add cancel option
-    const cancelOption = document.createElement('div');
-    cancelOption.textContent = 'Annuleren';
-    cancelOption.style.cssText = `
-        padding: 12px 16px;
-        cursor: pointer;
-        font-style: italic;
-        color: #666;
-        border-top: 1px solid #e0e0e0;
-        text-align: center;
-        background-color: #f8f9fa;
-        border-radius: 0 0 6px 6px;
-        transition: background-color 0.2s ease;
-    `;
-
-    cancelOption.addEventListener('mouseenter', () => {
-        cancelOption.style.backgroundColor = '#ffebee';
-        cancelOption.style.color = '#d32f2f';
-    });
-    cancelOption.addEventListener('mouseleave', () => {
-        cancelOption.style.backgroundColor = '#f8f9fa';
-        cancelOption.style.color = '#666';
-    });
-
-    cancelOption.addEventListener('click', () => {
-        dropdown.remove();
-        document.removeEventListener('click', closeDropdown);
-    });
-
-    dropdown.appendChild(cancelOption);
-
-    // Add to chart container
-    const chartContainer = root.dom;
-    chartContainer.style.position = 'relative';
-    chartContainer.appendChild(dropdown);
-
-    // Close dropdown when clicking outside
-    const closeDropdown = (event) => {
-        if (!dropdown.contains(event.target)) {
-            dropdown.remove();
-            document.removeEventListener('click', closeDropdown);
-        }
-    };
-    
-    // Delay adding the event listener to prevent immediate closure
-    setTimeout(() => {
-        document.addEventListener('click', closeDropdown);
-    }, 100);
-
-    // Add keyboard support
-    dropdown.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            dropdown.remove();
-            document.removeEventListener('click', closeDropdown);
-        }
-    });
-
-    // Make dropdown focusable for keyboard navigation
-    dropdown.setAttribute('tabindex', '-1');
-    dropdown.focus();
 }

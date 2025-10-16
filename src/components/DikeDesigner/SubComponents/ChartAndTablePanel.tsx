@@ -88,6 +88,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   const handleRemoveRow = (rowIndex: number) => {
     model.chartData = model.chartData.filter((_, index) => index !== rowIndex);
+    
   };
 
   const handleToggleMaximize = () => {
