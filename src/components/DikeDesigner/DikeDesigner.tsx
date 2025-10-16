@@ -306,6 +306,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "crossSectionPanelVisible");
     useWatchAndRerender(model, "designPanelVisible");
     useWatchAndRerender(model, "mapElement");
+    useWatchAndRerender(model, "isPlacingDwpProfile");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");

@@ -572,11 +572,11 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
     const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
-            panX: true,
-            panY: true,
+            panX: false,
+            panY: false,
             wheelX: "panX",
             wheelY: "zoomX",
-            pinchZoomX: true,
+            pinchZoomX: false,
         })
     );
 
@@ -696,48 +696,65 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     });
 
     chart.plotContainer.events.on("click", (ev) => {
-        console.log(ev, "Plot container clicked", ev.point);
-        
-        // Convert pixel coordinates to axis values
-        const point = chart.plotContainer.toLocal(ev.point);
-        const afstand = xAxis.positionToValue(xAxis.coordinateToPosition(point.x));
-        const hoogte = yAxis.positionToValue(yAxis.coordinateToPosition(point.y));
 
-        // Check if dwpLocations exists and has options
-        if (model.dwpLocations && model.dwpLocations.length > 0) {
-            // Show dropdown menu - pass the root from model
-            showDropdownMenu({
-                model,
-                clickPoint: ev.point,
-                afstand,
-                hoogte,
-                root: model.chartRoot
-            });
-        } else {
-            console.log("No dwpLocations available or empty array");
+        if (model.isPlacingDwpProfile) {
+
+            // Convert pixel coordinates to axis values
+            const point = chart.plotContainer.toLocal(ev.point);
+            const afstand = Math.round(xAxis.positionToValue(xAxis.coordinateToPosition(point.x)) * 10) / 10; // round to one decimal
+            const hoogte = Math.round(yAxis.positionToValue(yAxis.coordinateToPosition(point.y)) * 10) / 10; // round to one decimal
+
+            console.log(afstand, hoogte, "Clicked point in chart coordinates");
+
+                const newRow = {
+                    oid: model.chartData.length + 1,
+                    locatie: "",
+                    afstand,
+                    hoogte,
+                };
+                model.chartData = [...model.chartData, newRow];
+            // convert point to coordinates in the map
+            const item = xAxis.getSeriesItem(elevationSeries, afstand);
+
+            const cursorPoint = new Point({
+                x: item.dataContext["x"],
+                y: item.dataContext["y"],
+                spatialReference: new SpatialReference({
+                    wkid: 3857
+                })
+            })
+
+            // make new graphic and make new graphicslayer for cursorpoints
+            
         }
+        // console.log(ev, "Plot container clicked", ev.point);
+        
+
+
     });
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
     let cursor = chart.get("cursor");
 
     cursor.events.on("cursormoved", (ev) => {
-        const positionX = ev.target.getPrivate("positionX");
-        const x = xAxis.toAxisPosition(positionX);
-        const item = xAxis.getSeriesItem(elevationSeries, x);
+        if (elevationSeries.data.length) {
+            const positionX = ev.target.getPrivate("positionX");
+            const x = xAxis.toAxisPosition(positionX);
+            const item = xAxis.getSeriesItem(elevationSeries, x);
 
-        const cursorPoint = new Point({
-            x: item.dataContext["x"],
-            y: item.dataContext["y"],
-            spatialReference: new SpatialReference({
-                wkid: 3857
+            const cursorPoint = new Point({
+                x: item.dataContext["x"],
+                y: item.dataContext["y"],
+                spatialReference: new SpatialReference({
+                    wkid: 3857
+                })
             })
-        })
 
-        console.log(cursorPoint, "Cursor point on ground profile");
+            // console.log(cursorPoint, "Cursor point on ground profile");
 
-        // self.activeWorkspace.tempCrossSectionData.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
-        model.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
+            // self.activeWorkspace.tempCrossSectionData.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
+            model.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
+    }
 
 
 

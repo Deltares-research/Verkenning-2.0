@@ -98,6 +98,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     userLinePoints: any[] = []
     slopeLabels: am5.Label[] = []
 
+    isPlacingDwpProfile: boolean = false
+
 
     lineFeatureLayers: FeatureLayer[] = []
     selectedLineLayerId: string | null
@@ -312,11 +314,11 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         // Create a default empty sheet
         const defaultSheetName = "vak 1";
         const defaultData = [
-            {
-                locatie: "",
-                afstand: "",
-                hoogte: "",
-            }
+            // {
+            //     locatie: "",
+            //     afstand: "",
+            //     hoogte: "",
+            // }
         ];
 
         this.allChartData = {

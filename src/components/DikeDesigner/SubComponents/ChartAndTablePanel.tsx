@@ -34,6 +34,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Menu,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -52,7 +55,6 @@ interface ChartAndTablePanelProps {
   handleExcelUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-
 const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   setdesignPanelVisible,
   activeTab,
@@ -68,23 +70,12 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const [isMaximized, setIsMaximized] = useState(false);
   const [showNewTabDialog, setShowNewTabDialog] = useState(false);
   const [showDeleteTabDialog, setShowDeleteTabDialog] = useState(false);
-  // const [showRenameTabDialog, setShowRenameTabDialog] = useState(false); // Add this state
   const [newTabName, setNewTabName] = useState("");
-  // const [renameTabValue, setRenameTabValue] = useState(""); // Add this state
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
-
-  // const handleSheetChange = (sheetName: string) => {
-  //   const currentSheet = model.activeSheet;
-  //   const currentData = model.chartData ? [...model.chartData] : [];
-  //   model.allChartData[currentSheet] = currentData;
-
-  //   model.activeSheet = sheetName;
-
-  //   const newChartData = model.allChartData[sheetName] ? [...model.allChartData[sheetName]] : [];
-  //   model.chartData = newChartData;
-
-  //   console.log("Switched to sheet:", sheetName, model.chartData);
-  // };
+  
+  // Add state for MUI Menu
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const menuOpen = Boolean(menuAnchorEl);
 
   const handleAddRow = () => {
     const newRow = {
@@ -201,73 +192,6 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     setShowDeleteTabDialog(false);
   };
 
-  // Add rename tab functionality
-  // const handleRenameCurrentTab = () => {
-  //   setRenameTabValue(model.activeSheet as string); // Pre-fill with current name
-  //   setShowRenameTabDialog(true);
-  // };
-
-  // const handleConfirmRenameTab = () => {
-  //   if (renameTabValue.trim() === "") {
-  //     model.messages.commands.ui.displayNotification.execute({
-  //       title: "Hernoem tab",
-  //       message: "Voer een naam in voor de tab",
-  //       type: "error",
-  //     });
-  //     return;
-  //   }
-
-  //   // Check if the new name already exists (and it's not the current name)
-  //   if (renameTabValue !== model.activeSheet && model.allChartData[renameTabValue]) {
-  //     model.messages.commands.ui.displayNotification.execute({
-  //       title: "Hernoem tab",
-  //       message: "Er bestaat al een tab met deze naam",
-  //       type: "error",
-  //     });
-  //     return;
-  //   }
-
-  //   // If the name hasn't changed, just close the dialog
-  //   if (renameTabValue === model.activeSheet) {
-  //     setShowRenameTabDialog(false);
-  //     setRenameTabValue("");
-  //     return;
-  //   }
-
-  //   const oldName = model.activeSheet;
-  //   const newName = renameTabValue.trim();
-
-  //   // Save current data with the old name
-  //   const currentData = model.chartData ? [...model.chartData] : [];
-  //   model.allChartData[oldName] = currentData;
-
-  //   // Create new entry with new name
-  //   model.allChartData[newName] = model.allChartData[oldName];
-
-  //   // Delete old entry
-  //   delete model.allChartData[oldName];
-
-  //   // Update active sheet name
-  //   model.activeSheet = newName;
-
-  //   // Close dialog and reset
-  //   setShowRenameTabDialog(false);
-  //   setRenameTabValue("");
-
-  //   model.messages.commands.ui.displayNotification.execute({
-  //     title: "Hernoem tab",
-  //     message: `Tab hernoemd van "${oldName}" naar "${newName}"`,
-  //     type: "success",
-  //   });
-
-  //   console.log("Renamed tab from:", oldName, "to:", newName);
-  // };
-
-  // const handleCancelRenameTab = () => {
-  //   setShowRenameTabDialog(false);
-  //   setRenameTabValue("");
-  // };
-
   // Simple drag and drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedRowIndex(index);
@@ -306,6 +230,36 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     model.chartData = newChartData;
     
     console.log(`Moved row from ${draggedRowIndex} to ${dropIndex}`);
+  };
+
+  // Handle menu open/close
+  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const handleLocationSelect = (location: string) => {
+    console.log(`Selected location from MUI menu: ${location}`);
+    
+    // Store selected location in model for later use
+    model.selectedDwpLocation = location;
+    model.isPlacingDwpProfile = true;
+    
+    
+    // Show notification to user
+    model.messages.commands.ui.displayNotification.execute({
+      title: "Profielpunt plaatsen",
+      message: `Klik op de grafiek om "${location}" te plaatsen`,
+      type: "info",
+    });
+
+    
+    
+    
+    handleMenuClose();
   };
 
   return (
@@ -415,14 +369,14 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             <Button
               variant="contained"
               size="medium"
-              component="label"
               startIcon={<ControlPointIcon />}
-              color="primary"
-              onClick={() => locateDwpProfile(model)}
-              disabled={model.graphicsLayerLine?.graphics?.length === 0}
-              // sx={{ textTransform: "none" }}
+              color={model.isPlacingDwpProfile ? "secondary" : "primary"}
+              onClick={() => {
+                model.isPlacingDwpProfile = !model.isPlacingDwpProfile;
+              }}
+              disabled={model.graphicsLayerLine?.graphics?.length === 0 || !model.crossSectionChartData?.length}
             >
-              Teken profielpunt
+              Teken profielpunten {model.isPlacingDwpProfile ? "(Actief)" : ""}
             </Button>
 
             <Button
@@ -562,7 +516,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                       {/* Drag handle column header */}
                     </TableCell>
                     {model.chartData?.length > 0 &&
-                      Object.keys(model.chartData[0] as object || {}).map((header) => (
+                      Object.keys(model.chartData[0] as object || {}).slice(1).map((header) => (
                         <TableCell key={header} align="center" sx={{ fontSize: "11px" }}>
                           {header.charAt(0).toUpperCase() + header.slice(1)}
                         </TableCell>
@@ -589,7 +543,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                             backgroundColor: "#f9f9f9",
                           },
                           backgroundColor: draggedRowIndex === rowIndex ? "#e3f2fd" : "inherit",
-                          opacity: draggedRowIndex === rowIndex ? 0.5 : 1, // Add this line
+                          opacity: draggedRowIndex === rowIndex ? 0.5 : 1,
                         }}
                       >
                         {/* Drag handle column */}
@@ -605,8 +559,8 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                           />
                         </TableCell>
 
-                        {/* Data columns */}
-                        {Object.entries(row as object || {}).map(([key, cell], colIndex) => (
+                        {/* Data columns - exclude first value (oid) */}
+                        {Object.entries(row as object || {}).slice(1).map(([key, cell], colIndex) => (
                           <TableCell key={`${rowKey}-${key}`} align="center">
                             {colIndex === 0 ? (
                               <Select
@@ -694,39 +648,6 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Rename Tab Dialog */}
-      {/* <Dialog
-        open={showRenameTabDialog}
-        onClose={handleCancelRenameTab}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Tab Hernoemen</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Naam nieuwe ontwerp"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={renameTabValue}
-            onChange={(e) => setRenameTabValue(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleConfirmRenameTab();
-              }
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelRenameTab}>Annuleren</Button>
-          <Button onClick={handleConfirmRenameTab} variant="contained" color="primary">
-            Hernoemen
-          </Button>
-        </DialogActions>
-      </Dialog> */}
 
       {/* Delete Tab Confirmation Dialog */}
       <Dialog
