@@ -111,8 +111,19 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     lineLayerSymbol = {
         type: "simple-line",
-        color: [36, 161, 14],
+        color: [64, 64, 64],
         width: 3,
+         marker: { 
+            style: "arrow",
+            color: "grey",
+            placement: "begin"
+        }
+    };
+
+    lineLayerSymbolCrosssection = {
+        type: "simple-line",
+        color: [36, 161, 14],
+        width: 2,
          marker: { 
             style: "arrow",
             color: "grey",

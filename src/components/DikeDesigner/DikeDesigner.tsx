@@ -175,6 +175,10 @@ const DikeDesigner = (
 
     const handleClearGraphics = () => {
         model.graphicsLayerLine.removeAll();
+        model.graphicsLayerCrossSection.removeAll();
+        model.graphicsLayerPoint.removeAll();
+        model.graphicsLayerProfile.removeAll();
+        model.crossSectionChartData = [];
         model.selectedLineLayerId = null;
         model.selectedDijkvakField = null;
     };

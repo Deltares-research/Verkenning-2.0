@@ -1516,7 +1516,7 @@ export async function locateDwpProfile(model){
     const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, 100); // 100 meters length
     model.graphicsLayerCrossSection.add(new Graphic({
         geometry: perpendicularLine,
-        symbol: model.lineLayerSymbol,
+        symbol: model.lineLayerSymbolCrosssection,
     }));
 
     // get elevation data on that line
