@@ -447,7 +447,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                 variant="outlined"
                 size="large"
                 onClick={handleRivierzijdeMenuClick}
-                sx={{ minWidth: 100, textTransform: 'none' }}
+                
               >
                 Rivierzijde: {model.rivierzijde || 'rechts'}
               </Button>
@@ -458,6 +458,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                 anchorOrigin={{
                   vertical: 'bottom',
                   horizontal: 'left',
+                }}
+                PaperProps={{
+                  sx: {
+                    minWidth: rivierzijdeAnchorEl?.offsetWidth || 'auto',
+                  }
                 }}
               >
                 <MenuItem onClick={() => handleRivierzijdeSelect('rechts')}>
@@ -562,10 +567,23 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           indicatorColor="primary"
           textColor="primary"
           variant="fullWidth"
-          sx={{ flexShrink: 0 }}
+          sx={{ 
+            flexShrink: 0,
+            '& .MuiTab-root': {
+              backgroundColor: '#f0f0f0',
+              '&.Mui-selected': {
+                backgroundColor: '#1976d2',
+                color: 'white',
+                fontWeight: 'bold',
+              },
+              '&:hover': {
+                backgroundColor: '#e0e0e0',
+              },
+            },
+          }}
         >
           <Tab label="Dwarsprofiel" sx={{ fontSize: "11px" }} />
-          <Tab label="Invoerdata" />
+          <Tab label="Invoerdata" sx={{ fontSize: "11px" }} />
         </Tabs>
 
         {/* Content Area */}

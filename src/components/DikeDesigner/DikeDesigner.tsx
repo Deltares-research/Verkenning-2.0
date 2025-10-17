@@ -244,6 +244,10 @@ const DikeDesigner = (
 
     const handleCreateDesign = async () => {
 
+        model.graphicsLayerMesh.removeAll();
+        model.mergedMesh = null;
+        model.graphicsLayerTemp.removeAll();
+
         setLoading(true); // Show loader
         try {
             createDesigns(model).then(() => {
