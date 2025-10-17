@@ -40,7 +40,6 @@ export async function createDesigns(model): Promise<void> {
     let chartData: any[] = [];
 
     if (model.selectedDijkvakField) {
-        console.log("do stuff here...")
 
         // Use Promise.all() for parallel processing
         const designPromises = model.graphicsLayerLine.graphics.items
@@ -91,7 +90,21 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     // Use Promise.all() to process all chart data in parallel
     const offsetPromises = chartData.map(async (row) => {
         try {
-            const offsetDistance = row.afstand || 0;
+
+            let offsetDistance
+            if (row.afstand > 0) {
+                if (model.rivierzijde === 'rechts') {
+                    offsetDistance = -Math.abs(row.afstand || 0);
+                } else {
+                    offsetDistance = Math.abs(row.afstand || 0);
+                }
+            } if (row.afstand < 0) {
+                if (model.rivierzijde === 'rechts') {
+                    offsetDistance = Math.abs(row.afstand || 0);
+                } else {
+                    offsetDistance = -Math.abs(row.afstand || 0);
+                }
+            }
 
             // Project to RD New for accurate planar offset
             const projectedLine = projection.project(basePath, rdNewSpatialRef) as Polyline;
@@ -170,11 +183,15 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         createPolygonBetween(model, "buitenkruin", "binnenkruin", offsetGeometries);
     }
 
-    const containsBerm = chartData.some((row) =>
-        row.locatie?.toLowerCase().includes("berm")
+    const containsBinnenBerm = chartData.some((row) =>
+        row.locatie?.toLowerCase().includes("binnenberm")
     );
 
-    if (containsBerm) {
+    const containsBuitenBerm = chartData.some((row) =>  
+        row.locatie?.toLowerCase().includes("buitenberm")
+    );
+
+    if (containsBinnenBerm && containsBuitenBerm) {
         if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
             createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
         }
@@ -193,10 +210,41 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
             createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
         }
-    } else {
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
-            createPolygonBetween(model, "buitenkruin", "binnenkruin", [128, 0, 0, 0.9]);
+    } 
+
+    if (containsBinnenBerm && !containsBuitenBerm) {
+        if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
+            createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
         }
+        if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
+            createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
+        }
+        if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
+            createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
+        }
+        if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
+            createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
+        }
+
+    }
+    if (!containsBinnenBerm && containsBuitenBerm) {
+        if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
+            createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
+        }
+        if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
+            createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
+        }
+        if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
+            createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
+        }
+        if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
+            createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
+        }
+    }
+
+    
+    
+    if (!containsBinnenBerm && !containsBuitenBerm) {
         if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
             createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
         }
@@ -666,6 +714,34 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
                 model.chartData = [...model.chartData]; // Force reactivity
                 model.allChartData[model.activeSheet] = [...model.chartData];
+
+                // replace point in graphics layer
+                const graphic = model.graphicsLayerProfile.graphics.items.find(g => g.attributes.oid === dataItem.dataContext["oid"]);
+                if (graphic) {
+                    graphic.attributes.hoogte = snappedY;
+                    graphic.attributes.afstand = snappedX;
+                    // Optionally update geometry if needed
+                    let closestPoint = model.crossSectionChartData[0];
+                    let minDistance = Math.abs(closestPoint.afstand - snappedX);
+                    model.crossSectionChartData.forEach(dataPoint => {
+                        const distance = Math.abs(dataPoint.afstand - snappedX);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestPoint = dataPoint;
+                        }
+                    });
+
+                    // Create the map point using the closest elevation data point
+                    const cursorPoint = new Point({
+                        x: closestPoint.x,
+                        y: closestPoint.y,
+                        spatialReference: new SpatialReference({
+                            wkid: 3857
+                        })
+                    });
+                    graphic.geometry = cursorPoint;
+                }
+
             }
         });
 
@@ -1450,6 +1526,11 @@ export async function locateDwpProfile(model){
     // show elevation data in cross section chart
 }
 
+export function clearDwpProfile(model){
+    model.graphicsLayerProfile.removeAll();
+    model.chartData = [];   
+}
+
 function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = true) {
   const paths = polyline.paths[0];
   let minDist = Infinity;
@@ -1523,6 +1604,9 @@ function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = t
     spatialReference: polyline.spatialReference
   });
 }
+
+
+
 
 
 function createTriangleGraphics(model, polygon, triangulationData) {

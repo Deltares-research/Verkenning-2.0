@@ -13,6 +13,9 @@ import AdsClickIcon from '@mui/icons-material/AdsClick';
 import ControlPointIcon from '@mui/icons-material/ControlPoint';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import TableRowsIcon from "@mui/icons-material/TableRows";
+
+import ToggleButton from '@vertigis/web/ui/ToggleButton';
+import ToggleButtonGroup from '@vertigis/web/ui/ToggleButtonGroup';
 import {
   Paper,
   Typography,
@@ -40,7 +43,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
-import { locateDwpProfile } from "../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile } from "../Functions/DesignFunctions";
 
 interface ChartAndTablePanelProps {
   setdesignPanelVisible: (visible: boolean) => void;
@@ -76,9 +79,18 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   // Add state for MUI Menu
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(menuAnchorEl);
+  
+  // Add state for rivierzijde dropdown
+  const [rivierzijdeAnchorEl, setRivierzijdeAnchorEl] = useState<null | HTMLElement>(null);
+  const rivierzijdeOpen = Boolean(rivierzijdeAnchorEl);
+
+  // Add state for reference location dropdown
+  const [referentieAnchorEl, setReferentieAnchorEl] = useState<null | HTMLElement>(null);
+  const referentieOpen = Boolean(referentieAnchorEl);
 
   const handleAddRow = () => {
     const newRow = {
+      oid: model.chartData.length + 1,
       locatie: "",
       afstand: "",
       hoogte: "",
@@ -263,6 +275,44 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     handleMenuClose();
   };
 
+  const handleRivierzijdeMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setRivierzijdeAnchorEl(event.currentTarget);
+  };
+
+  const handleRivierzijdeMenuClose = () => {
+    setRivierzijdeAnchorEl(null);
+  };
+
+  const handleRivierzijdeSelect = (value: 'rechts' | 'links') => {
+    model.rivierzijde = value;
+    handleRivierzijdeMenuClose();
+    
+    model.messages.commands.ui.displayNotification.execute({
+      title: "Rivierzijde gewijzigd",
+      message: `Rivierzijde ingesteld op: ${value}`,
+      type: "info",
+    });
+  };
+
+  const handleReferentieMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setReferentieAnchorEl(event.currentTarget);
+  };
+
+  const handleReferentieMenuClose = () => {
+    setReferentieAnchorEl(null);
+  };
+
+  const handleReferentieSelect = (value: string) => {
+    model.referentieLocatie = value;
+    handleReferentieMenuClose();
+    
+    model.messages.commands.ui.displayNotification.execute({
+      title: "Referentie locatie gewijzigd",
+      message: `Referentie locatie ingesteld op: ${value}`,
+      type: "info",
+    });
+  };
+
   return (
     <>
       <Paper
@@ -386,14 +436,62 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               component="label"
               startIcon={<RemoveCircleOutlineIcon />}
               color="primary"
-              onClick={() => locateDwpProfile(model)}
-              disabled={model.graphicsLayerLine?.graphics?.length === 0}
+              onClick={() => clearDwpProfile(model)}
+              disabled={model.chartData?.length === 0}
               // sx={{ textTransform: "none" }}
             >
-              Verwijder profielpunt
+              Verwijder profielpunten
             </Button>
 
-            
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={handleRivierzijdeMenuClick}
+                sx={{ minWidth: 100, textTransform: 'none' }}
+              >
+                Rivierzijde: {model.rivierzijde || 'rechts'}
+              </Button>
+              <Menu
+                anchorEl={rivierzijdeAnchorEl}
+                open={rivierzijdeOpen}
+                onClose={handleRivierzijdeMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                }}
+              >
+                <MenuItem onClick={() => handleRivierzijdeSelect('rechts')}>
+                  Rechts
+                </MenuItem>
+                <MenuItem onClick={() => handleRivierzijdeSelect('links')}>
+                  Links
+                </MenuItem>
+              </Menu>
+
+                {/* <Button
+                variant="outlined"
+                size="large"
+                onClick={handleReferentieMenuClick}
+                sx={{ minWidth: 100, textTransform: 'none' }}
+              >
+               Referentie locatie: {model.referentieLocatie || 'Selecteer...'}
+              </Button>
+              <Menu
+                anchorEl={referentieAnchorEl}
+                open={referentieOpen}
+                onClose={handleReferentieMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                }}
+              >
+                {model.dwpLocations.map((location) => (
+                  <MenuItem key={location} onClick={() => handleReferentieSelect(location as string)}>
+                    {location}
+                  </MenuItem>
+                ))}
+              </Menu> */}
+
 
             {/* <Button
               disabled={!model.chartData?.length}
@@ -522,9 +620,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                           {header.charAt(0).toUpperCase() + header.slice(1)}
                         </TableCell>
                       ))}
-                    <TableCell align="center" sx={{ fontSize: "11px" }}>
-                      Acties
-                    </TableCell>
+                    {model.chartData?.length > 0 && (
+                      <TableCell align="center" sx={{ fontSize: "11px" }}>
+                        Acties
+                      </TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>

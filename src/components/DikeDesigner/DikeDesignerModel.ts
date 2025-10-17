@@ -38,7 +38,7 @@ import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtil
 import * as projection from "@arcgis/core/geometry/projection";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
-import SketchViewModel from "@arcgis/core/widgets/Sketch";
+import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 
 import { initializeChart, getLineFeatureLayers } from "./Functions/DesignFunctions";
 import { array } from "@amcharts/amcharts5";
@@ -100,7 +100,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     slopeLabels: am5.Label[] = []
 
     isPlacingDwpProfile: boolean = false
-
+    rivierzijde: 'rechts' | 'links' = 'rechts';
+    referentieLocatie: string ='binnenkruin';
 
     lineFeatureLayers: FeatureLayer[] = []
     selectedLineLayerId: string | null
@@ -111,7 +112,12 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     lineLayerSymbol = {
         type: "simple-line",
         color: [36, 161, 14],
-        width: 3
+        width: 3,
+         marker: { 
+            style: "arrow",
+            color: "grey",
+            placement: "begin"
+        }
     };
 
     cursorSymbol = new PointSymbol3D({
@@ -603,6 +609,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                     console.log("Graphics layer added to the map.");
 
                     this.sketchViewModel = new SketchViewModel({
+                        polylineSymbol: this.lineLayerSymbol as any,
                         view: this.view,
                         snappingOptions: {
                             enabled: true,

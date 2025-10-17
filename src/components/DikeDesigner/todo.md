@@ -1,1 +1,4 @@
 - make button to change input line direction
+- line direction fix, default is now: west to east
+- check + and - values
+- 

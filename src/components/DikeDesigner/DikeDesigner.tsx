@@ -307,6 +307,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "designPanelVisible");
     useWatchAndRerender(model, "mapElement");
     useWatchAndRerender(model, "isPlacingDwpProfile");
+    useWatchAndRerender(model, "rivierzijde");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");
