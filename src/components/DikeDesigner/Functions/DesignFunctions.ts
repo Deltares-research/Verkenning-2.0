@@ -106,6 +106,10 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
                 }
             }
 
+            if (row.afstand === 0) {
+                offsetDistance = 0;
+            }
+
             console.log(offsetDistance, "Offset distance for row:", row);
 
             // Project to RD New for accurate planar offset
@@ -189,7 +193,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         row.locatie?.toLowerCase().includes("binnenberm")
     );
 
-    const containsBuitenBerm = chartData.some((row) =>  
+    const containsBuitenBerm = chartData.some((row) =>
         row.locatie?.toLowerCase().includes("buitenberm")
     );
 
@@ -212,7 +216,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
             createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
         }
-    } 
+    }
 
     if (containsBinnenBerm && !containsBuitenBerm) {
         if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
@@ -244,8 +248,8 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         }
     }
 
-    
-    
+
+
     if (!containsBinnenBerm && !containsBuitenBerm) {
         if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
             createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
@@ -753,7 +757,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     });
 
     const elevationSeries = chart.series.push(
-    am5xy.LineSeries.new(root, {
+        am5xy.LineSeries.new(root, {
             name: "Hoogte vs Afstand",
             xAxis: xAxis as any,
             yAxis: yAxis as any,
@@ -782,14 +786,14 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             const afstand = Math.round(xAxis.positionToValue(xAxis.coordinateToPosition(point.x)) * 10) / 10; // round to one decimal
             const hoogte = Math.round(yAxis.positionToValue(yAxis.coordinateToPosition(point.y)) * 10) / 10; // round to one decimal
 
-                const newRow = {
-                    oid: model.chartData.length + 1,
-                    locatie: "",
-                    afstand,
-                    hoogte,
-                };
-                model.chartData = [...model.chartData, newRow];
-            
+            const newRow = {
+                oid: model.chartData.length + 1,
+                locatie: "",
+                afstand,
+                hoogte,
+            };
+            model.chartData = [...model.chartData, newRow];
+
             // Find the corresponding point on the ground profile
             if (model.chartDataElevation && model.chartDataElevation.length > 0) {
                 // Find the closest point in the elevation data based on afstand
@@ -861,7 +865,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
             // self.activeWorkspace.tempCrossSectionData.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
             model.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
-    }
+        }
 
 
 
@@ -1120,6 +1124,38 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
+    let cursor = chart.get("cursor");
+    cursor.events.on("cursormoved", (ev) => {
+        if (elevationSeries.data.length) {
+            const positionX = ev.target.getPrivate("positionX");
+            const x = xAxis.toAxisPosition(positionX);
+            const item = xAxis.getSeriesItem(elevationSeries, x);
+
+            const cursorPoint = new Point({
+                x: item.dataContext["x"],
+                y: item.dataContext["y"],
+                spatialReference: new SpatialReference({
+                    wkid: 3857
+                })
+            })
+
+            // console.log(cursorPoint, "Cursor point on ground profile");
+
+            // self.activeWorkspace.tempCrossSectionData.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
+            model.cursorLocationLayer.graphics.items[0].geometry = cursorPoint
+        }
+
+
+
+    });
+
+
+    chart.events.on("pointerover", (ev) => {
+        model.cursorLocationLayer.visible = true
+    });
+    chart.events.on("pointerout", (ev) => {
+        model.cursorLocationLayer.visible = false
+    });
 
     return () => {
         root.dispose();
@@ -1285,83 +1321,83 @@ export async function createCrossSection(model) {
     });
 }
 
-export async function getElevationData(model){
-        getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
-            console.log(offsetLocations, "Offset locations for cross section");
-            const sRef = model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference;
-            const promises = offsetLocations.map(loc =>
-                getPointAlongLine(model.graphicsLayerCrossSection.graphics.items[0].geometry.paths[0], loc, sRef)
-            );
+export async function getElevationData(model) {
+    getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
+        console.log(offsetLocations, "Offset locations for cross section");
+        const sRef = model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference;
+        const promises = offsetLocations.map(loc =>
+            getPointAlongLine(model.graphicsLayerCrossSection.graphics.items[0].geometry.paths[0], loc, sRef)
+        );
 
-            Promise.all(promises).then(async pointGraphics => {
-                console.log(pointGraphics, "Point graphics for cross section");
-                const multipoint = new Multipoint({
-                    hasM: true,
-                    points: pointGraphics.map(g => {
-                        const { x, y } = g.geometry as Point;
-                        const offset = g.attributes?.offset ?? 0;
-                        return [x, y, undefined, offset]; // [x, y, z, m]
-                    }),
-                    spatialReference: model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference
+        Promise.all(promises).then(async pointGraphics => {
+            console.log(pointGraphics, "Point graphics for cross section");
+            const multipoint = new Multipoint({
+                hasM: true,
+                points: pointGraphics.map(g => {
+                    const { x, y } = g.geometry as Point;
+                    const offset = g.attributes?.offset ?? 0;
+                    return [x, y, undefined, offset]; // [x, y, z, m]
+                }),
+                spatialReference: model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference
+            });
+            console.log(pointGraphics, "Point graphics for cross section");
+            console.log(multipoint, "Multipoint for cross section");
+
+            const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
+            console.log(elevationResult, "Elevation result for cross section");
+
+            model.chartDataElevation = elevationResult.geometry.points.map((point, index) => ({
+                afstand: point[3], // m value
+                hoogte: point[2],
+                x: point[0],
+                y: point[1]
+            }));
+
+            // Find intersection of perpendicular line with the reference line
+            const perpendicularLine = model.graphicsLayerCrossSection.graphics.items[0].geometry as Polyline;
+            const referenceLine = model.graphicsLayerLine.graphics.items[0].geometry as Polyline;
+
+            const intersection = geometryEngine.intersectLinesToPoints(perpendicularLine, referenceLine);
+
+            if (intersection) {
+                // Find the geodesic distance along the perpendicular line to the intersection point
+                let intersectionDistance = 0;
+
+                // Calculate geodesic distance from start of perpendicular line to intersection point
+                const perpStart = new Point({
+                    x: perpendicularLine.paths[0][0][0],
+                    y: perpendicularLine.paths[0][0][1],
+                    spatialReference: perpendicularLine.spatialReference
                 });
-                console.log(pointGraphics, "Point graphics for cross section");
-                console.log(multipoint, "Multipoint for cross section");
 
-                const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
-                console.log(elevationResult, "Elevation result for cross section");
+                const intersectionPoint = Array.isArray(intersection) ? intersection[0] : intersection;
 
-                model.chartDataElevation = elevationResult.geometry.points.map((point, index) => ({
-                    afstand: point[3], // m value
-                    hoogte: point[2],
-                    x: point[0],
-                    y: point[1]
+                // Create a line segment from start to intersection for geodesic measurement
+                const lineToIntersection = new Polyline({
+                    paths: [[[perpStart.x, perpStart.y], [intersectionPoint.x, intersectionPoint.y]]],
+                    spatialReference: perpendicularLine.spatialReference
+                });
+
+                intersectionDistance = geometryEngine.geodesicLength(lineToIntersection, "meters");
+
+                console.log("Geodesic intersection distance along perpendicular line:", intersectionDistance);
+
+                // Adjust all distances to be relative to the intersection point (0,0)
+                model.chartDataElevation = model.chartDataElevation.map(point => ({
+                    afstand: point.afstand - intersectionDistance, // Negative for one side, positive for the other
+                    hoogte: point.hoogte,
+                    x: point.x,
+                    y: point.y
                 }));
 
-                // Find intersection of perpendicular line with the reference line
-                const perpendicularLine = model.graphicsLayerCrossSection.graphics.items[0].geometry as Polyline;
-                const referenceLine = model.graphicsLayerLine.graphics.items[0].geometry as Polyline;
-                
-                const intersection = geometryEngine.intersectLinesToPoints(perpendicularLine, referenceLine);
-                
-                if (intersection) {
-                    // Find the geodesic distance along the perpendicular line to the intersection point
-                    let intersectionDistance = 0;
-                    
-                    // Calculate geodesic distance from start of perpendicular line to intersection point
-                    const perpStart = new Point({
-                        x: perpendicularLine.paths[0][0][0],
-                        y: perpendicularLine.paths[0][0][1],
-                        spatialReference: perpendicularLine.spatialReference
-                    });
-                    
-                    const intersectionPoint = Array.isArray(intersection) ? intersection[0] : intersection;
-                    
-                    // Create a line segment from start to intersection for geodesic measurement
-                    const lineToIntersection = new Polyline({
-                        paths: [[[perpStart.x, perpStart.y], [intersectionPoint.x, intersectionPoint.y]]],
-                        spatialReference: perpendicularLine.spatialReference
-                    });
-                    
-                    intersectionDistance = geometryEngine.geodesicLength(lineToIntersection, "meters");
-                    
-                    console.log("Geodesic intersection distance along perpendicular line:", intersectionDistance);
-                    
-                    // Adjust all distances to be relative to the intersection point (0,0)
-                    model.chartDataElevation = model.chartDataElevation.map(point => ({
-                        afstand: point.afstand - intersectionDistance, // Negative for one side, positive for the other
-                        hoogte: point.hoogte,
-                        x: point.x,
-                        y: point.y
-                    }));
+                console.log("Adjusted elevation chart data with intersection at 0:", model.chartDataElevation);
+            } else {
+                console.warn("No intersection found between perpendicular line and reference line");
+            }
 
-                    console.log("Adjusted elevation chart data with intersection at 0:", model.chartDataElevation);
-                } else {
-                    console.warn("No intersection found between perpendicular line and reference line");
-                }
+        })
 
-            })
-
-        });
+    });
 }
 
 // code for creating offset locations based on a start offset, segment length, step size, and segment number --> move to separate file if needed
@@ -1496,7 +1532,7 @@ export function getPointAlongLine(
     });
 }
 
-export async function locateDwpProfile(model){
+export async function locateDwpProfile(model) {
 
     // clean up previous graphics
     model.graphicsLayerPoint.removeAll();
@@ -1527,83 +1563,83 @@ export async function locateDwpProfile(model){
     // show elevation data in cross section chart
 }
 
-export function clearDwpProfile(model){
+export function clearDwpProfile(model) {
     model.graphicsLayerProfile.removeAll();
-    model.chartData = [];   
+    model.chartData = [];
 }
 
 function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = true) {
-  const paths = polyline.paths[0];
-  let minDist = Infinity;
-  let closestSegment = null;
-  let closestPoint = null;
+    const paths = polyline.paths[0];
+    let minDist = Infinity;
+    let closestSegment = null;
+    let closestPoint = null;
 
-  // 1. Find closest segment
-  for (let i = 0; i < paths.length - 1; i++) {
-    const p1 = paths[i];
-    const p2 = paths[i + 1];
+    // 1. Find closest segment
+    for (let i = 0; i < paths.length - 1; i++) {
+        const p1 = paths[i];
+        const p2 = paths[i + 1];
 
+        const dx = p2[0] - p1[0];
+        const dy = p2[1] - p1[1];
+
+        // Projection of point onto segment
+        const t = ((point.x - p1[0]) * dx + (point.y - p1[1]) * dy) / (dx * dx + dy * dy);
+        const tClamped = Math.max(0, Math.min(1, t));
+
+        const projX = p1[0] + tClamped * dx;
+        const projY = p1[1] + tClamped * dy;
+
+        const dist2 = (point.x - projX) ** 2 + (point.y - projY) ** 2;
+
+        if (dist2 < minDist) {
+            minDist = dist2;
+            closestSegment = [p1, p2];
+            closestPoint = { x: projX, y: projY };
+        }
+    }
+
+    // 2. Compute perpendicular vector
+    const [p1, p2] = closestSegment;
     const dx = p2[0] - p1[0];
     const dy = p2[1] - p1[1];
 
-    // Projection of point onto segment
-    const t = ((point.x - p1[0]) * dx + (point.y - p1[1]) * dy) / (dx * dx + dy * dy);
-    const tClamped = Math.max(0, Math.min(1, t));
+    // Normalize the direction vector
+    const segmentLength = Math.sqrt(dx * dx + dy * dy);
+    const normalizedDx = dx / segmentLength;
+    const normalizedDy = dy / segmentLength;
 
-    const projX = p1[0] + tClamped * dx;
-    const projY = p1[1] + tClamped * dy;
+    // Perpendicular vector (rotated 90 degrees)
+    const perpX = -normalizedDy;
+    const perpY = normalizedDx;
 
-    const dist2 = (point.x - projX) ** 2 + (point.y - projY) ** 2;
+    // 3. Construct perpendicular line with specified geodesic length in meters
+    // Create a test line to measure geodesic vs planar ratio
+    const testLine = new Polyline({
+        paths: [[[closestPoint.x, closestPoint.y], [closestPoint.x + perpX * 100, closestPoint.y + perpY * 100]]],
+        spatialReference: polyline.spatialReference
+    });
 
-    if (dist2 < minDist) {
-      minDist = dist2;
-      closestSegment = [p1, p2];
-      closestPoint = { x: projX, y: projY };
+    const planarLength = geometryEngine.planarLength(testLine, "meters");
+    const geodesicLength = geometryEngine.geodesicLength(testLine, "meters");
+    const geodesicToPlanarRatio = planarLength / geodesicLength;
+
+    // Calculate the coordinate offset needed for the desired geodesic length
+    const coordinateOffset = length * geodesicToPlanarRatio;
+    let start, end;
+    if (centerAtPoint) {
+        // Center the line at the point, extending in both directions
+        const halfOffset = coordinateOffset / 2;
+        start = [closestPoint.x - perpX * halfOffset, closestPoint.y - perpY * halfOffset];
+        end = [closestPoint.x + perpX * halfOffset, closestPoint.y + perpY * halfOffset];
+    } else {
+        start = [closestPoint.x, closestPoint.y];
+        end = [closestPoint.x + perpX * coordinateOffset, closestPoint.y + perpY * coordinateOffset];
     }
-  }
 
-  // 2. Compute perpendicular vector
-  const [p1, p2] = closestSegment;
-  const dx = p2[0] - p1[0];
-  const dy = p2[1] - p1[1];
-  
-  // Normalize the direction vector
-  const segmentLength = Math.sqrt(dx * dx + dy * dy);
-  const normalizedDx = dx / segmentLength;
-  const normalizedDy = dy / segmentLength;
-
-  // Perpendicular vector (rotated 90 degrees)
-  const perpX = -normalizedDy;
-  const perpY = normalizedDx;
-
-  // 3. Construct perpendicular line with specified geodesic length in meters
-  // Create a test line to measure geodesic vs planar ratio
-  const testLine = new Polyline({
-    paths: [[[closestPoint.x, closestPoint.y], [closestPoint.x + perpX * 100, closestPoint.y + perpY * 100]]],
-    spatialReference: polyline.spatialReference
-  });
-  
-  const planarLength = geometryEngine.planarLength(testLine, "meters");
-  const geodesicLength = geometryEngine.geodesicLength(testLine, "meters");
-  const geodesicToPlanarRatio = planarLength / geodesicLength;
-  
-  // Calculate the coordinate offset needed for the desired geodesic length
-  const coordinateOffset = length * geodesicToPlanarRatio;
-  let start, end;
-  if (centerAtPoint) {
-    // Center the line at the point, extending in both directions
-    const halfOffset = coordinateOffset / 2;
-    start = [closestPoint.x - perpX * halfOffset, closestPoint.y - perpY * halfOffset];
-    end = [closestPoint.x + perpX * halfOffset, closestPoint.y + perpY * halfOffset];
-  } else {
-    start = [closestPoint.x, closestPoint.y];
-    end = [closestPoint.x + perpX * coordinateOffset, closestPoint.y + perpY * coordinateOffset];
-  }
-
-  return new Polyline({
-    paths: [[start, end]],
-    spatialReference: polyline.spatialReference
-  });
+    return new Polyline({
+        paths: [[start, end]],
+        spatialReference: polyline.spatialReference
+    });
 }
 
 
@@ -1612,7 +1648,7 @@ function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = t
 
 function createTriangleGraphics(model, polygon, triangulationData) {
     const { triangles, vertices2D, vertices3D } = triangulationData;
-    
+
     // Create graphics for each triangle
     for (let i = 0; i < triangles.length; i += 3) {
         const a = triangles[i];
@@ -1638,11 +1674,11 @@ function createTriangleGraphics(model, polygon, triangulationData) {
         let outlineColor = [0, 255, 0, 1];
 
         if (area < 1.0) // Very small triangles in red
- {
+        {
             fillColor = [255, 0, 0, 0.5];
             outlineColor = [255, 0, 0, 1];
         } else if (area < 5.0) // Small triangles in yellow
- {
+        {
             fillColor = [255, 255, 0, 0.4];
             outlineColor = [255, 255, 0, 1];
         }
