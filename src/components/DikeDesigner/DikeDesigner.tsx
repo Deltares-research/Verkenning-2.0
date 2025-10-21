@@ -108,7 +108,7 @@ const DikeDesigner = (
                 console.log("Chart disposed");
             }
         }
-    }, [model.overviewVisible, model, activeTab, chartContainerRef, model.chartData, model.crossSectionChartData]);
+    }, [model.overviewVisible, model, activeTab, chartContainerRef, model.chartData, model.crossSectionChartData, model.chartDataElevation]);
 
     useEffect(() => {
         // Compare and log changes
@@ -247,6 +247,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.mergedMesh = null;
         model.graphicsLayerTemp.removeAll();
+        cleanFeatureLayer(model.designLayer2D);
 
         setLoading(true); // Show loader
         try {
@@ -310,6 +311,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "chartData");
     useWatchAndRerender(model, "allChartData");
     useWatchAndRerender(model, "crossSectionChartData");
+    useWatchAndRerender(model, "chartDataElevation");
     useWatchAndRerender(model, "crossSectionChartData.length");
     useWatchAndRerender(model, "crossSectionPanelVisible");
     useWatchAndRerender(model, "designPanelVisible");

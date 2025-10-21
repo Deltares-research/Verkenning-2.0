@@ -106,6 +106,8 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
                 }
             }
 
+            console.log(offsetDistance, "Offset distance for row:", row);
+
             // Project to RD New for accurate planar offset
             const projectedLine = projection.project(basePath, rdNewSpatialRef) as Polyline;
 
@@ -721,9 +723,9 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                     graphic.attributes.hoogte = snappedY;
                     graphic.attributes.afstand = snappedX;
                     // Optionally update geometry if needed
-                    let closestPoint = model.crossSectionChartData[0];
+                    let closestPoint = model.chartDataElevation[0];
                     let minDistance = Math.abs(closestPoint.afstand - snappedX);
-                    model.crossSectionChartData.forEach(dataPoint => {
+                    model.chartDataElevation.forEach(dataPoint => {
                         const distance = Math.abs(dataPoint.afstand - snappedX);
                         if (distance < minDistance) {
                             minDistance = distance;
@@ -764,7 +766,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         })
     );
 
-    elevationSeries.data.setAll(model.crossSectionChartData);
+    elevationSeries.data.setAll(model.chartDataElevation);
     refs.elevationSeriesRef.current = elevationSeries
 
     elevationSeries.strokes.template.setAll({
@@ -789,12 +791,12 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                 model.chartData = [...model.chartData, newRow];
             
             // Find the corresponding point on the ground profile
-            if (model.crossSectionChartData && model.crossSectionChartData.length > 0) {
+            if (model.chartDataElevation && model.chartDataElevation.length > 0) {
                 // Find the closest point in the elevation data based on afstand
-                let closestPoint = model.crossSectionChartData[0];
+                let closestPoint = model.chartDataElevation[0];
                 let minDistance = Math.abs(closestPoint.afstand - afstand);
 
-                model.crossSectionChartData.forEach(dataPoint => {
+                model.chartDataElevation.forEach(dataPoint => {
                     const distance = Math.abs(dataPoint.afstand - afstand);
                     if (distance < minDistance) {
                         minDistance = distance;
@@ -1222,8 +1224,7 @@ export async function createCrossSection(model) {
                     }),
                     spatialReference: model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference
                 });
-                console.log(pointGraphics, "Point graphics for cross section");
-                console.log(multipoint, "Multipoint for cross section");
+
 
                 const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
 
@@ -1309,7 +1310,7 @@ export async function getElevationData(model){
                 const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
                 console.log(elevationResult, "Elevation result for cross section");
 
-                model.crossSectionChartData = elevationResult.geometry.points.map((point, index) => ({
+                model.chartDataElevation = elevationResult.geometry.points.map((point, index) => ({
                     afstand: point[3], // m value
                     hoogte: point[2],
                     x: point[0],
@@ -1346,14 +1347,14 @@ export async function getElevationData(model){
                     console.log("Geodesic intersection distance along perpendicular line:", intersectionDistance);
                     
                     // Adjust all distances to be relative to the intersection point (0,0)
-                    model.crossSectionChartData = model.crossSectionChartData.map(point => ({
+                    model.chartDataElevation = model.chartDataElevation.map(point => ({
                         afstand: point.afstand - intersectionDistance, // Negative for one side, positive for the other
                         hoogte: point.hoogte,
                         x: point.x,
                         y: point.y
                     }));
-                    
-                    console.log("Adjusted cross-section chart data with intersection at 0:", model.crossSectionChartData);
+
+                    console.log("Adjusted elevation chart data with intersection at 0:", model.chartDataElevation);
                 } else {
                     console.warn("No intersection found between perpendicular line and reference line");
                 }

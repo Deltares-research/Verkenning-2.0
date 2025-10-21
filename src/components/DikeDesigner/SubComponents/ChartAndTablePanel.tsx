@@ -425,7 +425,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               onClick={() => {
                 model.isPlacingDwpProfile = !model.isPlacingDwpProfile;
               }}
-              disabled={model.graphicsLayerLine?.graphics?.length === 0 || !model.crossSectionChartData?.length}
+              disabled={model.graphicsLayerLine?.graphics?.length === 0 || !model.chartDataElevation?.length}
             >
               Teken profielpunten {model.isPlacingDwpProfile ? "(Actief)" : ""}
             </Button>
@@ -569,8 +569,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           variant="fullWidth"
           sx={{ 
             flexShrink: 0,
+            minHeight: '36px',
             '& .MuiTab-root': {
               backgroundColor: '#f0f0f0',
+              minHeight: '36px',
+              padding: '6px 12px',
               '&.Mui-selected': {
                 backgroundColor: '#1976d2',
                 color: 'white',
