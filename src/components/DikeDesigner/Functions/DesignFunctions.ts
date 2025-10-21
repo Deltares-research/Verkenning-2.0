@@ -613,6 +613,37 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
     });
 }
 
+export function exportDesignLayer2DAsGeoJSON(model): void {
+    model.designLayer2D.queryFeatures().then((result) => {
+        const geojson = {
+            type: "FeatureCollection",
+            crs: {
+                type: "name",
+                properties: { name: "EPSG:4326" },
+            },
+            features: result.features.map((feature) => ({
+                type: "Feature",
+                geometry: {
+                    type: "Polygon",
+                    coordinates: feature.geometry.rings,
+                },
+                properties: feature.attributes,
+            })),
+        };
+
+        // Create and download the GeoJSON file
+        const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "ontwerp_export.geojson";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+}
+
 export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef }): () => void {
     if (activeTab !== 0 || !model.chartData || !refs.chartContainerRef.current) {
         console.log(activeTab, model.chartData, refs.chartContainerRef.current, "Chart not initialized");

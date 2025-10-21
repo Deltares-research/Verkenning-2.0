@@ -25,7 +25,8 @@ import {
     initializeChart,
     initializeCrossSectionChart,
     setInputLineFromFeatureLayer,
-    createCrossSection
+    createCrossSection,
+    exportDesignLayer2DAsGeoJSON
 } from "./Functions/DesignFunctions";
 import ChartAndTablePanel from "./SubComponents/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/CrossSectionChartPanel";
@@ -296,8 +297,12 @@ const DikeDesigner = (
         exportGraphicsLayerAsGeoJSON(model)
     };
 
+    const handleExport2D = () => {
+        exportDesignLayer2DAsGeoJSON(model)
+    }
+
     useWatchAndRerender(model, "excavationVolume");
-    useWatchAndRerender(model, "fillVolume)");
+    useWatchAndRerender(model, "fillVolume");
     useWatchAndRerender(model, "totalVolumeDifference");
     useWatchAndRerender(model, "graphicsLayerLine.graphics.length");
     useWatchAndRerender(model, "graphicsLayerTemp.graphics.length");
@@ -390,6 +395,7 @@ const DikeDesigner = (
                         handleOpenOverview={handleOpenOverview}
                         handleCreateDesign={handleCreateDesign}
                         handleExportGraphics={handleExportGraphics}
+                        handleExport2D={handleExport2D}
                         handleClearDesign={handleClearDesign}
                         handleCreateCrossSection={handleCreateCrossSection}
                         loading={loading}

@@ -22,6 +22,7 @@ import {
     TableCell,
     LinearProgress,
     TextField,
+    Divider,
 } from "@mui/material";
 import React from "react";
 
@@ -43,6 +44,7 @@ interface DimensionsPanelProps {
     handleCreateCrossSection: () => () => void;
     handleCreateDesign: () => void;
     handleExportGraphics: () => void;
+    handleExport2D: () => void;
     handleClearDesign: () => void;
     loading: boolean;
 }
@@ -62,12 +64,26 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleCreateCrossSection,
     handleCreateDesign,
     handleExportGraphics,
+    handleExport2D,
     handleClearDesign,
     loading,
 }) => {
 
     const handleCreateLine = () => {
             model.startDrawingLine(model.graphicsLayerLine);
+    };
+
+    // Common button style for consistent icon alignment
+    const buttonWithIconStyle = {
+        justifyContent: 'flex-start',
+        paddingLeft: 2,
+        '& .MuiButton-startIcon': {
+            marginRight: 2,
+            marginLeft: 0,
+            minWidth: '24px',
+            display: 'flex',
+            justifyContent: 'center',
+        },
     };
 
     return (
@@ -191,12 +207,13 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     onClick={handleClearGraphics}
                     startIcon={<ClearIcon />}
                     fullWidth
+                    sx={buttonWithIconStyle}
                 >
                     Verwijder lijn
                 </Button>
             </Stack>
 
-            <Stack spacing={1} sx={stackStyle}>
+            {/* <Stack spacing={1} sx={stackStyle}> */}
                 {/* Hidden input for GeoJSON upload */}
                 <input
                     id="geojson-upload"
@@ -230,7 +247,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Verwijder ontwerpen
                 </Button> */}
-            </Stack>
+            {/* </Stack> */}
             <Stack spacing={1.5} sx={stackStyle}>
                 <Button
                     variant="contained"
@@ -239,9 +256,14 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     onClick={handleOpenOverview}
                     fullWidth
                     disabled={model.designPanelVisible}
+                    sx={buttonWithIconStyle}
                 >
                     Open 2D-ontwerpen
                 </Button>
+
+                 <Divider />
+                
+        
 
                 {/* Grid-size input */}
                 <TextField
@@ -267,6 +289,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     startIcon={<PlayCircleFilledWhiteIcon />}
                     onClick={handleCreateDesign}
                     fullWidth
+                    sx={buttonWithIconStyle}
                 >
                     Uitrollen in 3D
                 </Button>
@@ -278,6 +301,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     startIcon={<PlayCircleFilledWhiteIcon />}
                     onClick={handleCreateDesign}
                     fullWidth
+                    sx={buttonWithIconStyle}
                 >
                     Uitrollen over dijkvakken
                 </Button>
@@ -298,8 +322,20 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     startIcon={<CloudDownloadIcon />}
                     onClick={handleExportGraphics}
                     fullWidth
+                    sx={buttonWithIconStyle}
                 >
-                    Download ontwerpdata (GeoJSON)
+                    Download 3D ontwerpdata (GeoJSON)
+                </Button>
+                <Button
+                    disabled={!model.graphicsLayerTemp?.graphics.length}
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<CloudDownloadIcon />}
+                    onClick={handleExport2D}
+                    fullWidth
+                    sx={buttonWithIconStyle}
+                >
+                    Download 2D ruimtebeslag (GeoJSON)
                 </Button>
 
                 <Button
@@ -309,6 +345,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     startIcon={<ClearIcon />}
                     onClick={handleClearDesign}
                     fullWidth
+                    sx={buttonWithIconStyle}
                 >
                     Verwijder uitrol
                 </Button>
@@ -367,6 +404,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     startIcon={<InsightsIcon />}
                     onClick={handleCreateCrossSection()}
                     fullWidth
+                    sx={buttonWithIconStyle}
                 >
                     Controleer dwarsprofiel
                 </Button>
