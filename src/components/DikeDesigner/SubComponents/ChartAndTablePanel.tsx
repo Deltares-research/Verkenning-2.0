@@ -40,6 +40,7 @@ import {
   Menu,
   ListItemText,
   Divider,
+  Slider,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -75,11 +76,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const [showDeleteTabDialog, setShowDeleteTabDialog] = useState(false);
   const [newTabName, setNewTabName] = useState("");
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
-  
+
   // Add state for MUI Menu
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(menuAnchorEl);
-  
+
   // Add state for rivierzijde dropdown
   const [rivierzijdeAnchorEl, setRivierzijdeAnchorEl] = useState<null | HTMLElement>(null);
   const rivierzijdeOpen = Boolean(rivierzijdeAnchorEl);
@@ -93,6 +94,9 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const dwpLocationOpen = Boolean(dwpLocationAnchorEl);
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
 
+  // Add state for cross-section length slider
+  const [showLengthSlider, setShowLengthSlider] = useState(false);
+
   const handleAddRow = () => {
     const newRow = {
       oid: model.chartData.length + 1,
@@ -105,7 +109,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   const handleRemoveRow = (rowIndex: number) => {
     model.chartData = model.chartData.filter((_, index) => index !== rowIndex);
-    
+
   };
 
   const handleToggleMaximize = () => {
@@ -229,7 +233,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedRowIndex === null || draggedRowIndex === dropIndex) {
       return;
     }
@@ -237,16 +241,16 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     // Reorder the array
     const newChartData = [...model.chartData];
     const draggedItem = newChartData[draggedRowIndex];
-    
+
     // Remove the dragged item
     newChartData.splice(draggedRowIndex, 1);
-    
+
     // Insert at new position
     newChartData.splice(dropIndex, 0, draggedItem);
-    
+
     // Update the model
     model.chartData = newChartData;
-    
+
     console.log(`Moved row from ${draggedRowIndex} to ${dropIndex}`);
   };
 
@@ -261,12 +265,12 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   const handleLocationSelect = (location: string) => {
     console.log(`Selected location from MUI menu: ${location}`);
-    
+
     // Store selected location in model for later use
     model.selectedDwpLocation = location;
     model.isPlacingDwpProfile = true;
-    
-    
+
+
     // Show notification to user
     model.messages.commands.ui.displayNotification.execute({
       title: "Profielpunt plaatsen",
@@ -274,9 +278,9 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
       type: "info",
     });
 
-    
-    
-    
+
+
+
     handleMenuClose();
   };
 
@@ -291,7 +295,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const handleRivierzijdeSelect = (value: 'rechts' | 'links') => {
     model.rivierzijde = value;
     handleRivierzijdeMenuClose();
-    
+
     model.messages.commands.ui.displayNotification.execute({
       title: "Rivierzijde gewijzigd",
       message: `Rivierzijde ingesteld op: ${value}`,
@@ -310,7 +314,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   const handleReferentieSelect = (value: string) => {
     model.referentieLocatie = value;
     handleReferentieMenuClose();
-    
+
     model.messages.commands.ui.displayNotification.execute({
       title: "Referentie locatie gewijzigd",
       message: `Referentie locatie ingesteld op: ${value}`,
@@ -332,6 +336,10 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     setDwpLocation(model);
     handleDwpLocationMenuClose();
 
+  };
+
+  const handleToggleLengthSlider = () => {
+    setShowLengthSlider(!showLengthSlider);
   };
 
   return (
@@ -404,6 +412,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             p: 1,
             backgroundColor: "#fafafa",
             borderBottom: "1px solid rgba(0,0,0,0.06)",
+            position: 'relative', // Add this for the slider positioning
           }}
         >
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
@@ -425,7 +434,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               />
             </Button> */}
 
-              <Button
+            <Button
               variant="contained"
               size="medium"
               component="label"
@@ -433,10 +442,62 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               color="primary"
               onClick={() => locateDwpProfile(model)}
               disabled={model.graphicsLayerLine?.graphics?.length === 0}
-              // sx={{ textTransform: "none" }}
             >
               Genereer dwarsprofiel
             </Button>
+
+            <Button
+              variant="outlined"
+              size="medium"
+              onClick={handleToggleLengthSlider}
+              sx={{ minWidth: '160px' }}
+            >
+              DWP-lengte: {model.crossSectionLength}m
+            </Button>
+
+            {showLengthSlider && (
+              <Box sx={{ 
+                position: 'absolute', 
+                top: '100%', 
+                left: 0, 
+                right: 0, 
+                backgroundColor: 'white', 
+                padding: 2, 
+                boxShadow: 2, 
+                zIndex: 1000,
+                border: '1px solid #ccc',
+                borderRadius: 1
+              }}>
+                <Typography variant="body2" gutterBottom>
+                  Dwarsprofiel lengte: {model.crossSectionLength}m
+                </Typography>
+                <Slider
+                  value={model.crossSectionLength}
+                  onChange={(event: Event, newValue: number | number[]) => {
+                    model.crossSectionLength = newValue as number;
+                  }}
+                  min={50}
+                  max={500}
+                  step={10}
+                  marks={[
+                    { value: 50, label: '50m' },
+                    { value: 100, label: '100m' },
+                    { value: 200, label: '200m' },
+                    { value: 300, label: '300m' },
+                    { value: 500, label: '500m' }
+                  ]}
+                  valueLabelDisplay="auto"
+                  sx={{ mt: 1, mb: 1 }}
+                />
+                <Button 
+                  size="small" 
+                  onClick={handleToggleLengthSlider}
+                  variant="outlined"
+                >
+                  Sluiten
+                </Button>
+              </Box>
+            )}
 
             <Button
               variant="contained"
@@ -459,71 +520,73 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               color="primary"
               onClick={() => clearDwpProfile(model)}
               disabled={model.chartData?.length === 0}
-              // sx={{ textTransform: "none" }}
+            // sx={{ textTransform: "none" }}
             >
               Verwijder profielpunten
             </Button>
 
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={handleRivierzijdeMenuClick}
-                
-              >
-                Rivierzijde: {model.rivierzijde || 'rechts'}
-              </Button>
-              <Menu
-                anchorEl={rivierzijdeAnchorEl}
-                open={rivierzijdeOpen}
-                onClose={handleRivierzijdeMenuClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                PaperProps={{
-                  sx: {
-                    minWidth: rivierzijdeAnchorEl?.offsetWidth || 'auto',
-                  }
-                }}
-              >
-                <MenuItem onClick={() => handleRivierzijdeSelect('rechts')}>
-                  Rechts
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleDwpLocationMenuClick}
+              color="secondary"
+              disabled={!model.selectingDwpLocation}
+            >
+              Locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
+            </Button>
+            <Menu
+              anchorEl={dwpLocationAnchorEl}
+              open={dwpLocationOpen}
+              onClose={handleDwpLocationMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+              }}
+              PaperProps={{
+                sx: {
+                  minWidth: dwpLocationAnchorEl?.offsetWidth || 'auto',
+                }
+              }}
+            >
+              {model.dwpLocations.map((location) => (
+                <MenuItem key={location} onClick={() => handleDwpLocationSelect(location as string)}>
+                  {location.replace(/_/g, ' ')}
                 </MenuItem>
-                <MenuItem onClick={() => handleRivierzijdeSelect('links')}>
-                  Links
-                </MenuItem>
-              </Menu>
+              ))}
+            </Menu>
 
-              <Button
-                variant="outlined" 
-                size="large"
-                onClick={handleDwpLocationMenuClick}
-                disabled={!model.selectingDwpLocation}
-              >
-                Locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
-              </Button>
-              <Menu
-                anchorEl={dwpLocationAnchorEl}
-                open={dwpLocationOpen}
-                onClose={handleDwpLocationMenuClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                PaperProps={{
-                  sx: {
-                    minWidth: dwpLocationAnchorEl?.offsetWidth || 'auto',
-                  }
-                }}
-              >
-                {model.dwpLocations.map((location) => (
-                  <MenuItem key={location} onClick={() => handleDwpLocationSelect(location as string)}>
-                    {location.replace(/_/g, ' ')}
-                  </MenuItem>
-                ))}
-              </Menu>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={handleRivierzijdeMenuClick}
 
-  
+            >
+              Rivierzijde: {model.rivierzijde || 'rechts'}
+            </Button>
+            <Menu
+              anchorEl={rivierzijdeAnchorEl}
+              open={rivierzijdeOpen}
+              onClose={handleRivierzijdeMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+              }}
+              PaperProps={{
+                sx: {
+                  minWidth: rivierzijdeAnchorEl?.offsetWidth || 'auto',
+                }
+              }}
+            >
+              <MenuItem onClick={() => handleRivierzijdeSelect('rechts')}>
+                Rechts
+              </MenuItem>
+              <MenuItem onClick={() => handleRivierzijdeSelect('links')}>
+                Links
+              </MenuItem>
+            </Menu>
+
+
+
             {/* <Button
               disabled={!model.chartData?.length}
               variant="outlined"
@@ -546,7 +609,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             >
               Nieuw ontwerp toevoegen
             </Button> */}
-            
+
 
 
           </Box>
@@ -593,7 +656,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           indicatorColor="primary"
           textColor="primary"
           variant="fullWidth"
-          sx={{ 
+          sx={{
             flexShrink: 0,
             minHeight: '36px',
             '& .MuiTab-root': {

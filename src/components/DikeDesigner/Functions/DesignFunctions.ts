@@ -152,10 +152,10 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 
                 model.graphicsLayerTemp.add(offsetGraphic);
 
-                if (row.locatie) {
-                    return { locatie: row.locatie, geometry: offsetGraphic.geometry };
+                if (row.afstand) {
+                    return { afstand: row.afstand, geometry: offsetGraphic.geometry };
                 } else {
-                    console.log("Row name is missing in the data.", row);
+                    console.log("Row afstand is missing in the data.", row);
                     return null;
                 }
             }
@@ -171,12 +171,13 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 
     // Build offsetGeometries object from results, filtering out null values
     offsetResults.forEach(result => {
-        if (result?.locatie && result?.geometry) {
-            offsetGeometries[result.locatie] = result.geometry;
+        if (result?.afstand && result?.geometry) {
+            offsetGeometries[result.afstand] = result.geometry;
         }
     });
 
-    console.log("Offset geometries created:", Object.keys(offsetGeometries));
+    // console.log("Offset geometries created:", Object.keys(offsetGeometries));
+    console.log("Offset geometries created:", offsetGeometries);
 
     // Only proceed if we have valid geometries
     if (Object.keys(offsetGeometries).length === 0) {
@@ -184,80 +185,119 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         return;
     }
 
-    // Check and create polygons only if the required values exist
-    if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
-        createPolygonBetween(model, "buitenkruin", "binnenkruin", offsetGeometries);
-    }
+    // Sort chart data by distance (afstand) to ensure correct order
+    const sortedChartData = chartData
+        .filter(row => row.afstand !== undefined && row.afstand !== null && row.afstand !== "")
+        .sort((a, b) => parseFloat(a.afstand) - parseFloat(b.afstand));
 
-    const containsBinnenBerm = chartData.some((row) =>
-        row.locatie?.toLowerCase().includes("binnenberm")
-    );
+    console.log("Sorted chart data by distance:", sortedChartData);
 
-    const containsBuitenBerm = chartData.some((row) =>
-        row.locatie?.toLowerCase().includes("buitenberm")
-    );
+    // Create polygons between consecutive distance points
+    for (let i = 0; i < sortedChartData.length - 1; i++) {
+        const currentRow = sortedChartData[i];
+        const nextRow = sortedChartData[i + 1];
+        
+        const currentGeometry = offsetGeometries[currentRow.afstand];
+        const nextGeometry = offsetGeometries[nextRow.afstand];
+        
+        if (currentGeometry && nextGeometry) {
+            let polygonName;
 
-    if (containsBinnenBerm && containsBuitenBerm) {
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
-            createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
-        }
-        if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
-            createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
-        }
-        if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
-            createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
-        }
-        if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
-            createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
-        }
-        if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
-            createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
-        }
-        if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
-            createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
-        }
-    }
+            if (currentRow.locatie && nextRow.locatie) {
+                polygonName = `${currentRow.locatie}_${nextRow.locatie}`;
+            } else {
+                polygonName = `${currentRow.afstand}m_${nextRow.afstand}m`;
+            }
+            console.log(`Creating polygon between ${currentRow.afstand}m and ${nextRow.afstand}m`);
 
-    if (containsBinnenBerm && !containsBuitenBerm) {
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
-            createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
-        }
-        if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
-            createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
-        }
-        if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
-            createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
-        }
-        if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
-            createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
-        }
-
-    }
-    if (!containsBinnenBerm && containsBuitenBerm) {
-        if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
-            createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
-        }
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
-            createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
-        }
-        if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
-            createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
-        }
-        if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
-            createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
+            createPolygonBetweenDistances({
+                model,
+                distanceA: currentRow.afstand,
+                distanceB: nextRow.afstand,
+                offsetGeometries,
+                polygonName
+            });
+        } else {
+            console.warn(`Missing geometry for distance range ${currentRow.afstand}m to ${nextRow.afstand}m`);
         }
     }
 
+    
+
+    // // Check and create polygons only if the required values exist
+    // if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
+    //     createPolygonBetween(model, "buitenkruin", "binnenkruin", offsetGeometries);
+    // }
+
+    // const containsBinnenBerm = chartData.some((row) =>
+    //     row.locatie?.toLowerCase().includes("binnenberm")
+    // );
+
+    // const containsBuitenBerm = chartData.some((row) =>
+    //     row.locatie?.toLowerCase().includes("buitenberm")
+    // );
+
+    // if (containsBinnenBerm && containsBuitenBerm) {
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
+    //         createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
+    //         createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
+    //     }
+    // }
+
+    // if (containsBinnenBerm && !containsBuitenBerm) {
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
+    //         createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
+    //     }
+
+    // }
+    // if (!containsBinnenBerm && containsBuitenBerm) {
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
+    //         createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
+    //     }
+    // }
 
 
-    if (!containsBinnenBerm && !containsBuitenBerm) {
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
-            createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
-        }
-        if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
-            createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
-        }
-    }
+
+    // if (!containsBinnenBerm && !containsBuitenBerm) {
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
+    //     }
+    // }
 
     // console.log(model.uniqueParts, "Unique parts");
 
@@ -452,7 +492,7 @@ function createMeshFromPolygon(model, polygon, textureUrl = null) {
 //     model.meshes.push(mesh);
 // }
 
-function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
+export function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
     const geomA = offsetGeometries[nameA];
     const geomB = offsetGeometries[nameB];
     if (!geomA || !geomB) {
@@ -523,40 +563,87 @@ function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
             spatialReference: geomA.spatialReference
         });
 
-        // const partName = `${nameA}-${nameB}`;
+        // Each quad will have simple, predictable triangulation
+        createMeshFromPolygon(model, segmentPolygon, null);
+    }
+}
 
-        // const graphic3d = new Graphic({
-        //     geometry: segmentPolygon,
-        //     attributes: { name: partName }
-        // });
+export function createPolygonBetweenDistances(args: { model; distanceA; distanceB; offsetGeometries; polygonName }) {
+    const { model, distanceA, distanceB, offsetGeometries, polygonName } = args;
+    const geomA = offsetGeometries[distanceA];
+    const geomB = offsetGeometries[distanceB];
+    if (!geomA || !geomB) {
+        console.warn(`Could not find lines for distance ${distanceA} and/or ${distanceB}`);
+        return;
+    }
 
-        // model.graphicsLayerTemp.add(graphic3d);
+    // part for graphiclayers
+    const pathAtotal = geomA.paths[0];
+    const pathBtotal = geomB.paths[0].slice().reverse();
+    let ring = pathAtotal.concat(pathBtotal);
+    ring.push(pathAtotal[0]);
 
-        // // Create 2D version
-        // const ring2d = quad.map(point => [point[0], point[1]]);
-        // const polygon2d = new Polygon({
-        //     rings: [ring2d],
-        //     spatialReference: geomA.spatialReference
-        // });
+    let ring2d = ring.map(point => [point[0], point[1]]);
 
-        // const graphics2D = new Graphic({
-        //     geometry: polygon2d,
-        //     attributes: { name: partName }
-        // });
+    const polygon3d = new Polygon({
+        rings: [ring],
+        spatialReference: geomA.spatialReference
+    });
 
-        // model.designLayer2D.applyEdits({
-        //     addFeatures: [graphics2D]
-        // }).catch((error) => {
-        //     console.error("Error adding 2D polygon to design layer:", error);
-        // });
+    const polygon2d = new Polygon({
+        rings: [ring2d],
+        spatialReference: geomA.spatialReference
+    });
 
-        // model.uniqueParts.push(partName);
+    const graphics2D = new Graphic({
+        geometry: polygon2d,
+        attributes: { name: polygonName }
+    });
+
+    const graphic3d = new Graphic({
+        geometry: polygon3d,
+        attributes: { name: polygonName }
+    });
+
+    model.graphicsLayerTemp.add(graphic3d);
+
+    model.designLayer2D.applyEdits({
+        addFeatures: [graphics2D]
+    }).catch((error) => {
+        console.error("Error adding 2D polygon to design layer:", error);
+    });
+
+    // part for meshes, taking care of proper triangulation
+    const pathAforMesh = geomA.paths[0];
+    const pathBforMesh = geomB.paths[0];
+
+    // Make sure both paths have the same number of vertices
+    const minLength = Math.min(pathAforMesh.length, pathBforMesh.length);
+    const trimmedPathA = pathAforMesh.slice(0, minLength);
+    const trimmedPathB = pathBforMesh.slice(0, minLength);
+
+    // Create segments by connecting corresponding vertex pairs
+    for (let i = 0; i < minLength - 1; i++) {
+        // Create a quad (4-sided polygon) from two consecutive vertex pairs
+        const quad = [
+            trimmedPathA[i],       // Vertex i on line A
+            trimmedPathA[i + 1],   // Vertex i+1 on line A  
+            trimmedPathB[i + 1],   // Vertex i+1 on line B
+            trimmedPathB[i],       // Vertex i on line B
+            trimmedPathA[i]        // Close the polygon
+        ];
+
+        const segmentPolygon = new Polygon({
+            rings: [quad],
+            spatialReference: geomA.spatialReference
+        });
 
         // Each quad will have simple, predictable triangulation
         createMeshFromPolygon(model, segmentPolygon, null);
     }
 }
 
+// ...existing code...
 export function exportGraphicsLayerAsGeoJSON(model): void {
     const geojson = {
         type: "FeatureCollection",
@@ -606,7 +693,7 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export.geojson";
+        a.download = "ontwerp_export_3d.geojson";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -637,7 +724,7 @@ export function exportDesignLayer2DAsGeoJSON(model): void {
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export.geojson";
+        a.download = "ontwerp_export_2d.geojson";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -835,8 +922,9 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
     chart.plotContainer.events.on("click", (ev) => {
 
-        model.selectedPointIndex = null; // reset selected point index on chart click
-        model.selectedDwpLocation = null; // reset selected location on chart click
+        model.selectedPointIndex = null; 
+        model.selectedDwpLocation = null; 
+        model.selectingDwpLocation = false;
 
         if (model.isPlacingDwpProfile) {
 
@@ -1609,7 +1697,7 @@ export async function locateDwpProfile(model) {
     await model.startDrawingPoint(model.graphicsLayerPoint);
 
     // create line perpendicular to input line at that point (model.graphicsLayerLine)
-    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, 100); // 100 meters length
+    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, model.crossSectionLength); 
     model.graphicsLayerCrossSection.add(new Graphic({
         geometry: perpendicularLine,
         symbol: model.lineLayerSymbolCrosssection,
@@ -1705,7 +1793,6 @@ export function setDwpLocation(model){
     model.chartData[model.selectedPointIndex].locatie = model.selectedDwpLocation;
     model.chartData = [...model.chartData]; // Force reactivity
     model.allChartData[model.activeSheet] = [...model.chartData];
-    model.selectingDwpLocation = false;
 }
 
 

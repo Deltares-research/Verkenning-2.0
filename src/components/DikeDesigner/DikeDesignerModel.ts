@@ -114,6 +114,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectedDwpLocation: string | null = null
     selectedPointIndex: number | null = null
     selectingDwpLocation: boolean = false
+    crossSectionLength: number = 100
 
     lineLayerSymbol = {
         type: "simple-line",

@@ -326,6 +326,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "selectedDwpLocation");
     useWatchAndRerender(model, "selectedPointIndex");
     useWatchAndRerender(model, "selectingDwpLocation");
+    useWatchAndRerender(model, "crossSectionLength");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");
