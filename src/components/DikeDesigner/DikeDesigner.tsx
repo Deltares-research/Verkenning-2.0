@@ -323,6 +323,9 @@ const DikeDesigner = (
     useWatchAndRerender(model, "mapElement");
     useWatchAndRerender(model, "isPlacingDwpProfile");
     useWatchAndRerender(model, "rivierzijde");
+    useWatchAndRerender(model, "selectedDwpLocation");
+    useWatchAndRerender(model, "selectedPointIndex");
+    useWatchAndRerender(model, "selectingDwpLocation");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");

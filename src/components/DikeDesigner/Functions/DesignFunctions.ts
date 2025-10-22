@@ -720,6 +720,31 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         // Snap the coordinates to the nearest 0.5 meter
         const snapToGrid = (value: number, gridSize: number) => Math.round(value / gridSize) * gridSize;
 
+        circle.events.on("click", (ev) => {
+            model.selectingDwpLocation = true;
+            
+            // const clickedAfstand = dataItem.dataContext["afstand"];
+            // const clickedHoogte = dataItem.dataContext["hoogte"];
+            const clickedOid = dataItem.dataContext["oid"];
+            
+            const pointIndex = model.chartData.findIndex(
+                (d) => d.oid === clickedOid 
+            );
+
+            console.log("Point index found:", pointIndex, "for oid:", clickedOid);
+            
+    
+            // get location of point and set in dropdown
+            const pointLocation = model.chartData[pointIndex].locatie;
+            console.log("Point location:", pointLocation);
+            model.selectedDwpLocation = pointLocation;
+            model.selectedPointIndex = pointIndex;
+            
+            // console.log("Selected point:", model.chartData[pointIndex]);
+            // console.log("Selected DWP location set to:", model.selectedDwpLocation);
+          
+        });
+
         circle.events.on("dragstop", () => {
             // Calculate new positions
             const newY = yAxis.positionToValue(
@@ -810,6 +835,9 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
     chart.plotContainer.events.on("click", (ev) => {
 
+        model.selectedPointIndex = null; // reset selected point index on chart click
+        model.selectedDwpLocation = null; // reset selected location on chart click
+
         if (model.isPlacingDwpProfile) {
 
             // Convert pixel coordinates to axis values
@@ -819,7 +847,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
             const newRow = {
                 oid: model.chartData.length + 1,
-                locatie: "",
+                locatie: model.selectedDwpLocation || "",
                 afstand,
                 hoogte,
             };
@@ -1671,6 +1699,13 @@ function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = t
         paths: [[start, end]],
         spatialReference: polyline.spatialReference
     });
+}
+
+export function setDwpLocation(model){
+    model.chartData[model.selectedPointIndex].locatie = model.selectedDwpLocation;
+    model.chartData = [...model.chartData]; // Force reactivity
+    model.allChartData[model.activeSheet] = [...model.chartData];
+    model.selectingDwpLocation = false;
 }
 
 

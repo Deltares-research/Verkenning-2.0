@@ -111,6 +111,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectedDijkvakLayerFields: string[] = []
     selectedDijkvakField: string | null = null
 
+    selectedDwpLocation: string | null = null
+    selectedPointIndex: number | null = null
+    selectingDwpLocation: boolean = false
+
     lineLayerSymbol = {
         type: "simple-line",
         color: [64, 64, 64],

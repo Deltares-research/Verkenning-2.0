@@ -43,7 +43,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile } from "../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, setDwpLocation } from "../Functions/DesignFunctions";
 
 interface ChartAndTablePanelProps {
   setdesignPanelVisible: (visible: boolean) => void;
@@ -87,6 +87,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   // Add state for reference location dropdown
   const [referentieAnchorEl, setReferentieAnchorEl] = useState<null | HTMLElement>(null);
   const referentieOpen = Boolean(referentieAnchorEl);
+
+  // Add state for dwp location selection menu
+  const [dwpLocationAnchorEl, setDwpLocationAnchorEl] = useState<null | HTMLElement>(null);
+  const dwpLocationOpen = Boolean(dwpLocationAnchorEl);
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
 
   const handleAddRow = () => {
     const newRow = {
@@ -313,6 +318,22 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     });
   };
 
+  const handleDwpLocationMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setDwpLocationAnchorEl(event.currentTarget);
+  };
+
+  const handleDwpLocationMenuClose = () => {
+    setDwpLocationAnchorEl(null);
+  };
+
+  const handleDwpLocationSelect = (location: string) => {
+    // Store the selected location for the next point placement
+    model.selectedDwpLocation = location;
+    setDwpLocation(model);
+    handleDwpLocationMenuClose();
+
+  };
+
   return (
     <>
       <Paper
@@ -473,31 +494,36 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                 </MenuItem>
               </Menu>
 
-                {/* <Button
-                variant="outlined"
+              <Button
+                variant="outlined" 
                 size="large"
-                onClick={handleReferentieMenuClick}
-                sx={{ minWidth: 100, textTransform: 'none' }}
+                onClick={handleDwpLocationMenuClick}
+                disabled={!model.selectingDwpLocation}
               >
-               Referentie locatie: {model.referentieLocatie || 'Selecteer...'}
+                Locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
               </Button>
               <Menu
-                anchorEl={referentieAnchorEl}
-                open={referentieOpen}
-                onClose={handleReferentieMenuClose}
+                anchorEl={dwpLocationAnchorEl}
+                open={dwpLocationOpen}
+                onClose={handleDwpLocationMenuClose}
                 anchorOrigin={{
                   vertical: 'bottom',
                   horizontal: 'left',
                 }}
+                PaperProps={{
+                  sx: {
+                    minWidth: dwpLocationAnchorEl?.offsetWidth || 'auto',
+                  }
+                }}
               >
                 {model.dwpLocations.map((location) => (
-                  <MenuItem key={location} onClick={() => handleReferentieSelect(location as string)}>
-                    {location}
+                  <MenuItem key={location} onClick={() => handleDwpLocationSelect(location as string)}>
+                    {location.replace(/_/g, ' ')}
                   </MenuItem>
                 ))}
-              </Menu> */}
+              </Menu>
 
-
+  
             {/* <Button
               disabled={!model.chartData?.length}
               variant="outlined"
@@ -791,6 +817,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
     </>
   );
 };
