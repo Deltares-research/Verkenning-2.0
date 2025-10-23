@@ -75,14 +75,12 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
     // Common button style for consistent icon alignment
     const buttonWithIconStyle = {
-        justifyContent: 'flex-start',
-        paddingLeft: 2,
+        justifyContent: 'center',
         '& .MuiButton-startIcon': {
-            marginRight: 2,
+            position: 'absolute',
+            left: 16,
+            marginRight: 0,
             marginLeft: 0,
-            minWidth: '24px',
-            display: 'flex',
-            justifyContent: 'center',
         },
     };
 

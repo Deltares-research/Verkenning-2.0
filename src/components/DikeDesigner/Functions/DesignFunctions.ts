@@ -1508,12 +1508,7 @@ export function cleanFeatureLayer(layer) {
 
 
 export async function createCrossSection(model) {
-    model.messages.commands.ui.displayNotification.execute({
 
-        title: "Cross Section",
-        message: "Klik op de kaart om een dwarsprofiel te tekenen. Deze tool is in ontwikkeling.",
-        type: "success",
-    })
     model.startDrawingLine(model.graphicsLayerCrossSection).then(() => { // set interval dynamically?
         getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
             console.log(offsetLocations, "Offset locations for cross section");
@@ -1580,12 +1575,6 @@ export async function createCrossSection(model) {
 
                 }
 
-                model.messages.commands.ui.displayNotification.execute({
-
-                    title: "Cross Section",
-                    message: "Dwarsprofiel punten opgehaald en hoogtes berekend, deze worden straks getoond in de grafiek. Deze tool is in ontwikkeling.",
-                    type: "success",
-                });
             });
 
             // model.crossSectionLocations = offsetLocations;
@@ -1810,14 +1799,6 @@ export async function locateDwpProfile(model) {
     // clean up previous graphics
     model.graphicsLayerPoint.removeAll();
     model.graphicsLayerCrossSection.removeAll();
-    console.log("Locate DWP Profile function called");
-    // check if input line is present
-
-    // prompt user to click point on input line
-    model.messages.commands.ui.displayNotification.execute({
-        title: "Klik",
-        message: "Klik op de lijn om het dwarsprofiel te lokaliseren. Deze tool is in ontwikkeling.",
-    });
 
     // draw point on or near line
     await model.startDrawingPoint(model.graphicsLayerPoint);
@@ -1832,8 +1813,6 @@ export async function locateDwpProfile(model) {
     // get elevation data on that line
     getElevationData(model);
 
-
-    // show elevation data in cross section chart
 }
 
 export function clearDwpProfile(model) {
