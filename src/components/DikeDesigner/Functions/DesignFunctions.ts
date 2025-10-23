@@ -152,7 +152,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 
                 model.graphicsLayerTemp.add(offsetGraphic);
 
-                if (row.afstand) {
+                if (row.afstand !== undefined && row.afstand !== null) {
                     return { afstand: row.afstand, geometry: offsetGraphic.geometry };
                 } else {
                     console.log("Row afstand is missing in the data.", row);
@@ -171,7 +171,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 
     // Build offsetGeometries object from results, filtering out null values
     offsetResults.forEach(result => {
-        if (result?.afstand && result?.geometry) {
+        if (result?.afstand !== undefined && result?.afstand !== null && result?.geometry) {
             offsetGeometries[result.afstand] = result.geometry;
         }
     });
@@ -196,10 +196,10 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     for (let i = 0; i < sortedChartData.length - 1; i++) {
         const currentRow = sortedChartData[i];
         const nextRow = sortedChartData[i + 1];
-        
+
         const currentGeometry = offsetGeometries[currentRow.afstand];
         const nextGeometry = offsetGeometries[nextRow.afstand];
-        
+
         if (currentGeometry && nextGeometry) {
             let polygonName;
 
@@ -222,7 +222,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         }
     }
 
-    
+
 
     // // Check and create polygons only if the required values exist
     // if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
@@ -731,7 +731,7 @@ export function exportDesignLayer2DAsGeoJSON(model): void {
     });
 }
 
-export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef }): () => void {
+export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef; userSeriesRef }): () => void {
     if (activeTab !== 0 || !model.chartData || !refs.chartContainerRef.current) {
         console.log(activeTab, model.chartData, refs.chartContainerRef.current, "Chart not initialized");
         return
@@ -792,6 +792,9 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         strokeWidth: 2,
     });
 
+    // Store bullet references for highlighting
+    const bulletCircles = [];
+
     // Add draggable bullets with snapping logic
     series.bullets.push((root, series, dataItem) => {
         const circle = am5.Circle.new(root, {
@@ -804,32 +807,48 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             cursorOverStyle: "pointer",
         });
 
+        // Store reference to this bullet circle
+        bulletCircles.push(circle);
+
         // Snap the coordinates to the nearest 0.5 meter
         const snapToGrid = (value: number, gridSize: number) => Math.round(value / gridSize) * gridSize;
 
         circle.events.on("click", (ev) => {
             model.selectingDwpLocation = true;
-            
-            // const clickedAfstand = dataItem.dataContext["afstand"];
-            // const clickedHoogte = dataItem.dataContext["hoogte"];
+
             const clickedOid = dataItem.dataContext["oid"];
-            
+
             const pointIndex = model.chartData.findIndex(
-                (d) => d.oid === clickedOid 
+                (d) => d.oid === clickedOid
             );
 
             console.log("Point index found:", pointIndex, "for oid:", clickedOid);
-            
-    
+
+            // Reset all bullets to default appearance
+            bulletCircles.forEach((bulletCircle) => {
+                if (bulletCircle !== circle) {
+                    bulletCircle.set("fill", root.interfaceColors.get("background"));
+                    bulletCircle.set("stroke", series.get("fill"));
+                    bulletCircle.set("strokeWidth", 2);
+                    bulletCircle.set("radius", 5);
+                }
+            });
+
+            // Highlight the selected bullet
+            circle.set("fill", am5.color(0xff6b35)); // Orange fill
+            circle.set("stroke", am5.color(0xffffff)); // White border
+            circle.set("strokeWidth", 3);
+            circle.set("radius", 8);
+
             // get location of point and set in dropdown
             const pointLocation = model.chartData[pointIndex].locatie;
             console.log("Point location:", pointLocation);
             model.selectedDwpLocation = pointLocation;
             model.selectedPointIndex = pointIndex;
-            
+
             // console.log("Selected point:", model.chartData[pointIndex]);
             // console.log("Selected DWP location set to:", model.selectedDwpLocation);
-          
+
         });
 
         circle.events.on("dragstop", () => {
@@ -920,18 +939,60 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         strokeWidth: 3,
     });
 
+    const userSeries = chart.series.push(
+        am5xy.LineSeries.new(root, {
+            name: "User Drawn Line",
+            xAxis: xAxis as any,
+            yAxis: yAxis as any,
+            valueYField: "hoogte",
+            valueXField: "afstand",
+            stroke: am5.color(0x800080), // purple
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{valueY}",
+            }),
+        })
+    );
+
+    // Store the userSeries reference
+    refs.userSeriesRef.current = userSeries;
+
+    // Initialize userLinePoints if it doesn't exist
+    if (!model.userLinePoints) {
+        model.userLinePoints = [];
+    }
+
+    // Set initial data for userSeries
+    userSeries.data.setAll(model.userLinePoints);
+
+    // Add bullets (markers) at each clicked point
+    userSeries.bullets.push((root, series, dataItem) => (
+        am5.Bullet.new(root, {
+            sprite: am5.Circle.new(root, {
+                radius: 6,
+                fill: am5.color(0x800080), // purple fill
+                stroke: am5.color(0xffffff),
+                strokeWidth: 2,
+            })
+        })
+    ));
+
+    userSeries.strokes.template.setAll({
+        stroke: am5.color(0x800080), // purple
+        strokeWidth: 2,
+    });
+
     chart.plotContainer.events.on("click", (ev) => {
 
-        model.selectedPointIndex = null; 
-        model.selectedDwpLocation = null; 
+        model.selectedPointIndex = null;
+        model.selectedDwpLocation = null;
         model.selectingDwpLocation = false;
 
-        if (model.isPlacingDwpProfile) {
+        // Convert pixel coordinates to axis values
+        const point = chart.plotContainer.toLocal(ev.point);
+        const afstand = Math.round(xAxis.positionToValue(xAxis.coordinateToPosition(point.x)) * 10) / 10; // round to one decimal
+        const hoogte = Math.round(yAxis.positionToValue(yAxis.coordinateToPosition(point.y)) * 10) / 10; // round to one decimal
 
-            // Convert pixel coordinates to axis values
-            const point = chart.plotContainer.toLocal(ev.point);
-            const afstand = Math.round(xAxis.positionToValue(xAxis.coordinateToPosition(point.x)) * 10) / 10; // round to one decimal
-            const hoogte = Math.round(yAxis.positionToValue(yAxis.coordinateToPosition(point.y)) * 10) / 10; // round to one decimal
+        if (model.isPlacingDwpProfile) {
 
             const newRow = {
                 oid: model.chartData.length + 1,
@@ -946,7 +1007,6 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                 // Find the closest point in the elevation data based on afstand
                 let closestPoint = model.chartDataElevation[0];
                 let minDistance = Math.abs(closestPoint.afstand - afstand);
-
                 model.chartDataElevation.forEach(dataPoint => {
                     const distance = Math.abs(dataPoint.afstand - afstand);
                     if (distance < minDistance) {
@@ -984,11 +1044,68 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                 }
 
                 console.log("Added graphic to map at coordinates:", cursorPoint.x, cursorPoint.y);
+                console.log(model.userLinePoints, "Current user line points after adding DWP point");
+                // Don't modify user series when placing profile points
             } else {
                 console.warn("No cross section chart data available for point mapping");
             }
+        } else {
+            // Add the new point to the array
+            model.userLinePoints.push({ afstand, hoogte });
+            updateSlopeLabels({ model, root, chart, xAxis, yAxis });
+            userSeries.data.setAll(model.userLinePoints);
         }
 
+    });
+
+    chart.events.on("boundschanged", () => {
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
+    });
+
+    xAxis.on("start", () => {
+        console.log("X Axis end event triggered");
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
+    });
+
+    yAxis.on("start", () => {
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
+    });
+
+    userSeries.strokes.template.setAll({
+        stroke: am5.color(0x00cc00),
+        strokeWidth: 2,
+    });
+
+    const clearButton = chart.children.push(
+        am5.Button.new(root, {
+            label: am5.Label.new(root, { text: "Verwijder taludlijn", fontSize: 14 }),
+            x: 50,
+            y: 35,
+            centerX: am5.p0,
+            centerY: am5.p0,
+            // paddingLeft: 25,
+            // paddingRight: 25,
+            // paddingTop: 5,
+            // paddingBottom: 5,
+            // background: am5.RoundedRectangle.new(root, {
+            //     fill: am5.color(0xffcccc),
+            //     fillOpacity: 1,
+            //     cornerRadiusTL: 8,
+            //     cornerRadiusTR: 8,
+            //     cornerRadiusBL: 8,
+            //     cornerRadiusBR: 8,
+            // }),
+        })
+    );
+
+    clearButton.events.on("click", () => {
+        model.userLinePoints = [];
+        userSeries.data.setAll([]);
+        // Remove slope labels
+        if (model.slopeLabels) {
+            model.slopeLabels.forEach(label => label.dispose());
+            model.slopeLabels = [];
+        }
     });
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
@@ -1132,6 +1249,17 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
         })
     );
 
+    // Store the userSeries reference
+    refs.userSeriesRef.current = userSeries;
+
+    // Initialize userLinePoints if it doesn't exist
+    if (!model.userLinePoints) {
+        model.userLinePoints = [];
+    }
+
+    // Set initial data for userSeries
+    userSeries.data.setAll(model.userLinePoints);
+
     // Add bullets (markers) at each clicked point
     userSeries.bullets.push((root, series, dataItem) => (
         am5.Bullet.new(root, {
@@ -1149,59 +1277,6 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
         strokeWidth: 2,
     });
 
-    function updateSlopeLabels() {
-        // Clear old labels
-        model.slopeLabels.forEach(label => label.dispose());
-        model.slopeLabels = [];
-
-        const points = model.userLinePoints;
-        if (!points || points.length < 2) return;
-
-        for (let i = 1; i < points.length; i++) {
-            const p1 = points[i - 1];
-            const p2 = points[i];
-
-            const deltaX = p2.afstand - p1.afstand;
-            const deltaY = p2.hoogte - p1.hoogte;
-
-            let slopeRatio;
-            if (deltaY === 0) {
-                slopeRatio = "∞";
-            } else {
-                slopeRatio = (Math.abs(deltaX / deltaY)).toFixed(2);
-            }
-
-            const labelText = `1:${slopeRatio}`;
-
-            // Position label halfway between points
-            const midX = (p1.afstand + p2.afstand) / 2;
-            const midY = (p1.hoogte + p2.hoogte) / 2;
-
-            console.log(midX, midY, "Midpoint coordinates for slope label");
-
-            const label = chart.plotContainer.children.push(
-                am5.Label.new(root, {
-                    text: labelText,
-                    x: xAxis.get("renderer").positionToCoordinate(xAxis.valueToPosition(midX)),
-                    y: yAxis.get("renderer").positionToCoordinate(yAxis.valueToPosition(midY)),
-                    centerX: am5.p50,
-                    centerY: am5.p50,
-                    background: am5.Rectangle.new(root, {
-                        fill: am5.color(0xffffff),
-                        fillOpacity: 0.7
-                    }),
-                    paddingLeft: 2,
-                    paddingRight: 2,
-                    paddingTop: 1,
-                    paddingBottom: 1,
-                    fontSize: 14
-                })
-            );
-            console.log(label, "Slope label created: ", labelText)
-
-            model.slopeLabels.push(label);
-        }
-    }
     chart.plotContainer.events.on("click", (ev) => {
         // Convert pixel coordinates to axis values
         const point = chart.plotContainer.toLocal(ev.point);
@@ -1214,20 +1289,20 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
         // Update the series data
         userSeries.data.setAll(model.userLinePoints);
-        updateSlopeLabels();
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
     });
 
     chart.events.on("boundschanged", () => {
-        updateSlopeLabels();
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
     });
 
     xAxis.on("start", () => {
         console.log("X Axis end event triggered");
-        updateSlopeLabels();
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
     });
 
     yAxis.on("start", () => {
-        updateSlopeLabels();
+        updateSlopeLabels({ model, root, chart, xAxis, yAxis });
     });
 
     userSeries.strokes.template.setAll({
@@ -1266,7 +1341,6 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
             model.slopeLabels = [];
         }
     });
-
 
 
 
@@ -1309,7 +1383,59 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
     };
 }
 
+function updateSlopeLabels(args: { model: any; root: any; chart: any; xAxis: any; yAxis: any }) {
+    // Clear old labels
+    args.model.slopeLabels.forEach(label => label.dispose());
+    args.model.slopeLabels = [];
 
+    const points = args.model.userLinePoints;
+    if (!points || points.length < 2) return;
+
+    for (let i = 1; i < points.length; i++) {
+        const p1 = points[i - 1];
+        const p2 = points[i];
+
+        const deltaX = p2.afstand - p1.afstand;
+        const deltaY = p2.hoogte - p1.hoogte;
+
+        let slopeRatio;
+        if (deltaY === 0) {
+            slopeRatio = "∞";
+        } else {
+            slopeRatio = (Math.abs(deltaX / deltaY)).toFixed(2);
+        }
+
+        const labelText = `1:${slopeRatio}`;
+
+        // Position label halfway between points
+        const midX = (p1.afstand + p2.afstand) / 2;
+        const midY = (p1.hoogte + p2.hoogte) / 2;
+
+        console.log(midX, midY, "Midpoint coordinates for slope label");
+
+        const label = args.chart.plotContainer.children.push(
+            am5.Label.new(args.root, {
+                text: labelText,
+                x: args.xAxis.get("renderer").positionToCoordinate(args.xAxis.valueToPosition(midX)),
+                y: args.yAxis.get("renderer").positionToCoordinate(args.yAxis.valueToPosition(midY)),
+                centerX: am5.p50,
+                centerY: am5.p50,
+                background: am5.Rectangle.new(args.root, {
+                    fill: am5.color(0xffffff),
+                    fillOpacity: 0.7
+                }),
+                paddingLeft: 2,
+                paddingRight: 2,
+                paddingTop: 1,
+                paddingBottom: 1,
+                fontSize: 14
+            })
+        );
+        console.log(label, "Slope label created: ", labelText)
+
+        args.model.slopeLabels.push(label);
+    }
+}
 
 export async function getLineFeatureLayers(map): Promise<FeatureLayer[]> {
     if (!map) {
@@ -1697,7 +1823,7 @@ export async function locateDwpProfile(model) {
     await model.startDrawingPoint(model.graphicsLayerPoint);
 
     // create line perpendicular to input line at that point (model.graphicsLayerLine)
-    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, model.crossSectionLength); 
+    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, model.crossSectionLength);
     model.graphicsLayerCrossSection.add(new Graphic({
         geometry: perpendicularLine,
         symbol: model.lineLayerSymbolCrosssection,
@@ -1789,7 +1915,7 @@ function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = t
     });
 }
 
-export function setDwpLocation(model){
+export function setDwpLocation(model) {
     model.chartData[model.selectedPointIndex].locatie = model.selectedDwpLocation;
     model.chartData = [...model.chartData]; // Force reactivity
     model.allChartData[model.activeSheet] = [...model.chartData];

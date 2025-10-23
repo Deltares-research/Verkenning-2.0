@@ -102,7 +102,7 @@ const DikeDesigner = (
     }, ); 
 
     useEffect(() => {
-        initializeChart(model, activeTab, { chartContainerRef, seriesRef, elevationSeriesRef });
+        initializeChart(model, activeTab, { chartContainerRef, seriesRef, elevationSeriesRef, userSeriesRef });
         return () => {
             if (model.chartRoot) {
                 model.chartRoot.dispose();

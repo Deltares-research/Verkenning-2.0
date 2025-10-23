@@ -456,14 +456,14 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             </Button>
 
             {showLengthSlider && (
-              <Box sx={{ 
-                position: 'absolute', 
-                top: '100%', 
-                left: 0, 
-                right: 0, 
-                backgroundColor: 'white', 
-                padding: 2, 
-                boxShadow: 2, 
+              <Box sx={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                padding: 2,
+                boxShadow: 2,
                 zIndex: 1000,
                 border: '1px solid #ccc',
                 borderRadius: 1
@@ -489,8 +489,8 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                   valueLabelDisplay="auto"
                   sx={{ mt: 1, mb: 1 }}
                 />
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
                   onClick={handleToggleLengthSlider}
                   variant="outlined"
                 >
@@ -796,6 +796,10 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                                 onBlur={(e) =>
                                   handleCellChange(rowIndex as number, key, e.target.value)
                                 }
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(",", "."); // optional: auto-correct comma to dot
+                                  e.target.value = value;
+                                }}
                                 variant="outlined"
                                 size="small"
                                 onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking text field
