@@ -1252,10 +1252,9 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
     // Store the userSeries reference
     refs.userSeriesRef.current = userSeries;
 
-    // Initialize userLinePoints if it doesn't exist
-    if (!model.userLinePoints) {
-        model.userLinePoints = [];
-    }
+    // Set initial data for userSeries
+    model.userLinePoints = [];
+    
 
     // Set initial data for userSeries
     userSeries.data.setAll(model.userLinePoints);
