@@ -1,1 +1,2 @@
 - make column for talud values
+- create 2d ruimtebeslag above ahn
