@@ -45,6 +45,7 @@ interface DimensionsPanelProps {
     handleCreateDesign: () => void;
     handleExportGraphics: () => void;
     handleExport2D: () => void;
+    handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
     loading: boolean;
 }
@@ -65,6 +66,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleCreateDesign,
     handleExportGraphics,
     handleExport2D,
+    handleExportRuimtebeslag,
     handleClearDesign,
     loading,
 }) => {
@@ -330,6 +332,17 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     color="secondary"
                     startIcon={<CloudDownloadIcon />}
                     onClick={handleExport2D}
+                    fullWidth
+                    sx={buttonWithIconStyle}
+                >
+                    Download 2D ontwerpdata (GeoJSON)
+                </Button>
+                <Button
+                    disabled={!model.graphicsLayerTemp?.graphics.length}
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<CloudDownloadIcon />}
+                    onClick={handleExportRuimtebeslag}
                     fullWidth
                     sx={buttonWithIconStyle}
                 >

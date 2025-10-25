@@ -62,6 +62,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayerProfile: GraphicsLayer;
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
+    graphicsLayerRuimtebeslag: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
     designLayer2D: FeatureLayer | null = null;
@@ -540,6 +541,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "hide",
             });
 
+            this.graphicsLayerRuimtebeslag = new GraphicsLayer({
+                title: "Ruimtebeslag 2D",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "show",
+            });
+
             this.cursorLocationLayer = new GraphicsLayer({
                 title: "Cursor Location Layer",
                 elevationInfo: {
@@ -612,6 +622,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.graphicsLayerMesh);
             this.map.add(this.designLayer2D);
             this.map.add(this.cursorLocationLayer);
+            this.map.add(this.graphicsLayerRuimtebeslag);
             this.map.add(this.graphicsLayerProfile)
 
 

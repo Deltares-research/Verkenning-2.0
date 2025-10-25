@@ -12,6 +12,9 @@ import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
 import { Features } from "@vertigis/web/messaging";
+
+import * as alphaShapeOperator from "@arcgis/core/geometry/operators/alphaShapeOperator";
+import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
@@ -395,6 +398,37 @@ export async function calculateVolume(model): Promise<void> {
         totalVolumeDifference += volumeDifference;
     });
 
+
+    try {
+        // filter groundResult points for elevation above zGround and remove z-values
+        const filteredGroundPoints = groundResult.geometry.points.filter(([x, y, zGround], index) => {
+            const z3D = pointCoordsForVolume[index][2]; // Z value from the mesh geometry
+            return z3D > zGround;
+        }).map(([x, y]) => [x, y]);
+
+        const multipointAboveGround = new Multipoint({
+            points: filteredGroundPoints,
+            spatialReference: SpatialReference.WebMercator
+        });
+
+
+        const alphaShapeAboveGround = alphaShapeOperator.execute(multipointAboveGround, 0.5);
+        const singlePartAlphaShape = multiPartToSinglePartOperator.executeMany([alphaShapeAboveGround.alphaShape]);
+
+        if (singlePartAlphaShape) {
+
+            // iterate over singlePartAlphaShape parts and create graphics
+            singlePartAlphaShape.forEach(part => {
+                const aboveGroundGraphic = new Graphic({
+                    geometry: part,
+                });
+                model.graphicsLayerRuimtebeslag.add(aboveGroundGraphic);
+            });
+        }
+    } catch (error) {
+        console.error("Error creating alpha shape for above ground volume:", error);
+    }
+
     model.excavationVolume = excavationVolume.toFixed(2);
     model.fillVolume = fillVolume.toFixed(2);
     model.totalVolumeDifference = totalVolumeDifference.toFixed(2);
@@ -694,6 +728,62 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
         const a = document.createElement("a");
         a.href = url;
         a.download = "ontwerp_export_3d.geojson";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+}
+
+export function exportRuimteslagLayerAsGeoJSON(model): void {
+    const geojson = {
+        type: "FeatureCollection",
+        crs: {
+            type: "name",
+            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
+        },
+        features: [],
+    };
+
+    // Ensure the projection module is loaded
+    projection.load().then(() => {
+        model.graphicsLayerRuimtebeslag.graphics.forEach((graphic) => {
+            const geometry = graphic.geometry;
+
+            if (geometry) {
+                // Project the geometry to WGS84 (EPSG:4326)
+                const projectedGeometry = projection.project(
+                    geometry,
+                    new SpatialReference({ wkid: 4326 })
+                );
+
+                if (projectedGeometry) {
+                    let feature: any = {
+                        type: "Feature",
+                        geometry: null,
+                        properties: graphic.attributes || {}, // Include graphic attributes as properties
+                    };
+
+                    // Handle different geometry types
+                    if (!Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
+                        feature.geometry = {
+                            type: "Polygon",
+                            coordinates: (projectedGeometry as __esri.Polygon).rings,
+                        };
+                        geojson.features.push(feature);
+                    }
+
+                    // geojson.features.push(feature);
+                }
+            }
+        });
+
+        // Create and download the GeoJSON file
+        const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "ontwerp_export_ruimtebeslag_2d.geojson";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1254,7 +1344,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
     // Set initial data for userSeries
     model.userLinePoints = [];
-    
+
 
     // Set initial data for userSeries
     userSeries.data.setAll(model.userLinePoints);

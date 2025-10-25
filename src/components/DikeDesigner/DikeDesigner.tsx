@@ -26,7 +26,8 @@ import {
     initializeCrossSectionChart,
     setInputLineFromFeatureLayer,
     createCrossSection,
-    exportDesignLayer2DAsGeoJSON
+    exportDesignLayer2DAsGeoJSON,
+    exportRuimteslagLayerAsGeoJSON
 } from "./Functions/DesignFunctions";
 import ChartAndTablePanel from "./SubComponents/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/CrossSectionChartPanel";
@@ -248,6 +249,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.mergedMesh = null;
         model.graphicsLayerTemp.removeAll();
+        model.graphicsLayerRuimtebeslag.removeAll();
         cleanFeatureLayer(model.designLayer2D);
 
         setLoading(true); // Show loader
@@ -282,6 +284,7 @@ const DikeDesigner = (
         model.offsetGeometries = []
         model.graphicsLayerTemp.removeAll();
         model.graphicsLayerMesh.removeAll();
+        model.graphicsLayerRuimtebeslag.removeAll();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;
@@ -299,6 +302,10 @@ const DikeDesigner = (
 
     const handleExport2D = () => {
         exportDesignLayer2DAsGeoJSON(model)
+    }
+
+    const handleExportRuimtebeslag = () => {
+        exportRuimteslagLayerAsGeoJSON(model)
     }
 
     useWatchAndRerender(model, "excavationVolume");
@@ -400,6 +407,7 @@ const DikeDesigner = (
                         handleCreateDesign={handleCreateDesign}
                         handleExportGraphics={handleExportGraphics}
                         handleExport2D={handleExport2D}
+                        handleExportRuimtebeslag={handleExportRuimtebeslag}
                         handleClearDesign={handleClearDesign}
                         handleCreateCrossSection={handleCreateCrossSection}
                         loading={loading}
