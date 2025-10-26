@@ -42,6 +42,7 @@ import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 
 import { initializeChart, getLineFeatureLayers } from "./Functions/DesignFunctions";
 import { array } from "@amcharts/amcharts5";
+import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
 }
@@ -104,7 +105,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     isPlacingDwpProfile: boolean = false
     rivierzijde: 'rechts' | 'links' = 'rechts';
-    referentieLocatie: string ='binnenkruin';
+    referentieLocatie: string = 'binnenkruin';
 
     lineFeatureLayers: FeatureLayer[] = []
     selectedLineLayerId: string | null
@@ -121,7 +122,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         type: "simple-line",
         color: [64, 64, 64],
         width: 3,
-         marker: { 
+        marker: {
             style: "arrow",
             color: "grey",
             placement: "begin"
@@ -132,7 +133,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         type: "simple-line",
         color: [36, 161, 14],
         width: 2,
-         marker: { 
+        marker: {
             style: "arrow",
             color: "grey",
             placement: "begin"
@@ -150,7 +151,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         ]
     });
 
-    dwpPointSymbol =  new PointSymbol3D({
+    dwpPointSymbol = new PointSymbol3D({
         symbolLayers: [
             {
                 type: "icon",
@@ -178,7 +179,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
 
     overviewVisible: boolean = false
-    
+
 
     // New method to handle GeoJSON upload
     handleGeoJSONUpload(file: File): void {
@@ -329,7 +330,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                     this.drawnPoint = drawnPoint;
                     this.sketchViewModel.set("state", "update");
                     this.sketchViewModel.update(event.graphic);
-                    
+
 
                     handler.remove(); // Clean up the event listener
                     resolve(drawnPoint);
@@ -347,73 +348,119 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     }
 
     initializeEmptyChartData(): void {
-    if (!this.allChartData || Object.keys(this.allChartData).length === 0) {
-        // Create a default empty sheet
-        const defaultSheetName = "vak 1";
-        const defaultData = [
-            // {
-            //     locatie: "",
-            //     afstand: "",
-            //     hoogte: "",
-            // }
-        ];
+        if (!this.allChartData || Object.keys(this.allChartData).length === 0) {
+            // Create a default empty sheet
+            const defaultSheetName = "vak 1";
+            const defaultData = [
+                // {
+                //     locatie: "",
+                //     afstand: "",
+                //     hoogte: "",
+                // }
+            ];
 
-        this.allChartData = {
-            [defaultSheetName]: defaultData
-        };
-        
-        this.chartData = [...defaultData];
-        this.activeSheet = defaultSheetName;
-        
-        console.log("Initialized empty chart data with default sheet");
+            this.allChartData = {
+                [defaultSheetName]: defaultData
+            };
+
+            this.chartData = [...defaultData];
+            this.activeSheet = defaultSheetName;
+
+            console.log("Initialized empty chart data with default sheet");
+        }
     }
-}
 
     // here we need to make chartData contain all the sheets and forget about the excelsheets later
+    // handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    //     const fileInput = event.target; // Reference to the file input
+    //     const file = fileInput.files?.[0];
+    //     if (file) {
+    //         const reader = new FileReader();
+    //         reader.onload = (e) => {
+    //             const data = new Uint8Array(e.target?.result as ArrayBuffer);
+    //             const workbook = XLSX.read(data, { type: "array" });
+
+    //             // Extract all sheets
+    //             const sheets: Record<string, any[]> = {};
+    //             const allChartData: Record<string, any[]> = {};
+    //             workbook.SheetNames.forEach((sheetName) => {
+    //                 const sheet = workbook.Sheets[sheetName];
+    //                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    //                 sheets[sheetName] = jsonData;
+
+    //                 // Prepare chart data for each sheet
+    //                 if (jsonData.length > 1) {
+    //                     allChartData[sheetName] = jsonData
+    //                         .slice(1) // Skip the header row
+    //                         .map((row: any[]) => ({
+    //                             locatie: row[0], // Location name
+    //                             afstand: row[1], // X-axis value
+    //                             hoogte: row[2], // Y-axis value
+    //                         }))
+    //                         .sort((a, b) => a.afstand - b.afstand); // Sort by afstand
+    //                 }
+    //             });
+    //             this.allChartData = allChartData; // Store all chart data
+    //             console.log("All chart data:", this.allChartData);
+
+
+    //             // Set the first sheet as the default table data
+    //             const firstSheetName = workbook.SheetNames[0];
+    //             this.chartData = allChartData[firstSheetName];
+    //             this.activeSheet = firstSheetName;
+    //         };
+    //         reader.readAsArrayBuffer(file);
+    //     }
+
+    //     // Reset the file input value to allow reuploading the same file
+    //     fileInput.value = "";
+    //     this.overviewVisible = true;
+    // };
+
     handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const fileInput = event.target; // Reference to the file input
+        const fileInput = event.target;
         const file = fileInput.files?.[0];
+
         if (file) {
             const reader = new FileReader();
+
             reader.onload = (e) => {
+                console.log("Reading Excel file...");
                 const data = new Uint8Array(e.target?.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { type: "array" });
 
-                // Extract all sheets
-                const sheets: Record<string, any[]> = {};
-                const allChartData: Record<string, any[]> = {};
-                workbook.SheetNames.forEach((sheetName) => {
-                    const sheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    sheets[sheetName] = jsonData;
-
-                    // Prepare chart data for each sheet
-                    if (jsonData.length > 1) {
-                        allChartData[sheetName] = jsonData
-                            .slice(1) // Skip the header row
-                            .map((row: any[]) => ({
-                                locatie: row[0], // Location name
-                                afstand: row[1], // X-axis value
-                                hoogte: row[2], // Y-axis value
-                            }))
-                            .sort((a, b) => a.afstand - b.afstand); // Sort by afstand
-                    }
-                });
-                this.allChartData = allChartData; // Store all chart data
-                console.log("All chart data:", this.allChartData);
-
-
-                // Set the first sheet as the default table data
+                // extract just the first sheet
                 const firstSheetName = workbook.SheetNames[0];
-                this.chartData = allChartData[firstSheetName];
-                this.activeSheet = firstSheetName;
+                const sheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                // sort data and set model.chartData
+                if (jsonData.length > 1) {
+                    this.chartData = jsonData
+                        .slice(1) // Skip the header row
+                        .map((row: any[]) => ({
+                            id: row[0], // Unique ID
+                            locatie: row[1], // Location name
+                            afstand: row[2], // X-axis value
+                            hoogte: row[3], // Y-axis value
+                        }))
+                        .sort((a, b) => a.afstand - b.afstand); // Sort by afstand
+                }
+
+                console.log("Uploaded chart data for first sheet:", this.chartData);
             };
+
             reader.readAsArrayBuffer(file);
         }
+    };
 
-        // Reset the file input value to allow reuploading the same file
-        fileInput.value = "";
-        this.overviewVisible = true;
+
+
+    handleExcelDownload = () => {
+        const ws = XLSX.utils.json_to_sheet(this.chartData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Designs");
+        XLSX.writeFile(wb, "designs.xlsx");
     };
 
     // New method to set the table data for a selected sheet

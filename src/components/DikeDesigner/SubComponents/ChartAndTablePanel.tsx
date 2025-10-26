@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable import/order */
 import AddIcon from "@mui/icons-material/Add";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 // import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
@@ -111,6 +113,14 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     model.chartData = model.chartData.filter((_, index) => index !== rowIndex);
 
   };
+
+  const handleDownloadDesigns = () => {
+    model.handleExcelDownload();
+  };
+
+  const handleUploadDesigns = (event: React.ChangeEvent<HTMLInputElement>) => {
+    model.handleExcelUpload();
+  }
 
   const handleToggleMaximize = () => {
     setIsMaximized(!isMaximized);
@@ -703,13 +713,39 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             >
               <Button
                 variant="contained"
-                color="primary"
+                color="secondary"
                 startIcon={<AddIcon />}
                 onClick={handleAddRow}
               >
                 Voeg nieuwe rij toe
               </Button>
+              
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CloudDownloadIcon />}
+                  onClick={handleDownloadDesigns}
+                >
+                  Download ontwerpen (Excel)
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CloudUploadIcon />}
+                  component="label"
+                >
+                  Upload ontwerpen (Excel)
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    hidden
+                    onChange={handleExcelUpload}
+                  />
+                </Button>
+              </Box>
             </Box>
+            
 
             <TableContainer
               key={model.activeSheet}

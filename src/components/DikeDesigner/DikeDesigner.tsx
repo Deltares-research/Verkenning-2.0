@@ -241,6 +241,7 @@ const DikeDesigner = (
     const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         setdesignPanelVisible(true); // Close the overview when uploading a new Excel file
         model.handleExcelUpload(event);
+        console.log("Excel uploaded and design panel opened");
 
     }
 

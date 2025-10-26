@@ -1,2 +1,2 @@
-- make column for talud values
-- create 2d ruimtebeslag above ahn
+- make column for talud values with keuze button
+- download excel for continue in next session
