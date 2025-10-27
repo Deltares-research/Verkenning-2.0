@@ -418,11 +418,13 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     // };
 
     handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>, model) => {
-        model.chartData = []; // Clear existing chart data
         const fileInput = event.target;
         const file = fileInput.files?.[0];
 
         if (file) {
+            // Clear existing chart data
+            this.chartData = [];
+            
             const reader = new FileReader();
 
             reader.onload = (e) => {
@@ -439,13 +441,13 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 if (jsonData.length > 1) {
                     this.chartData = jsonData
                         .slice(1) // Skip the header row
-                        .map((row: any[]) => ({
-                            id: row[0], // Unique ID
-                            locatie: row[1], // Location name
-                            afstand: row[2], // X-axis value
-                            hoogte: row[3], // Y-axis value
+                        .map((row: any[], index) => ({
+                            oid: index + 1, // Add oid for proper row identification
+                            locatie: row[1] || "", // Location name
+                            afstand: row[2] || "", // X-axis value
+                            hoogte: row[3] || "", // Y-axis value
                         }))
-                        .sort((a, b) => a.afstand - b.afstand); // Sort by afstand
+                        .sort((a, b) => parseFloat(a.afstand) - parseFloat(b.afstand)); // Sort by afstand
                 }
 
                 console.log("Uploaded chart data for first sheet:", this.chartData);
@@ -453,6 +455,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
             reader.readAsArrayBuffer(file);
         }
+
+        // Reset the file input value to allow reuploading the same file
+        fileInput.value = "";
     };
 
 
