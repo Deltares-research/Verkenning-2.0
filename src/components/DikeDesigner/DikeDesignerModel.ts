@@ -417,7 +417,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     //     this.overviewVisible = true;
     // };
 
-    handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>, model) => {
+        model.chartData = []; // Clear existing chart data
         const fileInput = event.target;
         const file = fileInput.files?.[0];
 

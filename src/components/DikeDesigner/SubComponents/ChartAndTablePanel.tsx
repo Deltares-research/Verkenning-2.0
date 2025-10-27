@@ -49,7 +49,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile, setDwpLocation } from "../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, setDwpLocation, clearDwpLocation } from "../Functions/DesignFunctions";
 
 interface ChartAndTablePanelProps {
   setdesignPanelVisible: (visible: boolean) => void;
@@ -121,8 +121,14 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   };
 
   const handleRemoveRow = (rowIndex: number) => {
-    model.chartData = model.chartData.filter((_, index) => index !== rowIndex);
+    const rowToRemove = model.chartData[rowIndex];
+    if (!rowToRemove) return;
+    
+    // Remove by filtering out the row with the matching oid
+    model.chartData = model.chartData.filter((row) => row.oid !== rowToRemove.oid);
 
+    // remove dwp location from map 
+    clearDwpLocation(model, rowToRemove);
   };
 
   const handleDownloadDesigns = () => {
@@ -909,7 +915,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                               </Select>
                             ) : typeof cell === "string" || typeof cell === "number" ? (
                               <TextField
-                                value={isNaN(cell as number) ? "" : cell}
+                                defaultValue={isNaN(cell as number) ? "" : cell}
                                 onBlur={(e) =>
                                   handleCellChange(rowIndex as number, key, e.target.value)
                                 }
@@ -929,19 +935,19 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
                         {/* Talud column - only show from second row onwards */}
                         {rowIndex === 0 ? (
-                          <TableCell align="center" sx={{ backgroundColor: '#f8f9fa' }}>
+                          <TableCell align="center">
                             -
                           </TableCell>
                         ) : (
                           <TableCell 
                             align="center" 
                             sx={{ 
-                              backgroundColor: '#f8f9fa',
-                              border: '1px solid #dee2e6',
-                              fontSize: '12px'
+                              fontSize: '12px',
+                              width: '80px',
+                              minWidth: '80px',
                             }}
                           >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
                               <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>1:</Typography>
                               <TextField
                                 value={taludInputValues[rowIndex] !== undefined ? taludInputValues[rowIndex] : talud}
@@ -952,13 +958,6 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                                 }}
                                 variant="outlined"
                                 size="small"
-                                sx={{ 
-                                  '& .MuiInputBase-root': { 
-                                    fontSize: '12px',
-                                    height: '28px',
-                                    minWidth: '50px'
-                                  } 
-                                }}
                                 onMouseDown={(e) => e.stopPropagation()}
                               />
                             </Box>
@@ -974,11 +973,15 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                                   checked={rowToggleStates[rowIndex] === 'afstand'}
                                   onChange={() => handleToggleSwitch(rowIndex as number)}
                                   size="small"
-                                  color="primary"
                                 />
                               }
                               label={
-                                <Typography variant="caption" sx={{ fontSize: '10px' }}>
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    fontSize: '10px',
+                                  }}
+                                >
                                   {rowToggleStates[rowIndex] === 'afstand' ? 'afstand' : 'hoogte'}
                                 </Typography>
                               }

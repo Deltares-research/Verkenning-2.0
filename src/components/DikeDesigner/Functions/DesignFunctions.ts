@@ -912,8 +912,6 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
                 (d) => d.oid === clickedOid
             );
 
-            console.log("Point index found:", pointIndex, "for oid:", clickedOid);
-
             // Reset all bullets to default appearance
             bulletCircles.forEach((bulletCircle) => {
                 if (bulletCircle !== circle) {
@@ -962,8 +960,6 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             const index = model.chartData.findIndex(
                 (d) => d.afstand === dataItem.dataContext["afstand"]
             );
-
-            console.log(index)
 
             if (index !== -1) {
                 model.chartData[index].hoogte = snappedY;
@@ -1987,6 +1983,49 @@ export function setDwpLocation(model) {
     model.chartData[model.selectedPointIndex].locatie = model.selectedDwpLocation;
     model.chartData = [...model.chartData]; // Force reactivity
     model.allChartData[model.activeSheet] = [...model.chartData];
+}
+
+export function setMapDwpLocation(model, item) {
+
+    // replace point in graphics layer
+    const graphic = model.graphicsLayerProfile.graphics.items.find(g => g.attributes.oid === item.oid);
+
+    // fix x values properly
+    if (graphic) {
+        graphic.attributes.hoogte = item.hoogte;
+        graphic.attributes.afstand = item.afstand;
+        // Optionally update geometry if needed
+        let closestPoint = model.chartDataElevation[0];
+        let minDistance = Math.abs(closestPoint.afstand - item.afstand);
+        model.chartDataElevation.forEach(dataPoint => {
+            const distance = Math.abs(dataPoint.afstand - item.afstand);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPoint = dataPoint;
+            }
+        });
+
+        // Create the map point using the closest elevation data point
+        const cursorPoint = new Point({
+            x: closestPoint.x,
+            y: closestPoint.y,
+            spatialReference: new SpatialReference({
+                wkid: 3857
+            })
+        });
+        graphic.geometry = cursorPoint;
+    }
+
+    
+
+}
+
+export function clearDwpLocation(model, item) {
+    // remove point in graphics layer
+    const graphicIndex = model.graphicsLayerProfile.graphics.items.findIndex(g => g.attributes.oid === item.oid);
+    if (graphicIndex !== -1) {
+        model.graphicsLayerProfile.graphics.items.splice(graphicIndex, 1);
+    }
 }
 
 

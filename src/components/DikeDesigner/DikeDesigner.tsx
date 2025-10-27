@@ -27,7 +27,8 @@ import {
     setInputLineFromFeatureLayer,
     createCrossSection,
     exportDesignLayer2DAsGeoJSON,
-    exportRuimteslagLayerAsGeoJSON
+    exportRuimteslagLayerAsGeoJSON,
+    setMapDwpLocation
 } from "./Functions/DesignFunctions";
 import ChartAndTablePanel from "./SubComponents/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/CrossSectionChartPanel";
@@ -222,10 +223,10 @@ const DikeDesigner = (
         model.chartData = updatedData;
         model.allChartData[model.activeSheet] = updatedData; // Update the active sheet data
 
-        // update table 
-
         // 🔁 Update chart with new data
         seriesRef.current?.data.setAll(updatedData);
+
+        setMapDwpLocation(model, updatedData[rowIndex]);
 
     };
 
@@ -242,7 +243,7 @@ const DikeDesigner = (
     };
     const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         setdesignPanelVisible(true); // Close the overview when uploading a new Excel file
-        model.handleExcelUpload(event);
+        model.handleExcelUpload(event, model);
         console.log("Excel uploaded and design panel opened");
 
     }
