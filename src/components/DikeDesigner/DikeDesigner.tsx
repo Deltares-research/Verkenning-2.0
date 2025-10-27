@@ -222,6 +222,8 @@ const DikeDesigner = (
         model.chartData = updatedData;
         model.allChartData[model.activeSheet] = updatedData; // Update the active sheet data
 
+        // update table 
+
         // 🔁 Update chart with new data
         seriesRef.current?.data.setAll(updatedData);
 

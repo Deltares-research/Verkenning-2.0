@@ -1,2 +1,1 @@
-- make column for talud values with keuze button
-- download excel for continue in next session
+- make sure dwp points get updated on talud change

@@ -15,6 +15,7 @@ import AdsClickIcon from '@mui/icons-material/AdsClick';
 import ControlPointIcon from '@mui/icons-material/ControlPoint';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import TableRowsIcon from "@mui/icons-material/TableRows";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 import ToggleButton from '@vertigis/web/ui/ToggleButton';
 import ToggleButtonGroup from '@vertigis/web/ui/ToggleButtonGroup';
@@ -43,6 +44,8 @@ import {
   ListItemText,
   Divider,
   Slider,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -73,6 +76,8 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   handleClearExcel,
   handleExcelUpload,
 }) => {
+
+  
   const [isMaximized, setIsMaximized] = useState(false);
   const [showNewTabDialog, setShowNewTabDialog] = useState(false);
   const [showDeleteTabDialog, setShowDeleteTabDialog] = useState(false);
@@ -98,6 +103,12 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   // Add state for cross-section length slider
   const [showLengthSlider, setShowLengthSlider] = useState(false);
+
+  // Add state for toggle switches for each row
+  const [rowToggleStates, setRowToggleStates] = useState<Record<number, 'hoogte' | 'afstand'>>({});
+  
+  // Add state for talud input values
+  const [taludInputValues, setTaludInputValues] = useState<Record<number, string>>({});
 
   const handleAddRow = () => {
     const newRow = {
@@ -350,6 +361,54 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   const handleToggleLengthSlider = () => {
     setShowLengthSlider(!showLengthSlider);
+  };
+
+  // Function to handle toggle switch
+  const handleToggleSwitch = (rowIndex: number) => {
+    setRowToggleStates(prev => ({
+      ...prev,
+      [rowIndex]: prev[rowIndex] === 'hoogte' ? 'afstand' : 'hoogte'
+    }));
+  };
+
+  // Function to handle talud change
+  const handleTaludChange = (rowIndex: number, newTalud: string) => {
+    const taludValue = parseFloat(newTalud);
+    if (isNaN(taludValue) || taludValue <= 0) return;
+
+    const currentRow = model.chartData[rowIndex];
+    const prevRow = model.chartData[rowIndex - 1];
+    
+    if (!prevRow) return;
+
+    const currentAfstand = parseFloat(currentRow.afstand as string) || 0;
+    const currentHoogte = parseFloat(currentRow.hoogte as string) || 0;
+    const prevAfstand = parseFloat(prevRow.afstand as string) || 0;
+    const prevHoogte = parseFloat(prevRow.hoogte as string) || 0;
+
+    const currentHeightDiff = Math.abs(currentHoogte - prevHoogte);
+    const currentDistanceDiff = Math.abs(currentAfstand - prevAfstand);
+
+    // Determine if we should change afstand or hoogte based on switch state
+    const shouldChangeAfstand = rowToggleStates[rowIndex] === 'afstand';
+
+    if (shouldChangeAfstand) {
+      // Calculate new afstand based on new talud and current height difference
+      const newDistanceDiff = taludValue * currentHeightDiff;
+      const newAfstand = currentAfstand > prevAfstand 
+        ? prevAfstand + newDistanceDiff 
+        : prevAfstand - newDistanceDiff;
+      
+      handleCellChange(rowIndex, 'afstand', newAfstand.toFixed(1));
+    } else {
+      // Calculate new hoogte based on new talud and current distance difference
+      const newHeightDiff = currentDistanceDiff / taludValue;
+      const newHoogte = currentHoogte > prevHoogte 
+        ? prevHoogte + newHeightDiff 
+        : prevHoogte - newHeightDiff;
+      
+      handleCellChange(rowIndex, 'hoogte', newHoogte.toFixed(1));
+    }
   };
 
   return (
@@ -768,6 +827,11 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                       ))}
                     {model.chartData?.length > 0 && (
                       <TableCell align="center" sx={{ fontSize: "11px" }}>
+                        Talud
+                      </TableCell>
+                    )}
+                    {model.chartData?.length > 0 && (
+                      <TableCell align="center" sx={{ fontSize: "11px" }}>
                         Acties
                       </TableCell>
                     )}
@@ -776,6 +840,23 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                 <TableBody>
                   {model.chartData?.map((row, rowIndex) => {
                     const rowKey = `row-${rowIndex}`;
+                    const isEvenRow = rowIndex % 2 === 0;
+                    const nextRow = model.chartData[rowIndex + 1];
+                    
+                    // Calculate talud for current row relative to previous row
+                    const prevRow = model.chartData[rowIndex - 1];
+                    
+                    const currentAfstand = parseFloat(row.afstand as string) || 0;
+                    const currentHoogte = parseFloat(row.hoogte as string) || 0;
+                    const prevAfstand = prevRow ? (parseFloat(prevRow.afstand as string) || 0) : 0;
+                    const prevHoogte = prevRow ? (parseFloat(prevRow.hoogte as string) || 0) : 0;
+
+                    // talud is absolute distance difference divided by height difference
+                    const absoluteDistanceDiff = Math.abs(currentAfstand - prevAfstand);
+                    const heightDiff = Math.abs(currentHoogte - prevHoogte);
+                    const talud = prevRow && heightDiff !== 0 ? (absoluteDistanceDiff / heightDiff).toFixed(1) : '';
+
+                    
                     return (
                       <TableRow
                         key={rowKey}
@@ -828,7 +909,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                               </Select>
                             ) : typeof cell === "string" || typeof cell === "number" ? (
                               <TextField
-                                defaultValue={isNaN(cell as number) ? "" : cell}
+                                value={isNaN(cell as number) ? "" : cell}
                                 onBlur={(e) =>
                                   handleCellChange(rowIndex as number, key, e.target.value)
                                 }
@@ -846,16 +927,74 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                           </TableCell>
                         ))}
 
+                        {/* Talud column - only show from second row onwards */}
+                        {rowIndex === 0 ? (
+                          <TableCell align="center" sx={{ backgroundColor: '#f8f9fa' }}>
+                            -
+                          </TableCell>
+                        ) : (
+                          <TableCell 
+                            align="center" 
+                            sx={{ 
+                              backgroundColor: '#f8f9fa',
+                              border: '1px solid #dee2e6',
+                              fontSize: '12px'
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>1:</Typography>
+                              <TextField
+                                value={taludInputValues[rowIndex] !== undefined ? taludInputValues[rowIndex] : talud}
+                                onBlur={(e) => handleTaludChange(rowIndex as number, e.target.value)}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(",", ".");
+                                  setTaludInputValues(prev => ({ ...prev, [rowIndex]: value }));
+                                }}
+                                variant="outlined"
+                                size="small"
+                                sx={{ 
+                                  '& .MuiInputBase-root': { 
+                                    fontSize: '12px',
+                                    height: '28px',
+                                    minWidth: '50px'
+                                  } 
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                              />
+                            </Box>
+                          </TableCell>
+                        )}
+
                         {/* Actions column */}
                         <TableCell align="center">
-                          <IconButton
-                            color="error"
-                            size="small"
-                            onClick={() => handleRemoveRow(rowIndex as number)}
-                            onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking delete
-                          >
-                            <DeleteIcon />
-                          </IconButton>
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={rowToggleStates[rowIndex] === 'afstand'}
+                                  onChange={() => handleToggleSwitch(rowIndex as number)}
+                                  size="small"
+                                  color="primary"
+                                />
+                              }
+                              label={
+                                <Typography variant="caption" sx={{ fontSize: '10px' }}>
+                                  {rowToggleStates[rowIndex] === 'afstand' ? 'afstand' : 'hoogte'}
+                                </Typography>
+                              }
+                              labelPlacement="bottom"
+                              sx={{ margin: 0, minWidth: '60px' }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                            />
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => handleRemoveRow(rowIndex as number)}
+                              onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking delete
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     );
