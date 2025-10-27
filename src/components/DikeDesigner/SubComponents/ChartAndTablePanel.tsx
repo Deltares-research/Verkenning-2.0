@@ -791,6 +791,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                   color="primary"
                   startIcon={<CloudDownloadIcon />}
                   onClick={handleDownloadDesigns}
+                  disabled={model.chartData?.length === 0}
                 >
                   Download ontwerpen (Excel)
                 </Button>
@@ -799,6 +800,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                   color="primary"
                   startIcon={<CloudUploadIcon />}
                   component="label"
+                  disabled={model.graphicsLayerLine?.graphics?.length === 0 || !model.chartDataElevation?.length}
                 >
                   Upload ontwerpen (Excel)
                   <input
@@ -806,6 +808,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                     accept=".xlsx, .xls"
                     hidden
                     onChange={handleExcelUpload}
+            
                   />
                 </Button>
               </Box>

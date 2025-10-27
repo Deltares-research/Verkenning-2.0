@@ -2016,21 +2016,15 @@ export function setMapDwpLocation(model, item) {
         graphic.geometry = cursorPoint;
     }
 
-    
-
 }
 
 export function clearDwpLocation(model, item) {
     // remove point in graphics layer
-    const graphicIndex = model.graphicsLayerProfile.graphics.items.findIndex(g => g.attributes.oid === item.oid);
-    if (graphicIndex !== -1) {
-        model.graphicsLayerProfile.graphics.items.splice(graphicIndex, 1);
+    const graphic = model.graphicsLayerProfile.graphics.items.find(g => g.attributes.oid === item.oid);
+    if (graphic) {
+        model.graphicsLayerProfile.remove(graphic);
     }
 }
-
-
-
-
 
 function createTriangleGraphics(model, polygon, triangulationData) {
     const { triangles, vertices2D, vertices3D } = triangulationData;

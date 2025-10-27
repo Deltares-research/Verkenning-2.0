@@ -424,7 +424,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         if (file) {
             // Clear existing chart data
             this.chartData = [];
-            
+
             const reader = new FileReader();
 
             reader.onload = (e) => {
@@ -451,6 +451,53 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 }
 
                 console.log("Uploaded chart data for first sheet:", this.chartData);
+
+                // remove all graphics from the line layer
+                this.graphicsLayerProfile.removeAll();
+
+                // set all points from upload on the map
+                this.chartData.forEach((point) => {
+
+                    const afstand = parseFloat(point.afstand);
+                    const hoogte = parseFloat(point.hoogte);
+
+                    let closestPoint = model.chartDataElevation[0];
+                    let minDistance = Math.abs(closestPoint.afstand - afstand);
+                    model.chartDataElevation.forEach(dataPoint => {
+                        const distance = Math.abs(dataPoint.afstand - afstand);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestPoint = dataPoint;
+                        }
+                    });
+
+                    const cursorPoint = new Point({
+                        x: closestPoint.x,
+                        y: closestPoint.y,
+                        spatialReference: new SpatialReference({
+                            wkid: 3857
+                        })
+                    });
+
+                    // Create new graphic and add to graphics layer
+                    const graphic = new Graphic({
+                        geometry: cursorPoint,
+                        symbol: model.dwpPointSymbol,
+                        attributes: {
+                            afstand,
+                            hoogte,
+                            locatie: "",
+                            oid: point.oid
+                        }
+                    });
+
+                    // Add to the profile graphics layer
+                    if (model.graphicsLayerProfile) {
+                        model.graphicsLayerProfile.add(graphic);
+                        console.log("Added profile point graphic:", graphic);
+                    }
+
+                });
             };
 
             reader.readAsArrayBuffer(file);
@@ -458,6 +505,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
         // Reset the file input value to allow reuploading the same file
         fileInput.value = "";
+
     };
 
 

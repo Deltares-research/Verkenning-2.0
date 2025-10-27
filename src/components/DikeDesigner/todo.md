@@ -1,2 +1,0 @@
-- make sure dwp points get updated on remove row
-- make sure dwp points get updated on new excel upload
