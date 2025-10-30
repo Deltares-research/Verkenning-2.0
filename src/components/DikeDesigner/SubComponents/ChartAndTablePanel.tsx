@@ -371,10 +371,17 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 
   // Function to handle toggle switch
   const handleToggleSwitch = (rowIndex: number) => {
-    setRowToggleStates(prev => ({
-      ...prev,
-      [rowIndex]: prev[rowIndex] === 'hoogte' ? 'afstand' : 'hoogte'
-    }));
+    console.log(`Toggling switch for row ${rowIndex}`);
+    setRowToggleStates(prev => {
+      // Get current state or default to 'hoogte'
+      const currentState = prev[rowIndex] || 'hoogte';
+      const newState = currentState === 'hoogte' ? 'afstand' : 'hoogte';
+      
+      return {
+        ...prev,
+        [rowIndex]: newState
+      };
+    });
   };
 
   // Function to handle talud change
@@ -395,8 +402,8 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
     const currentHeightDiff = Math.abs(currentHoogte - prevHoogte);
     const currentDistanceDiff = Math.abs(currentAfstand - prevAfstand);
 
-    // Determine if we should change afstand or hoogte based on switch state
-    const shouldChangeAfstand = rowToggleStates[rowIndex] === 'afstand';
+    // Determine if we should change afstand or hoogte based on switch state (default to 'hoogte')
+    const shouldChangeAfstand = (rowToggleStates[rowIndex] || 'hoogte') === 'afstand';
 
     if (shouldChangeAfstand) {
       // Calculate new afstand based on new talud and current height difference
@@ -488,6 +495,8 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
             backgroundColor: "#fafafa",
             borderBottom: "1px solid rgba(0,0,0,0.06)",
             position: 'relative', // Add this for the slider positioning
+            overflowX: 'auto',
+            scrollbarWidth:'thin'
           }}
         >
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
@@ -953,6 +962,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
                               <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>1:</Typography>
                               <TextField
+                                sx= {{ width: '50px' }}
                                 value={taludInputValues[rowIndex] !== undefined ? taludInputValues[rowIndex] : talud}
                                 onBlur={(e) => handleTaludChange(rowIndex as number, e.target.value)}
                                 onChange={(e) => {
@@ -970,28 +980,30 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                         {/* Actions column */}
                         <TableCell align="center">
                           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
-                            <FormControlLabel
-                              control={
-                                <Switch
-                                  checked={rowToggleStates[rowIndex] === 'afstand'}
-                                  onChange={() => handleToggleSwitch(rowIndex as number)}
-                                  size="small"
-                                />
-                              }
-                              label={
-                                <Typography 
-                                  variant="caption" 
-                                  sx={{ 
-                                    fontSize: '10px',
-                                  }}
-                                >
-                                  {rowToggleStates[rowIndex] === 'afstand' ? 'afstand' : 'hoogte'}
-                                </Typography>
-                              }
-                              labelPlacement="bottom"
-                              sx={{ margin: 0, minWidth: '60px' }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                            />
+                            {rowIndex !== 0 && (
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={(rowToggleStates[rowIndex] || 'hoogte') === 'afstand'}
+                                    onChange={() => handleToggleSwitch(rowIndex as number)}
+                                    size="small"
+                                  />
+                                }
+                                label={
+                                  <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                      fontSize: '10px',
+                                    }}
+                                  >
+                                    {(rowToggleStates[rowIndex] || 'hoogte') === 'afstand' ? 'afstand' : 'hoogte'}
+                                  </Typography>
+                                }
+                                labelPlacement="bottom"
+                                sx={{ margin: 0, minWidth: '60px' }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                              />
+                            )}
                             <IconButton
                               color="error"
                               size="small"
