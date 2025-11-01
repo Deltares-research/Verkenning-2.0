@@ -49,7 +49,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile, setDwpLocation, clearDwpLocation } from "../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, setDwpLocation, clearDwpLocation, setMapDwpLocation } from "../Functions/DesignFunctions";
 
 interface ChartAndTablePanelProps {
   setdesignPanelVisible: (visible: boolean) => void;
@@ -539,50 +539,6 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
               DWP-lengte: {model.crossSectionLength}m
             </Button>
 
-            {showLengthSlider && (
-              <Box sx={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                backgroundColor: 'white',
-                padding: 2,
-                boxShadow: 2,
-                zIndex: 1000,
-                border: '1px solid #ccc',
-                borderRadius: 1
-              }}>
-                <Typography variant="body2" gutterBottom>
-                  Dwarsprofiel lengte: {model.crossSectionLength}m
-                </Typography>
-                <Slider
-                  value={model.crossSectionLength}
-                  onChange={(event: Event, newValue: number | number[]) => {
-                    model.crossSectionLength = newValue as number;
-                  }}
-                  min={50}
-                  max={500}
-                  step={10}
-                  marks={[
-                    { value: 50, label: '50m' },
-                    { value: 100, label: '100m' },
-                    { value: 200, label: '200m' },
-                    { value: 300, label: '300m' },
-                    { value: 500, label: '500m' }
-                  ]}
-                  valueLabelDisplay="auto"
-                  sx={{ mt: 1, mb: 1 }}
-                />
-                <Button
-                  size="small"
-                  onClick={handleToggleLengthSlider}
-                  variant="outlined"
-                >
-                  Sluiten
-                </Button>
-              </Box>
-            )}
-
             <Button
               variant="contained"
               size="medium"
@@ -927,13 +883,23 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
                               </Select>
                             ) : typeof cell === "string" || typeof cell === "number" ? (
                               <TextField
-                                defaultValue={isNaN(cell as number) ? "" : cell}
-                                onBlur={(e) =>
-                                  handleCellChange(rowIndex as number, key, e.target.value)
-                                }
+                                value={cell || ""}
+                                onBlur={(e) => {
+                                  handleCellChange(rowIndex as number, key, e.target.value);
+                                  // Update map graphic if this is an afstand or hoogte field
+                                  if ((key === 'afstand' || key === 'hoogte') && model.chartDataElevation?.length) {
+                                    setMapDwpLocation(model, {
+                                      ...row,
+                                      [key]: e.target.value
+                                    });
+                                  }
+                                }}
                                 onChange={(e) => {
                                   const value = e.target.value.replace(",", "."); // optional: auto-correct comma to dot
-                                  e.target.value = value;
+                                  // Update the model data immediately for controlled component
+                                  const updatedData = [...model.chartData];
+                                  updatedData[rowIndex][key] = value;
+                                  model.chartData = updatedData;
                                 }}
                                 variant="outlined"
                                 size="small"
@@ -1023,6 +989,44 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           </>
         )}
       </Paper>
+
+      {/* Length Slider Dialog */}
+      <Dialog
+        open={showLengthSlider}
+        onClose={handleToggleLengthSlider}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Dwarsprofiel Lengte Instellen</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" gutterBottom>
+            Dwarsprofiel lengte: {model.crossSectionLength}m
+          </Typography>
+          <Slider
+            value={model.crossSectionLength}
+            onChange={(event: Event, newValue: number | number[]) => {
+              model.crossSectionLength = newValue as number;
+            }}
+            min={50}
+            max={500}
+            step={10}
+            marks={[
+              { value: 50, label: '50m' },
+              { value: 100, label: '100m' },
+              { value: 200, label: '200m' },
+              { value: 300, label: '300m' },
+              { value: 500, label: '500m' }
+            ]}
+            valueLabelDisplay="auto"
+            sx={{ mt: 2, mb: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleToggleLengthSlider} variant="contained" color="primary">
+            Sluiten
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* New Tab Dialog */}
       <Dialog
