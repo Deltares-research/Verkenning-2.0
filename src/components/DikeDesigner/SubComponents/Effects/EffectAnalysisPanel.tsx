@@ -3,8 +3,8 @@ import { Stack, Button, Table, TableBody, TableCell, TableContainer, TableHead, 
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import React from "react";
 
-import type DikeDesignerModel from "../DikeDesignerModel";
-import { getIntersectingFeatures } from "../Functions/EffectFunctions";
+import type DikeDesignerModel from "../../DikeDesignerModel";
+import { getIntersectingFeatures } from "../../Functions/EffectFunctions";
 
 interface EffectAnalysisPanelProps {
     model: DikeDesignerModel;

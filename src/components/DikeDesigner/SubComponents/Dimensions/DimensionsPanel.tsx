@@ -26,7 +26,7 @@ import {
 } from "@mui/material";
 import React from "react";
 
-import { stackStyle } from "../../styles";
+import { stackStyle } from "../../../styles";
 
 
 interface DimensionsPanelProps {

@@ -30,10 +30,10 @@ import {
     exportRuimteslagLayerAsGeoJSON,
     setMapDwpLocation
 } from "./Functions/DesignFunctions";
-import ChartAndTablePanel from "./SubComponents/ChartAndTablePanel";
-import CrossSectionChartPanel from "./SubComponents/CrossSectionChartPanel";
-import DimensionsPanel from "./SubComponents/DimensionsPanel";
-import EffectAnalysisPanel from "./SubComponents/EffectAnalysisPanel";
+import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
+import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
+import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
+import EffectAnalysisPanel from "./SubComponents/Effects/EffectAnalysisPanel";
 
 
 // import { SimpleWorker } from "./Workers/SimpleWorker"; // adjust path as needed
