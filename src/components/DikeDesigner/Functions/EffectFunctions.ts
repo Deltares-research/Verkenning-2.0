@@ -17,7 +17,7 @@ export async function getIntersectingFeatures(model, layerTitle) {
     const geometries = model.graphicsLayerTemp.graphics.items.map(g => g.geometry);
 
     const unionGeometry = geometries.length > 1
-        ? geometryEngine.union(geometries as __esri.Geometry[])
+        ? geometryEngine.union(geometries as any[])
         : geometries[0];
 
     if (!unionGeometry) {

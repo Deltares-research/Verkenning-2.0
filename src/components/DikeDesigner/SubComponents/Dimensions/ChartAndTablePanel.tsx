@@ -5,20 +5,21 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 
 import {
-  Paper,
-  Typography,
-  IconButton,
-  Tabs,
-  Tab,
-  TextField,
-  Box,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Slider,
 } from "@mui/material";
+
+import Box from "@vertigis/web/ui/Box";
+import Button from "@vertigis/web/ui/Button";
+import IconButton from "@vertigis/web/ui/IconButton";
+import Paper from "@vertigis/web/ui/Paper";
+import Slider from "@vertigis/web/ui/Slider";
+import Tab from "@vertigis/web/ui/Tab";
+import Tabs from "@vertigis/web/ui/Tabs";
+import TextField from "@vertigis/web/ui/Input";
+import Typography from "@vertigis/web/ui/Typography";
 import React, { useState } from "react";
 
 import ButtonToolbar from "../ButtonToolbar";

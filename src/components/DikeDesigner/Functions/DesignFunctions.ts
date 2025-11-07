@@ -36,7 +36,18 @@ import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtil
 import * as projection from "@arcgis/core/geometry/projection";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
+// Add type interfaces at the top
+interface OffsetGeometries {
+    [key: string]: __esri.Polyline;
+}
 
+interface CreatePolygonBetweenDistancesArgs {
+    model: any;
+    distanceA: string | number;
+    distanceB: string | number;
+    offsetGeometries: OffsetGeometries;
+    polygonName: string;
+}
 
 export async function createDesigns(model): Promise<void> {
     let basePath: Polyline | undefined = undefined;
@@ -46,8 +57,8 @@ export async function createDesigns(model): Promise<void> {
 
         // Use Promise.all() for parallel processing
         const designPromises = model.graphicsLayerLine.graphics.items
-            .filter(graphic => graphic.attributes[model.selectedDijkvakField])
-            .map(graphic => {
+            .filter((graphic: __esri.Graphic) => graphic.attributes[model.selectedDijkvakField])
+            .map((graphic: __esri.Graphic) => {
                 const dijkvakValue = graphic.attributes[model.selectedDijkvakField];
                 return createDesign(model, graphic.geometry, model.allChartData[dijkvakValue], dijkvakValue);
             });
@@ -150,7 +161,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
                         style: "solid",
                         color: "grey",
                         width: 1,
-                    } as __esri.SimpleLineSymbolProperties,
+                    } as any,
                 });
 
                 model.graphicsLayerTemp.add(offsetGraphic);
@@ -217,7 +228,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
                 model,
                 distanceA: currentRow.afstand,
                 distanceB: nextRow.afstand,
-                offsetGeometries,
+                offsetGeometries: offsetGeometries as any,
                 polygonName
             });
         } else {
@@ -311,7 +322,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         symbol: {
             type: "mesh-3d",
             symbolLayers: [{ type: "fill" }],
-        } as __esri.Symbol3DLayerProperties,
+        } as any,
     });
     model.graphicsLayerMesh.add(mergedGraphic);
     model.mergedMesh = merged;
@@ -458,7 +469,6 @@ function createMeshFromPolygon(model, polygon, textureUrl = null) {
     // graphicsLayerTemp.add(new Graphic({ geometry: mesh, symbol, attributes: { footprint: polygon } }));
 }
 
-
 // functions for debugging with earcut
 // function ringArea(ring) {
 //   let area = 0;
@@ -526,7 +536,7 @@ function createMeshFromPolygon(model, polygon, textureUrl = null) {
 //     model.meshes.push(mesh);
 // }
 
-export function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
+export function createPolygonBetween(model: any, nameA: string, nameB: string, offsetGeometries: OffsetGeometries): void {
     const geomA = offsetGeometries[nameA];
     const geomB = offsetGeometries[nameB];
     if (!geomA || !geomB) {
@@ -602,7 +612,7 @@ export function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
     }
 }
 
-export function createPolygonBetweenDistances(args: { model; distanceA; distanceB; offsetGeometries; polygonName }) {
+export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistancesArgs): void {
     const { model, distanceA, distanceB, offsetGeometries, polygonName } = args;
     const geomA = offsetGeometries[distanceA];
     const geomB = offsetGeometries[distanceB];
@@ -1866,7 +1876,7 @@ export function getPointAlongLine(
 
             const pointGraphic = new Graphic({
                 geometry: point,
-                symbol: defaultPointSymbol,
+                symbol: defaultPointSymbol as any,
                 attributes: {
                     offset: offsetLocation.offset,
                 },
@@ -2072,7 +2082,7 @@ function createTriangleGraphics(model, polygon, triangulationData) {
                     color: outlineColor,
                     width: 1
                 }
-            } as __esri.SimpleFillSymbolProperties,
+            } as any,
             attributes: {
                 triangleIndex: Math.floor(i / 3),
                 area: area.toFixed(2),
@@ -2102,7 +2112,7 @@ function createTriangleGraphics(model, polygon, triangulationData) {
                     color: [255, 255, 255, 1],
                     width: 1
                 }
-            } as __esri.SimpleMarkerSymbolProperties,
+            } as any,
             attributes: {
                 vertexIndex: Math.floor(i / 3)
             }

@@ -265,7 +265,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                         const graphic = new Graphic({
                             geometry: projected as any,
                             attributes: properties,
-                            symbol: this.lineLayerSymbol,
+                            symbol: this.lineLayerSymbol as any,
                         });
 
                         this.graphicsLayerLine.add(graphic);
@@ -625,7 +625,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
             this.designLayer2D.renderer = new UniqueValueRenderer({
                 field: "name",
-                uniqueValueInfos,
+                uniqueValueInfos: uniqueValueInfos as any[],
                 defaultSymbol: {
                     type: "simple-fill",
                     color: [204, 255, 204, 0.7], // light green
