@@ -8,22 +8,39 @@ import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite
 // import TableRowsIcon from "@mui/icons-material/TableRows";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import {
-    Stack,
-    ButtonGroup,
-    Button,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    TableContainer,
-    Table,
-    TableBody,
-    TableRow,
-    TableCell,
-    LinearProgress,
-    TextField,
-    Divider,
+    // Stack,
+    // ButtonGroup,
+    // Button,
+    // FormControl,
+    // InputLabel,
+    // Select,
+    // MenuItem,
+    // TableContainer,
+    // Table,
+    // TableBody,
+    // TableRow,
+    // TableCell,
+    // LinearProgress,
+    // TextField,
+    // Divider,
 } from "@mui/material";
+
+import Stack from "@vertigis/web/ui/Stack";
+import ButtonGroup from "@vertigis/web/ui/ButtonGroup";
+import Button from "@vertigis/web/ui/Button";
+import FormControl from "@vertigis/web/ui/FormControl";
+import InputLabel from "@vertigis/web/ui/FormLabel";
+import Select from "@vertigis/web/ui/Select";
+import MenuItem from "@vertigis/web/ui/MenuItem";
+import TableContainer from "@vertigis/web/ui/Box";
+import Table from "@vertigis/web/ui/Table";
+import TableBody from "@vertigis/web/ui/TableBody";
+import TableRow from "@vertigis/web/ui/TableRow";
+import TableCell from "@vertigis/web/ui/TableCell";
+import LinearProgress from "@vertigis/web/ui/LinearProgress";
+import TextField from "@vertigis/web/ui/Input";
+import Divider from "@vertigis/web/ui/Divider";
+
 import React from "react";
 
 import { stackStyle } from "../../../styles";
@@ -77,32 +94,28 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
     // Common button style for consistent icon alignment
     const buttonWithIconStyle = {
-        justifyContent: 'center',
-        '& .MuiButton-startIcon': {
-            position: 'absolute',
-            left: 16,
-            marginRight: 0,
-            marginLeft: 0,
-        },
+        // justifyContent: 'flex-center',
+        // paddingLeft: '12px',
+        // '& .MuiButton-startIcon': {
+        //     marginRight: '8px',
+        //     marginLeft: 0,
+        // },
     };
 
     return (
         <Stack spacing={1}>
             <Stack spacing={2} sx={stackStyle}>
-                <ButtonGroup fullWidth>
+                <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
                         disabled={!model.sketchViewModel}
                         color="primary"
                         onClick={handleCreateLine}
                         startIcon={<EditIcon />}
                         variant="contained"
-                        sx={{
-                            flexDirection: "column",
-                            padding: "8px 4px",
-                            fontSize: "9px",
-                        }}
+                        size="medium"
+                        sx={{ flex: 1 }}
                     >
-                        Teken referentielijn
+                        Teken lijn
                     </Button>
                     <Button
                         color="primary"
@@ -110,13 +123,10 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         startIcon={<UploadFileIcon />}
                         variant="contained"
                         disabled={!model.map}
-                        sx={{
-                            flexDirection: "column",
-                            padding: "8px 4px",
-                            fontSize: "9px",
-                        }}
+                        size="medium"
+                        sx={{ flex: 1 }}
                     >
-                        Upload GeoJSON
+                        Upload
                     </Button>
                     <Button
                         color="primary"
@@ -124,15 +134,13 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         startIcon={<MapIcon />}
                         variant="contained"
                         disabled={!model.map}
-                        sx={{
-                            flexDirection: "column",
-                            padding: "8px 4px",
-                            fontSize: "9px",
-                        }}
+                        size="medium"
+                        sx={{ flex: 1 }}
                     >
                         Kies uit kaart
                     </Button>
-                </ButtonGroup>
+                </Stack>
+                
                 {isLayerListVisible && (
                     <>
                         {/* Ontwerplijn Dropdown */}
@@ -268,18 +276,18 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 {/* Grid-size input */}
                 <TextField
                     value={model.gridSize}
-                    label="Gridgrootte [m]"
+              
                     type="number"
-                    variant="outlined"
+                    // variant="outlined"
                     size="medium"
                     onChange={handleGridChange}
                     sx={{ marginTop: 4 }}
-                    InputProps={{
-                        sx: { fontSize: '12px', lineHeight: '2' },
-                    }}
-                    InputLabelProps={{
-                        sx: { fontSize: '12px' }
-                    }}
+                    // InputProps={{
+                    //     sx: { fontSize: '12px', lineHeight: '2' },
+                    // // }}
+                    // InputLabelProps={{
+                    //     sx: { fontSize: '12px' }
+                    // }}
                 />
 
                 <Button

@@ -330,6 +330,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 }
 
 export async function calculateVolume(model): Promise<void> {
+    model.graphicsLayerControlPoints.removeAll();
 
     const gridSize = model.gridSize;
 
@@ -337,57 +338,110 @@ export async function calculateVolume(model): Promise<void> {
         model.mergedMesh
     );
 
-    // elevationSampler.demResolution.max = 5; // Set the maximum resolution for the DEM
-    // elevationSampler.demResolution.min = 5; // Set the minimum resolution for the DEM
-
-    // console.log("Elevation sampler created:", elevationSampler);
-
+    // **PROJECT MESH EXTENT TO RD NEW FOR PROPER METER-BASED GRID**
     const extent = model.meshGraphic.geometry.extent;
+    
+    // RD New spatial reference (EPSG:28992) where 1 unit = 1 meter
+    const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
+    await projection.load();
+    
+    // Create extent polygon and project to RD New
+    const extentPolygon = new Polygon({
+        rings: [[
+            [extent.xmin, extent.ymin],
+            [extent.xmax, extent.ymin], 
+            [extent.xmax, extent.ymax],
+            [extent.xmin, extent.ymax],
+            [extent.xmin, extent.ymin]
+        ]],
+        spatialReference: extent.spatialReference
+    });
+    
+    const projectedExtent = projection.project(extentPolygon, rdNewSpatialRef) as Polygon;
+    const rdExtent = projectedExtent.extent;
+    
+    console.log(`Original extent (Web Mercator): xmin=${extent.xmin.toFixed(2)}, xmax=${extent.xmax.toFixed(2)}, ymin=${extent.ymin.toFixed(2)}, ymax=${extent.ymax.toFixed(2)}`);
+    console.log(`RD extent: xmin=${rdExtent.xmin.toFixed(2)}, xmax=${rdExtent.xmax.toFixed(2)}, ymin=${rdExtent.ymin.toFixed(2)}, ymax=${rdExtent.ymax.toFixed(2)}`);
 
     const pointCoordsForVolume = [];
     const groundPoints = [];
 
-    for (let x = extent.xmin; x <= extent.xmax; x += gridSize) {
-        for (let y = extent.ymin; y <= extent.ymax; y += gridSize) {
-            // const point = new Point({
-            //     x: x as number,
-            //     y: y as number,
-            //     spatialReference: SpatialReference.WebMercator
-            // });
-
-
-
-
-            // Query the elevation at the point, maybe batch this?
-            const elevation = elevationSampler.elevationAt(x, y);
+    // **GENERATE GRID IN RD NEW COORDINATES WITH PROPER METER SPACING**
+    let pointCount = 0;
+    let validPoints = 0;
+    
+    for (let rdX = rdExtent.xmin; rdX <= rdExtent.xmax; rdX += gridSize) {
+        for (let rdY = rdExtent.ymin; rdY <= rdExtent.ymax; rdY += gridSize) {
+            pointCount++;
+            
+            // **PROJECT EACH GRID POINT BACK TO WEB MERCATOR FOR ELEVATION SAMPLING**
+            const rdPoint = new Point({
+                x: rdX,
+                y: rdY,
+                spatialReference: rdNewSpatialRef
+            });
+            
+            const webMercatorPoint = projection.project(rdPoint, SpatialReference.WebMercator) as Point;
+            
+            // Query the elevation at the point
+            const elevation = elevationSampler.elevationAt(webMercatorPoint.x, webMercatorPoint.y);
             if (elevation) {
+                validPoints++;
+                
+                // Add control point graphic using Web Mercator coordinates
+                // model.graphicsLayerControlPoints.add(new Graphic({ 
+                //     geometry: webMercatorPoint, 
+                //     symbol: model.controlPointSymbol 
+                // }));
 
                 // Add the point to the volume calculation
-                pointCoordsForVolume.push([x, y, elevation]);
+                pointCoordsForVolume.push([webMercatorPoint.x, webMercatorPoint.y, elevation]);
 
                 // Add the point to the ground elevation query
-                groundPoints.push([x, y]);
-
+                groundPoints.push([webMercatorPoint.x, webMercatorPoint.y]);
             }
         }
     }
-
-
-
-    // console.log("All points processed:", pointCoordsForVolume);
+    
+    // **ADD VERIFICATION LOGGING TO CHECK ACTUAL DISTANCES**
+    console.log(`Total grid points generated: ${pointCount}`);
+    console.log(`Valid points with elevation: ${validPoints}`);
+    
+    if (validPoints >= 2) {
+        // Check distance between first two points
+        const point1WM = new Point({
+            x: pointCoordsForVolume[0][0],
+            y: pointCoordsForVolume[0][1],
+            spatialReference: SpatialReference.WebMercator
+        });
+        const point2WM = new Point({
+            x: pointCoordsForVolume[1][0], 
+            y: pointCoordsForVolume[1][1],
+            spatialReference: SpatialReference.WebMercator
+        });
+        
+        // Project to RD for accurate distance measurement
+        const point1RD = projection.project(point1WM, rdNewSpatialRef) as Point;
+        const point2RD = projection.project(point2WM, rdNewSpatialRef) as Point;
+        
+        const actualDistance = Math.sqrt(
+            Math.pow(point2RD.x - point1RD.x, 2) + Math.pow(point2RD.y - point1RD.y, 2)
+        );
+        
+        console.log(`Verification: Actual distance between first two control points: ${actualDistance.toFixed(2)}m (expected: ${gridSize}m)`);
+    }
 
     if (pointCoordsForVolume.length === 0) {
         console.warn("No points were processed. Ensure the mesh geometries and grid size are correct.");
         return;
     }
 
+    // **KEEP VOLUME CALCULATIONS USING CORRECT MODEL.GRIDSIZE AREA**
     // Query ground elevations for all points
     const multipointForGround = new Multipoint({
         points: groundPoints,
         spatialReference: SpatialReference.WebMercator
     });
-
-
 
     const groundResult = await model.elevationLayer.queryElevation(multipointForGround, { returnSampleInfo: true });
     console.log("Ground elevation query result:", groundResult);
@@ -422,8 +476,8 @@ export async function calculateVolume(model): Promise<void> {
             spatialReference: SpatialReference.WebMercator
         });
 
+        const alphaShapeAboveGround = alphaShapeOperator.execute(multipointAboveGround, 5);
 
-        const alphaShapeAboveGround = alphaShapeOperator.execute(multipointAboveGround, 0.5);
         const singlePartAlphaShape = multiPartToSinglePartOperator.executeMany([alphaShapeAboveGround.alphaShape]);
 
         if (singlePartAlphaShape) {
@@ -447,8 +501,6 @@ export async function calculateVolume(model): Promise<void> {
     console.log("Total volume difference:", totalVolumeDifference, "m³");
     console.log("Total cut volume:", excavationVolume, "m³");
     console.log("Total fill volume:", fillVolume, "m³");
-
-
 }
 
 
