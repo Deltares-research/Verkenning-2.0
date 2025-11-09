@@ -1,21 +1,21 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import {
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TextField,
-  Box,
-  Select,
-  MenuItem,
-  Typography,
-  Switch,
-  FormControlLabel,
-  IconButton,
-} from "@mui/material";
+
+import Table from "@vertigis/web/ui/Table"
+import TableContainer from "@vertigis/web/ui/Box"
+import TableHead from "@vertigis/web/ui/TableHead"
+import TableRow from "@vertigis/web/ui/TableRow"
+import TableCell from "@vertigis/web/ui/TableCell"
+import TableBody from "@vertigis/web/ui/TableBody"
+import Select from "@vertigis/web/ui/Select"  
+import MenuItem from "@vertigis/web/ui/MenuItem"
+import Typography from "@vertigis/web/ui/Typography"
+import Switch from "@vertigis/web/ui/Switch"
+import FormControlLabel from "@vertigis/web/ui/FormControlLabel"
+import IconButton from "@vertigis/web/ui/IconButton"
+import Box from "@vertigis/web/ui/Box"
+import TextField from "@vertigis/web/ui/Input"
+
 import React, { useState } from "react";
 
 import { clearDwpLocation, setMapDwpLocation } from "../../Functions/DesignFunctions";
@@ -127,17 +127,17 @@ const DataTable: React.FC<DataTableProps> = ({
       <Table stickyHeader>
         <TableHead>
           <TableRow>
-            <TableCell align="center" sx={{ fontSize: "11px", width: "40px" }} />
+            <TableCell align="center" sx={{ fontSize: "11px", width: "40px", padding: "4px", border: "1px solid #ddd" }} />
             {model.chartData?.length > 0 &&
               Object.keys(model.chartData[0] as object || {}).slice(1).map((header) => (
-                <TableCell key={header} align="center" sx={{ fontSize: "11px" }}>
+                <TableCell key={header} align="center" sx={{ fontSize: "11px", padding: "4px", border: "1px solid #ddd" }}>
                   {header.charAt(0).toUpperCase() + header.slice(1)}
                 </TableCell>
               ))}
             {model.chartData?.length > 0 && (
               <>
-                <TableCell align="center" sx={{ fontSize: "11px" }}>Talud</TableCell>
-                <TableCell align="center" sx={{ fontSize: "11px" }}>Acties</TableCell>
+                <TableCell align="center" sx={{ fontSize: "11px", padding: "4px", border: "1px solid #ddd" }}>Talud</TableCell>
+                <TableCell align="center" sx={{ fontSize: "11px", padding: "4px", border: "1px solid #ddd" }}>Acties</TableCell>
               </>
             )}
           </TableRow>
@@ -171,7 +171,7 @@ const DataTable: React.FC<DataTableProps> = ({
                   opacity: draggedRowIndex === rowIndex ? 0.5 : 1,
                 }}
               >
-                <TableCell align="center" sx={{ width: "40px" }}>
+                <TableCell align="center" sx={{ width: "40px", padding: "4px", border: "1px solid #ddd" }}>
                   <DragIndicatorIcon
                     sx={{
                       color: "#999",
@@ -184,7 +184,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
 
                 {Object.entries(row as object || {}).slice(1).map(([key, cell], colIndex) => (
-                  <TableCell key={`${rowKey}-${key}`} align="center">
+                  <TableCell key={`${rowKey}-${key}`} align="center" sx={{ padding: "4px", border: "1px solid #ddd" }}>
                     {colIndex === 0 ? (
                       <Select
                         value={cell}
@@ -220,7 +220,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           updatedData[rowIndex][key] = value;
                           model.chartData = updatedData;
                         }}
-                        variant="outlined"
+                   
                         size="small"
                         onMouseDown={(e) => e.stopPropagation()}
                       />
@@ -230,9 +230,9 @@ const DataTable: React.FC<DataTableProps> = ({
 
                 {/* Talud column */}
                 {rowIndex === 0 ? (
-                  <TableCell align="center">-</TableCell>
+                  <TableCell align="center" sx={{ padding: "4px", border: "1px solid #ddd" }}>-</TableCell>
                 ) : (
-                  <TableCell align="center" sx={{ fontSize: '12px', width: '80px', minWidth: '80px' }}>
+                  <TableCell align="center" sx={{ fontSize: '12px', width: '80px', minWidth: '80px', padding: "4px", border: "1px solid #ddd" }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
                       <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>1:</Typography>
                       <TextField
@@ -243,7 +243,6 @@ const DataTable: React.FC<DataTableProps> = ({
                           const value = e.target.value.replace(",", ".");
                           setTaludInputValues(prev => ({ ...prev, [rowIndex]: value }));
                         }}
-                        variant="outlined"
                         size="small"
                         onMouseDown={(e) => e.stopPropagation()}
                       />
@@ -252,7 +251,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 )}
 
                 {/* Actions column */}
-                <TableCell align="center">
+                <TableCell align="center" sx={{ padding: "4px", border: "1px solid #ddd" }}>
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
                     {rowIndex !== 0 && (
                       <FormControlLabel
@@ -264,11 +263,11 @@ const DataTable: React.FC<DataTableProps> = ({
                           />
                         }
                         label={
-                          <Typography variant="caption" sx={{ fontSize: '10px' }}>
+                          <Typography sx={{ fontSize: '10px' }}>
                             {(rowToggleStates[rowIndex] || 'hoogte') === 'afstand' ? 'afstand' : 'hoogte'}
                           </Typography>
                         }
-                        labelPlacement="bottom"
+                        labelPlacement="end"
                         sx={{ margin: 0, minWidth: '60px' }}
                         onMouseDown={(e) => e.stopPropagation()}
                       />

@@ -1,5 +1,14 @@
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import { Stack, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
+import Stack from "@vertigis/web/ui/Stack"
+import Button from "@vertigis/web/ui/Button";
+import Table from "@vertigis/web/ui/Table";
+import TableBody from "@vertigis/web/ui/TableBody";
+import TableCell from "@vertigis/web/ui/TableCell";
+import TableContainer from "@vertigis/web/ui/Box";
+import TableHead from "@vertigis/web/ui/TableHead";
+import TableRow from "@vertigis/web/ui/TableRow";
+import Paper from "@vertigis/web/ui/Paper";
+
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import React from "react";
 

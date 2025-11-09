@@ -5,28 +5,9 @@ import FilterIcon from "@mui/icons-material/Filter";
 import InsightsIcon from '@mui/icons-material/Insights';
 import MapIcon from "@mui/icons-material/Map";
 import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
-// import TableRowsIcon from "@mui/icons-material/TableRows";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import {
-    // Stack,
-    // ButtonGroup,
-    // Button,
-    // FormControl,
-    // InputLabel,
-    // Select,
-    // MenuItem,
-    // TableContainer,
-    // Table,
-    // TableBody,
-    // TableRow,
-    // TableCell,
-    // LinearProgress,
-    // TextField,
-    // Divider,
-} from "@mui/material";
 
 import Stack from "@vertigis/web/ui/Stack";
-import ButtonGroup from "@vertigis/web/ui/ButtonGroup";
 import Button from "@vertigis/web/ui/Button";
 import FormControl from "@vertigis/web/ui/FormControl";
 import InputLabel from "@vertigis/web/ui/FormLabel";
@@ -38,8 +19,8 @@ import TableBody from "@vertigis/web/ui/TableBody";
 import TableRow from "@vertigis/web/ui/TableRow";
 import TableCell from "@vertigis/web/ui/TableCell";
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
-import TextField from "@vertigis/web/ui/Input";
 import Divider from "@vertigis/web/ui/Divider";
+import FormLabel from "@vertigis/web/ui/FormLabel";
 
 import React from "react";
 
@@ -105,6 +86,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     return (
         <Stack spacing={1}>
             <Stack spacing={2} sx={stackStyle}>
+                <FormLabel>Referentielijn</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
                         disabled={!model.sketchViewModel}
@@ -230,33 +212,8 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     hidden
                     onChange={handleFileChange}
                 />
-                {/* <Button
-                    variant="contained"
-                    component="label"
-                    startIcon={<TableRowsIcon />}
-                    color="primary"
-                    fullWidth
-                >
-                    Upload ontwerpen (Excel)
-                    <input
-                        type="file"
-                        accept=".xlsx, .xls"
-                        hidden
-                        onChange={handleExcelUpload}
-                    />
-                </Button>
-                <Button
-                    disabled={!model.chartData?.length}
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<ClearIcon />}
-                    onClick={handleClearExcel}
-                    fullWidth
-                >
-                    Verwijder ontwerpen
-                </Button> */}
-            {/* </Stack> */}
             <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Ontwerpen</FormLabel>
                 <Button
                     variant="contained"
                     color="primary"
@@ -274,6 +231,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         
 
                 {/* Grid-size input */}
+                {/* <FormLabel>Grid grootte [m]</FormLabel>
                 <TextField
                     value={model.gridSize}
               
@@ -288,7 +246,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     // InputLabelProps={{
                     //     sx: { fontSize: '12px' }
                     // }}
-                />
+                /> */}
 
                 <Button
                     disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length}
@@ -302,7 +260,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     Uitrollen in 3D
                 </Button>
 
-                <Button
+                {/* <Button
                     disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length || !model.selectedDijkvakField}
                     variant="contained"
                     color="primary"
@@ -312,7 +270,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     sx={buttonWithIconStyle}
                 >
                     Uitrollen over dijkvakken
-                </Button>
+                </Button> */}
                 {/* <Button
                     disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length || !model.selectedDijkvakField}
                     variant="contained"
@@ -369,53 +327,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     Verwijder uitrol
                 </Button>
 
-                {/* Volume table with loader */}
-                <div style={{ position: "relative" }}>
-                    {loading && (
-                        <LinearProgress
-                            sx={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                zIndex: 1,
-                            }}
-                        />
-                    )}
-                    <TableContainer sx={{ marginTop: 2, opacity: loading ? 0.5 : 1 }}>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell sx={{ fontSize: 11 }} align="left">
-                                        Totaal volume verschil [m³]
-                                    </TableCell>
-                                    <TableCell sx={{ fontSize: 11 }} align="right">
-                                        {model.totalVolumeDifference ?? "-"}
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell sx={{ fontSize: 11 }} align="left">
-                                        Uitgravingsvolume [m³]
-                                    </TableCell>
-                                    <TableCell sx={{ fontSize: 11 }} align="right">
-                                        {model.excavationVolume ?? "-"}
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell sx={{ fontSize: 11 }} align="left">
-                                        Opvulvolume [m³]
-                                    </TableCell>
-                                    <TableCell sx={{ fontSize: 11 }} align="right">
-                                        {model.fillVolume ?? "-"}
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </div>
-            </Stack>
-
-            <Stack spacing={1.5} sx={stackStyle}>
                 <Button
                     // disabled={!model.chartData?.length}
                     variant="contained"
@@ -427,16 +338,53 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Controleer dwarsprofiel
                 </Button>
-                {/* <Button
-                    // disabled={!model.chartData?.length}
-                    variant="contained"
-                    color="primary"
-                    startIcon={<ClearIcon />}
-                    onClick={handleRemoveTalud()}
-                    fullWidth
-                >
-                    Verwijder taludlijn
-                </Button> */}
+
+            </Stack>
+
+            <Stack spacing={1.5} sx={stackStyle}>
+                    {loading && (
+                        <LinearProgress
+                            sx={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                zIndex: 1,
+                                borderRadius: "8px 8px 0 0"
+                            }}
+                        />
+                    )}
+                    <TableContainer sx={{ marginTop: 0, opacity: loading ? 0.5 : 1 }}>
+                        <FormLabel>Volume overzicht</FormLabel>
+                        <Table>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell sx={{border: "none", padding: "4px 8px" }} align="left">
+                                        Verschil [m³]
+                                    </TableCell>
+                                    <TableCell sx={{  border: "none", padding: "4px 8px", fontWeight: "bold" }} align="right">
+                                        {model.totalVolumeDifference ?? "-"}
+                                    </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
+                                        Uitgraven [m³]
+                                    </TableCell>
+                                    <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#d32f2f" }} align="right">
+                                        {model.excavationVolume ?? "-"}
+                                    </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
+                                        Opvullen [m³]
+                                    </TableCell>
+                                    <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#2e7d32" }} align="right">
+                                        {model.fillVolume ?? "-"}
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
             </Stack>
         </Stack>
     );

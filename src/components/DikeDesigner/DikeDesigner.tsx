@@ -3,18 +3,16 @@ import ArchitectureIcon from "@mui/icons-material/Architecture";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SelectAllIcon from "@mui/icons-material/SelectAll";
-import {
-    Box,
-    Tab,
-    Tabs,
-} from "@mui/material";
+
+import Box from "@vertigis/web/ui/Box";
+import Tab from "@vertigis/web/ui/Tab"
+import Tabs from "@vertigis/web/ui/Tabs"
+
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import React, { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
-
-
 
 import type DikeDesignerModel from "./DikeDesignerModel";
 import {
