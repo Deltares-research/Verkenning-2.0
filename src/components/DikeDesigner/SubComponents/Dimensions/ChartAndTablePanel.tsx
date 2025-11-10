@@ -6,10 +6,11 @@ import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
+
+import DialogTitle from "@vertigis/web/ui/DialogTitle";
+import DialogContent from "@vertigis/web/ui/DialogContent";
+import DialogActions from "@vertigis/web/ui/DialogActions";
 
 import Box from "@vertigis/web/ui/Box";
 import Button from "@vertigis/web/ui/Button";
@@ -22,7 +23,7 @@ import TextField from "@vertigis/web/ui/Input";
 import Typography from "@vertigis/web/ui/Typography";
 import React, { useState } from "react";
 
-import ButtonToolbar from "../ButtonToolbar";
+import ButtonToolbar from "./ButtonToolbar";
 import DataTable from "./DataTable";
 import TableActions from "./TableActions";
 

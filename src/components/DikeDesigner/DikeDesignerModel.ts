@@ -66,6 +66,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayerRuimtebeslag: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
+    graphicsLayerControlPoints: GraphicsLayer;
+
     designLayer2D: FeatureLayer | null = null;
     uniqueParts: string[] = [];
 
@@ -158,6 +160,16 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 size: 8,
                 outline: { color: "#bcbcbcff", size: 1 },
                 material: { color: "#575757ff" }
+            } as any
+        ]
+    });
+    controlPointSymbol = new PointSymbol3D({
+        symbolLayers: [
+            {
+                type: "icon",
+                size: 6,
+                outline: { color: "#bcbcbcff", size: 1 },
+                material: { color: "#000000ff" }
             } as any
         ]
     });
@@ -642,6 +654,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "hide",
             });
 
+            this.graphicsLayerControlPoints = new GraphicsLayer({
+                title: "Control Points Layer",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+
             this.graphicsLayerRuimtebeslag = new GraphicsLayer({
                 title: "Ruimtebeslag 2D",
                 elevationInfo: {
@@ -717,6 +738,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 url: this.elevationLayerUrl,
             });
             this.map.add(this.graphicsLayerPoint);
+            this.map.add(this.graphicsLayerControlPoints);
             this.map.add(this.graphicsLayerLine);
             this.map.add(this.graphicsLayerCrossSection);
             this.map.add(this.graphicsLayerTemp);

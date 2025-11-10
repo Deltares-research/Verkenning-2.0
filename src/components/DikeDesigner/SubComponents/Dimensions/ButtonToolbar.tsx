@@ -1,12 +1,13 @@
 import AdsClickIcon from '@mui/icons-material/AdsClick';
 import ControlPointIcon from '@mui/icons-material/ControlPoint';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import {
-  Box,
-  Button,
-  Menu,
-  MenuItem,
-} from "@mui/material";
+
+
+import Box from "@vertigis/web/ui/Box";
+import Button from "@vertigis/web/ui/Button";
+import Menu from "@vertigis/web/ui/Menu";
+import MenuItem from "@vertigis/web/ui/MenuItem";
+
 import React, { useState } from "react";
 
 import { locateDwpProfile, clearDwpProfile, setDwpLocation } from "../../Functions/DesignFunctions";
@@ -130,13 +131,13 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           Locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
         </Button>
 
-        <Button
+        {/* <Button
           variant="outlined"
           size="large"
           onClick={handleRivierzijdeMenuClick}
         >
           Rivierzijde: {model.rivierzijde || 'rechts'}
-        </Button>
+        </Button> */}
       </Box>
 
       {/* DWP Location Menu */}

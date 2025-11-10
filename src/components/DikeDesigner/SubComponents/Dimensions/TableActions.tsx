@@ -1,10 +1,9 @@
 import AddIcon from "@mui/icons-material/Add";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import {
-  Box,
-  Button,
-} from "@mui/material";
+
+import Box from "@vertigis/web/ui/Box";
+import Button from "@vertigis/web/ui/Button";
 import React from "react";
 
 interface TableActionsProps {
@@ -45,7 +44,7 @@ const TableActions: React.FC<TableActionsProps> = ({
         onClick={handleDownloadDesigns}
         disabled={model.chartData?.length === 0}
       >
-        Download ontwerpen (Excel)
+        Download ontwerp (Excel)
       </Button>
       <Button
         variant="contained"
@@ -54,7 +53,7 @@ const TableActions: React.FC<TableActionsProps> = ({
         component="label"
         disabled={model.graphicsLayerLine?.graphics?.length === 0 || !model.chartDataElevation?.length}
       >
-        Upload ontwerpen (Excel)
+        Upload ontwerp (Excel)
         <input
           type="file"
           accept=".xlsx, .xls"

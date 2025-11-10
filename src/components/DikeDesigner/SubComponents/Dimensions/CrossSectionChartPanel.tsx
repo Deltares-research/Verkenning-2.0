@@ -1,24 +1,12 @@
-// import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-// import DeleteIcon from "@mui/icons-material/Delete";
-import {
-  Paper,
-  Typography,
-  IconButton,
-//   Tabs,
-//   Tab,
-//   TableContainer,
-//   Table,
-//   TableHead,
-//   TableRow,
-//   TableCell,
-//   TableBody,
-//   TextField,
-  Box,
-//   Select,
-//   MenuItem,
-//   Button,
-} from "@mui/material";
+
+import Paper from "@vertigis/web/ui/Paper";
+import Typography from "@vertigis/web/ui/Typography";
+import IconButton from "@vertigis/web/ui/IconButton";
+import Box from "@vertigis/web/ui/Box";
+
+
+
 import { useEffect } from "react";
 // import React, { useState } from "react";
 
