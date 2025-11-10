@@ -1,0 +1,61 @@
+name: Bug Report
+description: Report an incorrect behavior of the VRTool Suite.
+labels: [bug, "triage required"]
+type: bug
+projects: ["Deltares-research/47"]
+
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: VRTool Suite version checks
+      options:
+        - label: I have checked that this issue has not already been reported.
+          required: true
+        - label: I have checked that this bug exists on the latest version of Verkenningen 2.0 in `main` [here](https://github.com/Deltares-research/Verkenning-2.0).
+          required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: In which components of Verkenningen 2.0 is the bug found?
+      multiple: true
+      options:
+        - Front-end
+        - Back-end
+        - Documentation
+        - Unclear/Overall
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      description: >
+        Please provide a minimal example.
+      label: Reproducible example
+    validations:
+      required: true
+  - type: textarea
+    id: current-behaviour
+    attributes:
+      description: >
+        Please provide a description of the incorrect behaviour shown in the reproducible example.
+      label: Current behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      description: >
+        Please provide a description of what you think the behaviour should be.
+      label: Desired behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      description: >
+        Please add any other context about the bug here.
+      label: Additional context
+    validations:
+      required: false
