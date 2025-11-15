@@ -626,7 +626,7 @@ export function createPolygonBetween(model: any, nameA: string, nameB: string, o
         attributes: { name: partName }
     });
 
-    model.graphicsLayerTemp.add(graphic3d);
+    model.graphicsLayer3dPolygon.add(graphic3d);
 
     model.designLayer2D.applyEdits({
         addFeatures: [graphics2D]
@@ -701,7 +701,7 @@ export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistance
         attributes: { name: polygonName }
     });
 
-    model.graphicsLayerTemp.add(graphic3d);
+    model.graphicsLayer3dPolygon.add(graphic3d);
 
     model.designLayer2D.applyEdits({
         addFeatures: [graphics2D]
@@ -740,7 +740,7 @@ export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistance
 }
 
 // ...existing code...
-export function exportGraphicsLayerAsGeoJSON(model): void {
+export function export3dGraphicsLayerAsGeoJSON(model): void {
     const geojson = {
         type: "FeatureCollection",
         crs: {
@@ -752,7 +752,7 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
 
     // Ensure the projection module is loaded
     projection.load().then(() => {
-        model.graphicsLayerTemp.graphics.forEach((graphic) => {
+        model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
@@ -769,14 +769,13 @@ export function exportGraphicsLayerAsGeoJSON(model): void {
                         properties: graphic.attributes || {}, // Include graphic attributes as properties
                     };
 
-                    // Handle different geometry types
-                    if (!Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
-                        feature.geometry = {
-                            type: "Polygon",
-                            coordinates: (projectedGeometry as __esri.Polygon).rings,
-                        };
-                        geojson.features.push(feature);
-                    }
+         
+                    feature.geometry = {
+                        type: "Polygon",
+                        coordinates: (projectedGeometry as __esri.Polygon).rings,
+                    };
+                    geojson.features.push(feature);
+                    
 
                     // geojson.features.push(feature);
                 }

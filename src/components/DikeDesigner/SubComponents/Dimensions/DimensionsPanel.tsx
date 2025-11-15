@@ -41,7 +41,7 @@ interface DimensionsPanelProps {
     handleOpenOverview: () => void;
     handleCreateCrossSection: () => () => void;
     handleCreateDesign: () => void;
-    handleExportGraphics: () => void;
+    handleExport3dDesign: () => void;
     handleExport2D: () => void;
     handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
@@ -62,7 +62,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleOpenOverview,
     handleCreateCrossSection,
     handleCreateDesign,
-    handleExportGraphics,
+    handleExport3dDesign,
     handleExport2D,
     handleExportRuimtebeslag,
     handleClearDesign,
@@ -286,7 +286,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     variant="contained"
                     color="secondary"
                     startIcon={<CloudDownloadIcon />}
-                    onClick={handleExportGraphics}
+                    onClick={handleExport3dDesign}
                     fullWidth
                     sx={buttonWithIconStyle}
                 >

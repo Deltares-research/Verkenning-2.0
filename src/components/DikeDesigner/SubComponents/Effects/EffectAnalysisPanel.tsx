@@ -13,7 +13,7 @@ import { useWatchAndRerender } from "@vertigis/web/ui";
 import React from "react";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { getIntersectingFeatures } from "../../Functions/EffectFunctions";
+import { getIntersectingFeatures, calculate3dAreas } from "../../Functions/EffectFunctions";
 
 interface EffectAnalysisPanelProps {
     model: DikeDesignerModel;
@@ -55,6 +55,10 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
     };
 
+    const handle3DAreaCalculation = async () => {
+        const areas = await calculate3dAreas(model.graphicsLayer3dPolygon.graphics, model);
+    }
+
     useWatchAndRerender(model, "intersectingPanden")
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
@@ -69,6 +73,15 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                 fullWidth
             >
                 Voer effectenanalyse uit
+            </Button>
+            <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AssessmentIcon />}
+                onClick={handle3DAreaCalculation}
+                fullWidth
+            >
+                Bereken 3D Oppervlakte
             </Button>
             {/* Summary Table */}
             <TableContainer component={Paper} sx={{  }}>

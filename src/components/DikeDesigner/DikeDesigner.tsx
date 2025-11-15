@@ -19,7 +19,7 @@ import {
     calculateVolume,
     cleanFeatureLayer,
     createDesigns,
-    exportGraphicsLayerAsGeoJSON,
+    export3dGraphicsLayerAsGeoJSON,
     initializeChart,
     initializeCrossSectionChart,
     setInputLineFromFeatureLayer,
@@ -251,6 +251,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.mergedMesh = null;
         model.graphicsLayerTemp.removeAll();
+        model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         cleanFeatureLayer(model.designLayer2D);
 
@@ -285,6 +286,7 @@ const DikeDesigner = (
         model.meshes = []
         model.offsetGeometries = []
         model.graphicsLayerTemp.removeAll();
+        model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.mergedMesh = null;
@@ -298,8 +300,8 @@ const DikeDesigner = (
         cleanFeatureLayer(model.designLayer2D);
     };
 
-    const handleExportGraphics = () => {
-        exportGraphicsLayerAsGeoJSON(model)
+    const handleExport3dDesign = () => {
+        export3dGraphicsLayerAsGeoJSON(model)
     };
 
     const handleExport2D = () => {
@@ -315,6 +317,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "totalVolumeDifference");
     useWatchAndRerender(model, "graphicsLayerLine.graphics.length");
     useWatchAndRerender(model, "graphicsLayerTemp.graphics.length");
+    useWatchAndRerender(model, "graphicsLayer3dPolygon.graphics.length");
     useWatchAndRerender(model, "chartData.length");
     useWatchAndRerender(model, "overviewVisible");
     useWatchAndRerender(model, "selectedLineLayerId");
@@ -407,7 +410,7 @@ const DikeDesigner = (
                         handleClearExcel={handleClearExcel}
                         handleOpenOverview={handleOpenOverview}
                         handleCreateDesign={handleCreateDesign}
-                        handleExportGraphics={handleExportGraphics}
+                        handleExport3dDesign={handleExport3dDesign}
                         handleExport2D={handleExport2D}
                         handleExportRuimtebeslag={handleExportRuimtebeslag}
                         handleClearDesign={handleClearDesign}

@@ -63,6 +63,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayerProfile: GraphicsLayer;
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
+    graphicsLayer3dPolygon: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
@@ -724,6 +725,17 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "show",
                 visible: false,
             });
+
+            this.graphicsLayer3dPolygon = new GraphicsLayer({
+                title: "3D ontwerp - tijdelijk",
+                elevationInfo: {    
+                    mode: "absolute-height",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: false
+            });
+            
             this.graphicsLayerMesh = new GraphicsLayer({
                 title: "Mesh layer - tijdelijk",
                 elevationInfo: {
@@ -742,6 +754,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.graphicsLayerLine);
             this.map.add(this.graphicsLayerCrossSection);
             this.map.add(this.graphicsLayerTemp);
+            this.map.add(this.graphicsLayer3dPolygon);
             this.map.add(this.graphicsLayerMesh);
             this.map.add(this.designLayer2D);
             this.map.add(this.cursorLocationLayer);
