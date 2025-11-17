@@ -64,6 +64,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
     graphicsLayer3dPolygon: GraphicsLayer;
+    graphicsLayer3dMeasurement: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
@@ -120,6 +121,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectedPointIndex: number | null = null
     selectingDwpLocation: boolean = false
     crossSectionLength: number = 100
+    
 
     lineLayerSymbol = {
         type: "simple-line",
@@ -673,6 +675,16 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "show",
             });
 
+            this.graphicsLayer3dMeasurement = new GraphicsLayer({
+                title: "3D metingen - controle",
+                elevationInfo: {
+                    mode: "absolute-height",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: false
+            });
+
             this.cursorLocationLayer = new GraphicsLayer({
                 title: "Cursor Location Layer",
                 elevationInfo: {
@@ -760,6 +772,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.cursorLocationLayer);
             this.map.add(this.graphicsLayerRuimtebeslag);
             this.map.add(this.graphicsLayerProfile)
+            this.map.add(this.graphicsLayer3dMeasurement)
 
 
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);

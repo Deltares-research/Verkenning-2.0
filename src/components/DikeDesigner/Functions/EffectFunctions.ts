@@ -1,7 +1,11 @@
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import type FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Polygon from "@arcgis/core/geometry/Polygon";
+
+import * as intersectionOperator from "@arcgis/core/geometry/operators/intersectionOperator";
+import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
+import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -44,88 +48,116 @@ export async function getIntersectingFeatures(model, layerTitle) {
 
 }
 
-export function calculate3dArea(polygon) {
-    const rings = polygon.rings[0];  // outer ring
-    
-    // Handle case where polygon may not be closed or is closed
-    const isClosed = rings.length > 0 && 
-                     rings[0][0] === rings[rings.length - 1][0] && 
-                     rings[0][1] === rings[rings.length - 1][1] &&
-                     (rings[0][2] || 0) === (rings[rings.length - 1][2] || 0);
-    
-    const numVertices = isClosed ? rings.length - 1 : rings.length;
-    
-    let area = 0;
-
-    // Fan triangulation from first vertex
-    // For n unique vertices, we get n-2 triangles
-    for (let i = 1; i < numVertices - 1; i++) {
-        const p0 = rings[0];
-        const p1 = rings[i];
-        const p2 = rings[i + 1];
-
-        area += triangleArea3D(p0, p1, p2);
-    }
-
-    return area; // square meters (for Web Mercator coordinates)
-}
-
-function triangleArea3D(a, b, c) {
-    const ab = [
-        b[0] - a[0],
-        b[1] - a[1],
-        (b[2] || 0) - (a[2] || 0)
-    ];
-
-    const ac = [
-        c[0] - a[0],
-        c[1] - a[1],
-        (c[2] || 0) - (a[2] || 0)
-    ];
-
-    // cross product
-    const cross = [
-        ab[1] * ac[2] - ab[2] * ac[1],
-        ab[2] * ac[0] - ab[0] * ac[2],
-        ab[0] * ac[1] - ab[1] * ac[0]
-    ];
-
-    // area = |cross| / 2
-    return Math.sqrt(
-        cross[0] * cross[0] +
-        cross[1] * cross[1] +
-        cross[2] * cross[2]
-    ) / 2;
-}
 
 export async function calculate3dAreas(graphics, model) {
     let totalArea = 0;
     
-    // Use for...of loop to properly await each async operation
+    // Create elevation sampler once before the loop
+    console.log("Creating elevation sampler from merged mesh...");
+    const elevationSampler = await meshUtils.createElevationSampler(
+        model.mergedMesh
+    );
+    console.log("Elevation sampler created successfully");
+
+    const footprint2D = geometryEngine.union(model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry));
+    
+    if (!footprint2D) {
+        console.warn("Failed to create 2D footprint union");
+        return 0;
+    }
+
     for (const graphic of graphics) {
-        const polygon = graphic.geometry;
-        const areaMeasurement = new AreaMeasurementAnalysis({
-            geometry: polygon
-        });
+        try {
+            // Create 2D version of the polygon (remove Z values)
+            const poly2D = new Polygon({
+                rings: graphic.geometry.rings.map(
+                    ring => ring.map(([x, y, z]) => [x, y])
+                ),
+                spatialReference: graphic.geometry.spatialReference
+            });
 
-        // add to scene view
-        model.view.analyses.add(areaMeasurement);
+            // Intersect with footprint
+            const intersectXY = intersectionOperator.execute(poly2D, footprint2D) as Polygon;
+            
+            if (!intersectXY || !intersectXY.rings || intersectXY.rings.length === 0) {
+                console.warn("No intersection found for graphic:", graphic);
+                continue;
+            }
 
-        // retrieve measured results from analysis view once available
-        const analysisView = await model.view.whenAnalysisView(areaMeasurement);
-       
-        const result = analysisView.result;
-        console.log("3D Area for graphic:", graphic, "is", result.area.value, "square meters");
-        // add attribute to graphic
-        graphic.attributes = {
-            ...graphic.attributes,
-            "area_3d": result.area.value
-        };
+            // Create 3D polygon with elevations from the design mesh
+            const clipped3D = new Polygon({
+                spatialReference: graphic.geometry.spatialReference,
+                rings: intersectXY.rings.map(ring => {
+                    return ring.map(([x, y]) => {
+                        // Sample elevation from the design mesh at this XY location
+                        const z = elevationSampler.elevationAt(x, y);
+                        
+                        // If elevation is null/undefined, use 0 or skip the point
+                        if (z === null || z === undefined) {
+                            console.warn(`No elevation found at (${x}, ${y}), using 0`);
+                            return [x, y, 0];
+                        }
+                        
+                        return [x, y, z];
+                    });
+                })
+            });
 
-        model.view.analyses.remove(areaMeasurement);
-        totalArea += result.area.value;
+            // Update the graphic geometry
+            graphic.geometry = clipped3D;
+
+            // Split multi-ring polygons into single-ring polygons
+            const singlePartPolygons = clipped3D.rings.length > 1
+                ? multiPartToSinglePartOperator.executeMany([clipped3D])
+                : [clipped3D];
+
+            console.log(`Processing ${singlePartPolygons.length} polygon part(s) for graphic`);
+
+            let graphicTotalArea = 0;
+
+            // Process each single-ring polygon separately
+            for (const singlePolygon of singlePartPolygons) {
+                try {
+                    const areaMeasurement = new AreaMeasurementAnalysis({
+                        geometry: singlePolygon
+                    });
+
+                    model.view.analyses.add(areaMeasurement);
+                    model.graphicsLayer3dMeasurement.add(areaMeasurement);
+                    console.log(areaMeasurement,"area measurement")
+                    // model.view.analyses.remove(areaMeasurement);
+
+                    const analysisView = await model.view.whenAnalysisView(areaMeasurement);
+                    const result = analysisView.result;
+                    
+                    if (result && result.area) {
+                        console.log("3D Area for polygon part:", result.area.value, "square meters");
+                        graphicTotalArea += result.area.value;
+                    }
+
+                    // Optionally remove the analysis after measurement
+                    // model.view.analyses.remove(areaMeasurement);
+
+                } catch (areaError) {
+                    console.error("Error measuring area for polygon part:", areaError);
+                }
+            }
+
+            // Store total area for this graphic
+            graphic.attributes = {
+                ...graphic.attributes,
+                "area_3d": graphicTotalArea
+            };
+
+            totalArea += graphicTotalArea;
+            
+            console.log("Total 3D area for graphic:", graphicTotalArea, "square meters");
+
+        } catch (error) {
+            console.error("Error processing graphic:", graphic, error);
+        }
     }
     
-    console.log("Total 3D Area:", totalArea, "square meters");
+    console.log("Total 3D Area for all graphics:", totalArea, "square meters");
     return totalArea;
 }
