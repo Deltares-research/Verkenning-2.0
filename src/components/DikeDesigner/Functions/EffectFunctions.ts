@@ -1,6 +1,7 @@
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import type FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Polygon from "@arcgis/core/geometry/Polygon";
+import Polyline from "@arcgis/core/geometry/Polyline";
 
 import * as intersectionOperator from "@arcgis/core/geometry/operators/intersectionOperator";
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
@@ -158,4 +159,39 @@ export async function calculate3dAreas(graphics, model) {
     
     console.log("Total 3D Area for all graphics:", totalArea, "square meters");
     return totalArea;
+}
+
+
+export function getLineLength(profileLine: any): number {
+    try {
+        const path = profileLine.paths[0];
+        const lineSegments = path.length - 1;
+        let totalLength = 0;
+
+        for (let step = 0; step < lineSegments; step++) {
+            const [xStart, yStart] = path[step];
+            const [xEnd, yEnd] = path[step + 1];
+
+            const lineSegment = new Polyline({
+                hasZ: false,
+                hasM: false,
+                paths: [
+                    [
+                        [xStart, yStart],
+                        [xEnd, yEnd],
+                    ],
+                ],
+                spatialReference: profileLine.spatialReference,
+            });
+
+            const segmentLength = geometryEngine.geodesicLength(lineSegment, "meters");
+            totalLength += segmentLength;
+        }
+        
+        console.log("Total geodesic line length:", totalLength, "meters");
+        return totalLength;
+    } catch (error) {
+        console.error("Error calculating line length:", error);
+        return 0;
+    }
 }

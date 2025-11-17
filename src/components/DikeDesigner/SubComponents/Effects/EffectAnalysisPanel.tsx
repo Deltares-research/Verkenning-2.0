@@ -10,7 +10,9 @@ import TableRow from "@vertigis/web/ui/TableRow";
 import Paper from "@vertigis/web/ui/Paper";
 
 import { useWatchAndRerender } from "@vertigis/web/ui";
-import React from "react";
+import React, { useMemo } from "react";
+
+import * as geodeticLengthOperator from "@arcgis/core/geometry/operators/geodeticLengthOperator";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { getIntersectingFeatures, calculate3dAreas } from "../../Functions/EffectFunctions";
@@ -64,6 +66,19 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
     useWatchAndRerender(model, "total3dArea")
+    useWatchAndRerender(model, "graphicsLayerLine")
+
+    // Calculate line length
+    const lineLength = useMemo(() => {
+        if (model.graphicsLayerLine?.graphics?.length > 0) {
+            const firstGraphic = model.graphicsLayerLine.graphics.getItemAt(0);
+            if (firstGraphic?.geometry) {
+                const length = geodeticLengthOperator.execute(firstGraphic.geometry);
+                return length;
+            }
+        }
+        return 0;
+    }, [model.graphicsLayerLine?.graphics?.length]);
 
     return (
         <Stack spacing={2}>
@@ -85,6 +100,8 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
             >
                 Bereken 3D Oppervlakte
             </Button>
+
+         {/* button for toggling 3D measurement polygons */}
             
             {/* Summary Table */}
             <TableContainer component={Paper} sx={{  }}>
@@ -109,8 +126,12 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             <TableCell  sx={{ fontSize: "11px"}} align="right">{model.intersectingPercelen?.length}</TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell sx={{ fontSize: "11px"}}>3D Oppervlakte</TableCell>
+                            <TableCell sx={{ fontSize: "11px"}}>3D Oppervlakte [m²]</TableCell>
                             <TableCell  sx={{ fontSize: "11px"}} align="right">{model.total3dArea?.toFixed(2)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px"}}>Lengte traject [m]</TableCell>
+                            <TableCell  sx={{ fontSize: "11px"}} align="right">{lineLength?.toFixed(2)}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
