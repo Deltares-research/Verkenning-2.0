@@ -64,7 +64,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
     graphicsLayer3dPolygon: GraphicsLayer;
-    graphicsLayer3dMeasurement: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
@@ -87,6 +86,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     totalVolumeDifference: number = 0
     excavationVolume: number = 0
     fillVolume: number = 0
+    total3dArea: number = 0
 
     chartData: any[] = []
     allChartData: Record<string, any[]> = {}
@@ -675,16 +675,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "show",
             });
 
-            this.graphicsLayer3dMeasurement = new GraphicsLayer({
-                title: "3D metingen - controle",
-                elevationInfo: {
-                    mode: "absolute-height",
-                    offset: 0
-                },
-                listMode: "show",
-                visible: false
-            });
-
             this.cursorLocationLayer = new GraphicsLayer({
                 title: "Cursor Location Layer",
                 elevationInfo: {
@@ -772,7 +762,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.cursorLocationLayer);
             this.map.add(this.graphicsLayerRuimtebeslag);
             this.map.add(this.graphicsLayerProfile)
-            this.map.add(this.graphicsLayer3dMeasurement)
 
 
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);

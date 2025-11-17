@@ -56,12 +56,14 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     };
 
     const handle3DAreaCalculation = async () => {
-        const areas = await calculate3dAreas(model.graphicsLayer3dPolygon.graphics, model);
+        const totalArea = await calculate3dAreas(model.graphicsLayer3dPolygon.graphics, model);
+        model.total3dArea = totalArea;
     }
 
     useWatchAndRerender(model, "intersectingPanden")
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
+    useWatchAndRerender(model, "total3dArea")
 
     return (
         <Stack spacing={2}>
@@ -83,6 +85,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
             >
                 Bereken 3D Oppervlakte
             </Button>
+            
             {/* Summary Table */}
             <TableContainer component={Paper} sx={{  }}>
                 <Table >
@@ -104,6 +107,10 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px"}}>Percelen</TableCell>
                             <TableCell  sx={{ fontSize: "11px"}} align="right">{model.intersectingPercelen?.length}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px"}}>3D Oppervlakte</TableCell>
+                            <TableCell  sx={{ fontSize: "11px"}} align="right">{model.total3dArea?.toFixed(2)}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>

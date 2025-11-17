@@ -123,8 +123,6 @@ export async function calculate3dAreas(graphics, model) {
                     });
 
                     model.view.analyses.add(areaMeasurement);
-                    model.graphicsLayer3dMeasurement.add(areaMeasurement);
-                    console.log(areaMeasurement,"area measurement")
                     // model.view.analyses.remove(areaMeasurement);
 
                     const analysisView = await model.view.whenAnalysisView(areaMeasurement);

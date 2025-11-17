@@ -182,6 +182,7 @@ const DikeDesigner = (
         model.crossSectionChartData = [];
         model.selectedLineLayerId = null;
         model.selectedDijkvakField = null;
+        model.view.analyses.removeAll()
     };
 
     const handleGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +254,7 @@ const DikeDesigner = (
         model.graphicsLayerTemp.removeAll();
         model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
+        model.view.analyses.removeAll()
         cleanFeatureLayer(model.designLayer2D);
 
         setLoading(true); // Show loader
@@ -297,7 +299,9 @@ const DikeDesigner = (
         model.intersectingBomen = null;
         model.intersectingPercelen = null;
         model.userLinePoints = [];
+        model.view.analyses.removeAll()
         cleanFeatureLayer(model.designLayer2D);
+
     };
 
     const handleExport3dDesign = () => {
