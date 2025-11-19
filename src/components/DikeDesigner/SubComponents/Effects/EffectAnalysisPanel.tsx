@@ -1,4 +1,6 @@
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import ClearIcon from '@mui/icons-material/Clear';
 import Stack from "@vertigis/web/ui/Stack"
 import Button from "@vertigis/web/ui/Button";
 import Table from "@vertigis/web/ui/Table";
@@ -12,7 +14,7 @@ import Paper from "@vertigis/web/ui/Paper";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import React, { useMemo } from "react";
 
-import * as geodeticLengthOperator from "@arcgis/core/geometry/operators/geodeticLengthOperator";
+import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { getIntersectingFeatures, calculate3dAreas } from "../../Functions/EffectFunctions";
@@ -26,7 +28,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
 }) => {
 
-    const handleTest = async () => {
+    const handleEffectAnalysis = async () => {
         model.messages.commands.ui.displayBusyState.execute({}).catch((error) => {
             console.error("Error displaying busy state:", error);
         });
@@ -57,51 +59,91 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
     };
 
-    const handle3DAreaCalculation = async () => {
+    const handleDesignCalculations = async () => {
         const totalArea = await calculate3dAreas(model.graphicsLayer3dPolygon.graphics, model);
         model.total3dArea = totalArea;
+
+        if (model.graphicsLayerLine?.graphics?.length > 0) {
+            console.log("Calculating line length...");
+            const firstGraphic = model.graphicsLayerLine.graphics.getItemAt(0);
+            if (firstGraphic?.geometry) {
+                console.log("Calculating line length...");
+                const length = geometryEngine.geodesicLength(firstGraphic.geometry, "meters");
+                console.log("Calculated line length:", length);
+                model.lineLength = length;
+            } else {
+                console.log("No geometry found in the first graphic of graphicsLayerLine.");
+            }
+        }
+    };
+
+    const handle3dAreaLayerclear = () => {
+        model.view.analyses.removeAll();
     }
 
     useWatchAndRerender(model, "intersectingPanden")
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
     useWatchAndRerender(model, "total3dArea")
+    useWatchAndRerender(model, "lineLength")
     useWatchAndRerender(model, "graphicsLayerLine")
 
-    // Calculate line length
-    const lineLength = useMemo(() => {
-        if (model.graphicsLayerLine?.graphics?.length > 0) {
-            const firstGraphic = model.graphicsLayerLine.graphics.getItemAt(0);
-            if (firstGraphic?.geometry) {
-                const length = geodeticLengthOperator.execute(firstGraphic.geometry);
-                return length;
-            }
-        }
-        return 0;
-    }, [model.graphicsLayerLine?.graphics?.length]);
 
     return (
         <Stack spacing={2}>
+
+             <Button
+                variant="contained"
+                color="primary"
+                startIcon={<ViewInArIcon />}
+                onClick={handleDesignCalculations}
+                fullWidth
+                disabled={!model.mergedMesh}
+            >
+                Bereken ontwerp maten
+            </Button>
+            <Button
+                variant="contained"
+                color="primary"
+                startIcon={<ClearIcon />}
+                onClick={handle3dAreaLayerclear}
+                fullWidth
+                disabled={!model.mergedMesh}
+            >
+                Verwijder 3D Oppervlakte lagen
+            </Button>
+
+            {/* Detailed Results Table */}
+            <TableContainer component={Paper} sx={{  }}>
+                <Table >
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px", fontWeight: "bold"  }}>Ontwerp element</TableCell>
+                            <TableCell align="right" sx={{ fontSize: "11px",fontWeight: "bold" }}>Afmeting</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px"}}>3D Oppervlakte [m²]</TableCell>
+                            <TableCell  sx={{ fontSize: "11px"}} align="right">{model.total3dArea?.toFixed(2)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px"}}>Lengte traject [m]</TableCell>
+                            <TableCell  sx={{ fontSize: "11px"}} align="right">{model.lineLength?.toFixed(2)}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </TableContainer>
             <Button
                 variant="contained"
                 color="primary"
                 startIcon={<AssessmentIcon />}
-                onClick={handleTest}
+                onClick={handleEffectAnalysis}
                 fullWidth
+                disabled={!model.graphicsLayerTemp?.graphics.length}
             >
                 Voer effectenanalyse uit
             </Button>
-            <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AssessmentIcon />}
-                onClick={handle3DAreaCalculation}
-                fullWidth
-            >
-                Bereken 3D Oppervlakte
-            </Button>
-
-         {/* button for toggling 3D measurement polygons */}
             
             {/* Summary Table */}
             <TableContainer component={Paper} sx={{  }}>
@@ -124,14 +166,6 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px"}}>Percelen</TableCell>
                             <TableCell  sx={{ fontSize: "11px"}} align="right">{model.intersectingPercelen?.length}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell sx={{ fontSize: "11px"}}>3D Oppervlakte [m²]</TableCell>
-                            <TableCell  sx={{ fontSize: "11px"}} align="right">{model.total3dArea?.toFixed(2)}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell sx={{ fontSize: "11px"}}>Lengte traject [m]</TableCell>
-                            <TableCell  sx={{ fontSize: "11px"}} align="right">{lineLength?.toFixed(2)}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>

@@ -158,6 +158,7 @@ export async function calculate3dAreas(graphics, model) {
     }
     
     console.log("Total 3D Area for all graphics:", totalArea, "square meters");
+    console.log(model.view.analyses, "Current analyses in view");
     return totalArea;
 }
 

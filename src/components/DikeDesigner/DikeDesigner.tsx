@@ -182,6 +182,7 @@ const DikeDesigner = (
         model.crossSectionChartData = [];
         model.selectedLineLayerId = null;
         model.selectedDijkvakField = null;
+        model.lineLength = null;
         model.view.analyses.removeAll()
     };
 
@@ -255,6 +256,8 @@ const DikeDesigner = (
         model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.view.analyses.removeAll()
+        model.total3dArea = null;
+        model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
 
         setLoading(true); // Show loader
@@ -300,6 +303,8 @@ const DikeDesigner = (
         model.intersectingPercelen = null;
         model.userLinePoints = [];
         model.view.analyses.removeAll()
+        model.total3dArea = null;
+        model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
 
     };

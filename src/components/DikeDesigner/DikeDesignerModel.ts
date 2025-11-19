@@ -87,6 +87,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     excavationVolume: number = 0
     fillVolume: number = 0
     total3dArea: number = 0
+    lineLength: number = 0
 
     chartData: any[] = []
     allChartData: Record<string, any[]> = {}
