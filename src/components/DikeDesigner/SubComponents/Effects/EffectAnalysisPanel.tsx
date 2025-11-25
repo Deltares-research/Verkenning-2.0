@@ -17,7 +17,7 @@ import React, { useMemo } from "react";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { getIntersectingFeatures, calculate3dAreas } from "../../Functions/EffectFunctions";
+import { getIntersectingFeatures, calculate3dAreas, calculate2dAreas } from "../../Functions/EffectFunctions";
 
 interface EffectAnalysisPanelProps {
     model: DikeDesignerModel;
@@ -60,8 +60,10 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     };
 
     const handleDesignCalculations = async () => {
-        const totalArea = await calculate3dAreas(model.graphicsLayer3dPolygon.graphics, model);
-        model.total3dArea = totalArea;
+        const total2dArea = await calculate2dAreas(model);
+        model.total2dArea = total2dArea;
+        const total3dArea = await calculate3dAreas(model);
+        model.total3dArea = total3dArea;
 
         if (model.graphicsLayerLine?.graphics?.length > 0) {
             console.log("Calculating line length...");
@@ -126,6 +128,10 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px"}}>3D Oppervlakte [m²]</TableCell>
                             <TableCell  sx={{ fontSize: "11px"}} align="right">{model.total3dArea?.toFixed(2)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px"}}>2D Oppervlakte [m²]</TableCell>
+                            <TableCell  sx={{ fontSize: "11px"}} align="right">{model.total2dArea?.toFixed(2)}</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px"}}>Lengte traject [m]</TableCell>

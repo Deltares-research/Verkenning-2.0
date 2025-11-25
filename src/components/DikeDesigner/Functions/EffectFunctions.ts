@@ -50,7 +50,8 @@ export async function getIntersectingFeatures(model, layerTitle) {
 }
 
 
-export async function calculate3dAreas(graphics, model) {
+export async function calculate3dAreas(model) {
+    const graphics = model.graphicsLayer3dPolygon.graphics;
     let totalArea = 0;
     
     // Create elevation sampler once before the loop
@@ -162,6 +163,20 @@ export async function calculate3dAreas(graphics, model) {
     return totalArea;
 }
 
+export function calculate2dAreas(model) {
+    let totalArea = 0;
+    for (const graphic of model.graphicsLayerRuimtebeslag.graphics.items) {
+        console.log("Calculating area for 2dgraphic:", graphic);
+        try {
+            const area = geometryEngine.geodesicArea(graphic.geometry, "square-meters");
+            totalArea += area;
+        } catch (error) {
+            console.error("Error calculating 2D area for graphic:", graphic, error);
+        }
+    }
+    console.log("Total 2D Area for all graphics:", totalArea, "square meters");
+    return totalArea;
+}
 
 export function getLineLength(profileLine: any): number {
     try {
