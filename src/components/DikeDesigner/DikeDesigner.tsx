@@ -3,6 +3,7 @@ import ArchitectureIcon from "@mui/icons-material/Architecture";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SelectAllIcon from "@mui/icons-material/SelectAll";
+import BuildIcon from "@mui/icons-material/Build";
 
 import Box from "@vertigis/web/ui/Box";
 import Tab from "@vertigis/web/ui/Tab"
@@ -26,6 +27,7 @@ import {
     createCrossSection,
     exportDesignLayer2DAsGeoJSON,
     exportRuimteslagLayerAsGeoJSON,
+    exportInputLinesAsGeoJSON,
     setMapDwpLocation
 } from "./Functions/DesignFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
@@ -323,6 +325,11 @@ const DikeDesigner = (
         exportRuimteslagLayerAsGeoJSON(model)
     }
 
+    const handleExportInputLine = () => {
+        exportInputLinesAsGeoJSON(model)
+    }
+
+
     useWatchAndRerender(model, "excavationVolume");
     useWatchAndRerender(model, "fillVolume");
     useWatchAndRerender(model, "totalVolumeDifference");
@@ -396,15 +403,21 @@ const DikeDesigner = (
                         onChange={handleChange}
                         variant="scrollable"
                         scrollButtons="auto"
-
                         aria-label="scrollable auto tabs example"
-
                     >
-                        <Tab icon={<ArchitectureIcon />} label="Dimensioneren" {...a11yProps(0)}>
-                        </Tab>
-                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(1)} />
-                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(2)} />
-                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(3)} />
+                        <Tab 
+                            icon={<ArchitectureIcon />} 
+                            label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
+                            {...a11yProps(0)}
+                        />
+                        <Tab 
+                            icon={<BuildIcon />} 
+                            label={(<span>Dimensioneer<br />constructie</span>) as any}
+                            {...a11yProps(1)}
+                        />
+                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(2)} />
+                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(3)} />
+                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(4)} />
                     </Tabs>
                 </Box>
                 <CustomTabPanel value={value} index={0}>
@@ -422,6 +435,7 @@ const DikeDesigner = (
                         handleOpenOverview={handleOpenOverview}
                         handleCreateDesign={handleCreateDesign}
                         handleExport3dDesign={handleExport3dDesign}
+                        handleExportInputLine={handleExportInputLine}
                         handleExport2D={handleExport2D}
                         handleExportRuimtebeslag={handleExportRuimtebeslag}
                         handleClearDesign={handleClearDesign}
@@ -430,7 +444,25 @@ const DikeDesigner = (
                     />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
+                    {/* TODO: Add Dimensioneer constructie panel content */}
+                    <Box sx={{ p: 2 }}>
+                        Dimensioneer constructie - Coming soon
+                    </Box>
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={2}>
                     <EffectAnalysisPanel model={model} />
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={3}>
+                    {/* TODO: Add Kosten panel content */}
+                    <Box sx={{ p: 2 }}>
+                        Kosten - Coming soon
+                    </Box>
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={4}>
+                    {/* TODO: Add Afwegen panel content */}
+                    <Box sx={{ p: 2 }}>
+                        Afwegen - Coming soon
+                    </Box>
                 </CustomTabPanel>
             </Box>
 

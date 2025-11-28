@@ -21,8 +21,10 @@ import TableCell from "@vertigis/web/ui/TableCell";
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
 import Divider from "@vertigis/web/ui/Divider";
 import FormLabel from "@vertigis/web/ui/FormLabel";
+import Checkbox from "@vertigis/web/ui/Checkbox";
+import ListItemText from "@vertigis/web/ui/ListItemText";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { stackStyle } from "../../../styles";
 
@@ -42,6 +44,7 @@ interface DimensionsPanelProps {
     handleCreateCrossSection: () => () => void;
     handleCreateDesign: () => void;
     handleExport3dDesign: () => void;
+    handleExportInputLine: () => void;
     handleExport2D: () => void;
     handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
@@ -63,14 +66,51 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleCreateCrossSection,
     handleCreateDesign,
     handleExport3dDesign,
+    handleExportInputLine,
     handleExport2D,
     handleExportRuimtebeslag,
     handleClearDesign,
     loading,
 }) => {
+    const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
 
     const handleCreateLine = () => {
             model.startDrawingLine(model.graphicsLayerLine);
+    };
+
+    const downloadOptions = [
+        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
+        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
+    ];
+
+    const handleDownloadChange = (event) => {
+        const value = event.target.value;
+        setSelectedDownloads(typeof value === 'string' ? value.split(',') : value);
+    };
+
+    const handleDownloadSelected = async () => {
+        for (const downloadType of selectedDownloads) {
+            switch (downloadType) {
+                case 'inputline':
+                    handleExportInputLine();
+                    break;
+                case '3d':
+                    handleExport3dDesign();
+                    break;
+                case '2d':
+                    handleExport2D();
+                    break;
+                case 'ruimtebeslag':
+                    handleExportRuimtebeslag();
+                    break;
+            }
+            // Small delay between downloads to avoid browser blocking
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        // Clear selection after download
+        setSelectedDownloads([]);
     };
 
     // Common button style for consistent icon alignment
@@ -227,26 +267,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 </Button>
 
                  <Divider />
-                
-        
-
-                {/* Grid-size input */}
-                {/* <FormLabel>Grid grootte [m]</FormLabel>
-                <TextField
-                    value={model.gridSize}
-              
-                    type="number"
-                    // variant="outlined"
-                    size="medium"
-                    onChange={handleGridChange}
-                    sx={{ marginTop: 4 }}
-                    // InputProps={{
-                    //     sx: { fontSize: '12px', lineHeight: '2' },
-                    // // }}
-                    // InputLabelProps={{
-                    //     sx: { fontSize: '12px' }
-                    // }}
-                /> */}
 
                 <Button
                     disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length}
@@ -258,61 +278,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     sx={buttonWithIconStyle}
                 >
                     Uitrollen in 3D
-                </Button>
-
-                {/* <Button
-                    disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length || !model.selectedDijkvakField}
-                    variant="contained"
-                    color="primary"
-                    startIcon={<PlayCircleFilledWhiteIcon />}
-                    onClick={handleCreateDesign}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Uitrollen over dijkvakken
-                </Button> */}
-                {/* <Button
-                    disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length || !model.selectedDijkvakField}
-                    variant="contained"
-                    color="primary"
-                    startIcon={<TravelExploreIcon />}
-                    onClick={handle2DAnalysis}
-                    fullWidth
-                >
-                    Ruimtebeslag analyse (2D)
-                </Button> */}
-                <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleExport3dDesign}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download 3D ontwerpdata (GeoJSON)
-                </Button>
-                <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleExport2D}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download 2D ontwerpdata (GeoJSON)
-                </Button>
-                <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleExportRuimtebeslag}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download 2D ruimtebeslag (GeoJSON)
                 </Button>
 
                 <Button
@@ -328,7 +293,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 </Button>
 
                 <Button
-                    // disabled={!model.chartData?.length}
                     variant="contained"
                     color="primary"
                     startIcon={<InsightsIcon />}
@@ -338,6 +302,8 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Controleer dwarsprofiel
                 </Button>
+
+                <Divider />
 
             </Stack>
 
@@ -386,6 +352,46 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         </Table>
                     </TableContainer>
             </Stack>
+            <Stack spacing={1} sx={stackStyle}>
+                                    <FormLabel>Downloads (GeoJSON)</FormLabel>
+                <FormControl fullWidth size="small">
+                    <InputLabel sx={{ fontSize: "11px" }}>Selecteer data om te downloaden</InputLabel>
+                    <Select
+                        multiple
+                        value={selectedDownloads}
+                        onChange={handleDownloadChange}
+                        renderValue={(selected) => (selected as string[]).map(val => 
+                            downloadOptions.find(opt => opt.value === val)?.label
+                        ).join(', ')}
+                 
+                    >
+                        {downloadOptions.map((option) => (
+                            <MenuItem 
+                                key={option.value} 
+                                value={option.value}
+                                disabled={option.disabled}
+    
+                            >
+                                <Checkbox checked={selectedDownloads.indexOf(option.value) > -1} />
+                                <ListItemText primary={option.label} />
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <Button
+                    disabled={selectedDownloads.length === 0}
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<CloudDownloadIcon />}
+                    onClick={handleDownloadSelected}
+                    fullWidth
+                    sx={buttonWithIconStyle}
+                >
+                    Download geselecteerd ({selectedDownloads.length})
+                </Button>
+
+            </Stack>
+
         </Stack>
     );
 };
