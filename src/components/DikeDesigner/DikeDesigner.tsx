@@ -393,7 +393,7 @@ const DikeDesigner = (
 
 
     return (
-        <LayoutElement {...props} style={{ width: "100%", overflowY: "scroll" }}>
+        <LayoutElement {...props} style={{ width: "100%", overflowY: "auto" }}>
             <Box
                 sx={{ width: '100%' }}
             >

@@ -23,8 +23,13 @@ import Divider from "@vertigis/web/ui/Divider";
 import FormLabel from "@vertigis/web/ui/FormLabel";
 import Checkbox from "@vertigis/web/ui/Checkbox";
 import ListItemText from "@vertigis/web/ui/ListItemText";
+import Input from "@vertigis/web/ui/Input";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@vertigis/web/ui/DialogTitle";
+import DialogContent from "@vertigis/web/ui/DialogContent";
+import DialogActions from "@vertigis/web/ui/DialogActions";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import { stackStyle } from "../../../styles";
 
@@ -73,6 +78,32 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     loading,
 }) => {
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
+    
+    // Initialize from model if it exists, otherwise empty string
+    const [designName, setDesignName] = useState<string>(() => model.designName || "");
+    const [showNameDialog, setShowNameDialog] = useState(false);
+    
+    // Track if we've initialized to prevent resetting on re-renders
+    const hasInitialized = useRef(false);
+    
+    useEffect(() => {
+        if (!hasInitialized.current && model.designName) {
+            setDesignName(model.designName);
+            hasInitialized.current = true;
+        }
+    }, [model.designName]);
+
+    const handleDesignNameBlur = () => {
+        // Update model when input loses focus
+        if (designName.trim()) {
+            model.designName = designName.trim();
+        }
+    };
+
+    const handleDesignNameChange = (e) => {
+        // Update local state immediately for fast typing
+        setDesignName(e.target.value);
+    };
 
     const handleCreateLine = () => {
             model.startDrawingLine(model.graphicsLayerLine);
@@ -91,6 +122,15 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     };
 
     const handleDownloadSelected = async () => {
+        // Check if design name is filled in
+        if (!designName.trim()) {
+            setShowNameDialog(true);
+            return;
+        }
+
+        // Update model with trimmed name
+        model.designName = designName.trim();
+
         for (const downloadType of selectedDownloads) {
             switch (downloadType) {
                 case 'inputline':
@@ -111,6 +151,13 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         }
         // Clear selection after download
         setSelectedDownloads([]);
+    };
+
+    const handleDialogConfirm = () => {
+        setShowNameDialog(false);
+        if (designName.trim()) {
+            handleDownloadSelected();
+        }
     };
 
     // Common button style for consistent icon alignment
@@ -353,7 +400,17 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     </TableContainer>
             </Stack>
             <Stack spacing={1} sx={stackStyle}>
-                                    <FormLabel>Downloads (GeoJSON)</FormLabel>
+                <FormLabel>Downloads (GeoJSON)</FormLabel>
+                <InputLabel sx={{ fontSize: "11px" }}>Ontwerpnaam</InputLabel>
+                <Input
+                    value={designName}
+                    onChange={handleDesignNameChange}
+                    onBlur={handleDesignNameBlur}
+                    placeholder="Voer een ontwerpnaam in"
+                    size="small"
+                    fullWidth
+                />
+
                 <FormControl fullWidth size="small">
                     <InputLabel sx={{ fontSize: "11px" }}>Selecteer data om te downloaden</InputLabel>
                     <Select
@@ -392,6 +449,31 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
             </Stack>
 
+            {/* Name prompt dialog */}
+            <Dialog open={showNameDialog} onClose={() => setShowNameDialog(false)}>
+                <DialogTitle>Ontwerp naam vereist</DialogTitle>
+                <DialogContent>
+                    <Input
+                        autoFocus
+                        value={designName}
+                        onChange={handleDesignNameChange}
+                        onBlur={handleDesignNameBlur}
+                        placeholder="Voer een ontwerpnaam in"
+                        fullWidth
+                        sx={{ marginTop: 2 }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowNameDialog(false)}>Annuleren</Button>
+                    <Button 
+                        onClick={handleDialogConfirm} 
+                        variant="contained" 
+                        disabled={!designName.trim()}
+                    >
+                        Bevestigen
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Stack>
     );
 };

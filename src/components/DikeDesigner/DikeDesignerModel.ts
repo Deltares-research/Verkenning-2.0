@@ -49,6 +49,7 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
 
+    designName: string = "";
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
 
@@ -182,6 +183,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
     intersectingPercelen: object[] = []
+    intersectingWegdelen2dRuimtebeslag: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",

@@ -21,7 +21,7 @@ export async function getIntersectingFeatures(model, layerTitle) {
         return [];
     }
 
-    const geometries = model.graphicsLayerTemp.graphics.items.map(g => g.geometry);
+    const geometries = model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry);
 
     const unionGeometry = geometries.length > 1
         ? geometryEngine.union(geometries as any[])
@@ -49,6 +49,75 @@ export async function getIntersectingFeatures(model, layerTitle) {
 
 }
 
+export async function getIntersectingArea2dRuimtebeslag(model, layerTitle) {
+    const layerToQuery = model.map.allLayers.items.find(
+        (layer) => layer.title === layerTitle
+    ) as FeatureLayer;
+
+    if (!layerToQuery) {
+        console.warn(`Layer ${layerTitle} not found!`);
+        return 0;
+    }
+
+    // Get union of all 2d ruimtebeslag polygons
+    const geometries = model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry);
+    const unionGeometry = geometries.length > 1
+        ? geometryEngine.union(geometries as any[])
+        : geometries[0];
+
+    if (!unionGeometry) {
+        console.warn("No geometry to query with.");
+        return 0;
+    }
+
+    // Query features that intersect with 2d ruimtebeslag
+    const query = layerToQuery.createQuery();
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    query.geometry = unionGeometry;
+    query.spatialRelationship = "intersects";
+
+    try {
+        const result = await layerToQuery.queryFeatures(query);
+        console.log(`Found ${result.features.length} intersecting features in ${layerTitle}`);
+
+        let totalOverlapArea = 0;
+
+        // Calculate intersection area for each feature (synchronous operations, no await needed)
+        result.features.forEach((feature) => {
+            const intersection = geometryEngine.intersect(
+                feature.geometry,
+                unionGeometry
+            );
+
+            // // add graphic to graphicslayertemp
+            // model.graphicsLayerTemp.graphics.add({
+            //     geometry: intersection,
+            //     symbol: {
+            //         type: "simple-fill",
+            //         color: [255, 0, 0, 0.5],
+            //         outline: {
+            //             color: [255, 0, 0, 1],
+            //             width: 2
+            //         }
+            //     }
+            // });
+
+            if (intersection) {
+                const area = geometryEngine.geodesicArea(intersection as Polygon, "square-meters");
+                totalOverlapArea += area;
+                console.log(`Intersection area for feature ${feature.attributes.OBJECTID || 'unknown'}: ${area.toFixed(2)} m²`);
+            }
+        });
+
+        console.log(`Total overlap area with ${layerTitle}: ${totalOverlapArea.toFixed(2)} m²`);
+        return totalOverlapArea;
+
+    } catch (error) {
+        console.error(`Error calculating intersection area with ${layerTitle}:`, error);
+        return 0;
+    }
+}
 
 export async function calculate3dAreas(model) {
     const graphics = model.graphicsLayer3dPolygon.graphics;

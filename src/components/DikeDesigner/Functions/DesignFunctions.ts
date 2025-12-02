@@ -745,18 +745,16 @@ export function export3dGraphicsLayerAsGeoJSON(model): void {
         type: "FeatureCollection",
         crs: {
             type: "name",
-            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
+            properties: { name: "EPSG:4326" },
         },
         features: [],
     };
 
-    // Ensure the projection module is loaded
     projection.load().then(() => {
         model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
-                // Project the geometry to WGS84 (EPSG:4326)
                 const projectedGeometry = projection.project(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
@@ -765,33 +763,28 @@ export function export3dGraphicsLayerAsGeoJSON(model): void {
                 if (projectedGeometry) {
                     let feature: any = {
                         type: "Feature",
-                        geometry: null,
-                        properties: graphic.attributes || {}, // Include graphic attributes as properties
-                    };
-
-
-                    feature.geometry = {
-                        type: "Polygon",
-                        coordinates: (projectedGeometry as __esri.Polygon).rings,
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: (projectedGeometry as __esri.Polygon).rings,
+                        },
+                        properties: graphic.attributes || {},
                     };
                     geojson.features.push(feature);
-
-
-                    // geojson.features.push(feature);
                 }
             }
         });
 
-        // Create and download the GeoJSON file
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_3d.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_ontwerp_3d.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
@@ -800,54 +793,46 @@ export function exportRuimteslagLayerAsGeoJSON(model): void {
         type: "FeatureCollection",
         crs: {
             type: "name",
-            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
+            properties: { name: "EPSG:4326" },
         },
         features: [],
     };
 
-    // Ensure the projection module is loaded
     projection.load().then(() => {
         model.graphicsLayerRuimtebeslag.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
-                // Project the geometry to WGS84 (EPSG:4326)
                 const projectedGeometry = projection.project(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
 
-                if (projectedGeometry) {
+                if (projectedGeometry && !Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
                     let feature: any = {
                         type: "Feature",
-                        geometry: null,
-                        properties: graphic.attributes || {}, // Include graphic attributes as properties
-                    };
-
-                    // Handle different geometry types
-                    if (!Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
-                        feature.geometry = {
+                        geometry: {
                             type: "Polygon",
                             coordinates: (projectedGeometry as __esri.Polygon).rings,
-                        };
-                        geojson.features.push(feature);
-                    }
-
-                    // geojson.features.push(feature);
+                        },
+                        properties: graphic.attributes || {},
+                    };
+                    geojson.features.push(feature);
                 }
             }
         });
 
-        // Create and download the GeoJSON file
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_ruimtebeslag_2d.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_ruimtebeslag_2d.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
@@ -869,16 +854,17 @@ export function exportDesignLayer2DAsGeoJSON(model): void {
             })),
         };
 
-        // Create and download the GeoJSON file
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_2d.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_ontwerp_2d.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
@@ -887,16 +873,15 @@ export function exportInputLinesAsGeoJSON(model): void {
         type: "FeatureCollection",
         crs: {
             type: "name",
-            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
+            properties: { name: "EPSG:4326" },
         },
         features: [],
     };
-    // Ensure the projection module is loaded
+    
     projection.load().then(() => {
         model.graphicsLayerLine.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
             if (geometry) {
-                // Project the geometry to WGS84 (EPSG:4326)
                 const projectedGeometry = projection.project(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
@@ -904,28 +889,28 @@ export function exportInputLinesAsGeoJSON(model): void {
                 if (projectedGeometry) {
                     let feature: any = {
                         type: "Feature",
-                        geometry: null,
-                        properties: graphic.attributes || {}, // Include graphic attributes as properties
-                    };
-                    feature.geometry = {
-                        type: "LineString",
-                        coordinates: (projectedGeometry as __esri.Polyline).paths[0],
+                        geometry: {
+                            type: "LineString",
+                            coordinates: (projectedGeometry as __esri.Polyline).paths[0],
+                        },
+                        properties: graphic.attributes || {},
                     };
                     geojson.features.push(feature);
                 }
             }
         });
-        // Create and download the GeoJSON file
+        
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_input_lines.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_input_lines.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
-
 }
 
 export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef; userSeriesRef }): () => void {
