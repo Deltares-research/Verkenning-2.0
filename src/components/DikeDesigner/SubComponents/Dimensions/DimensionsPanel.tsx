@@ -6,6 +6,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import MapIcon from "@mui/icons-material/Map";
 import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import SaveIcon from "@mui/icons-material/Save";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -53,6 +54,7 @@ interface DimensionsPanelProps {
     handleExport2D: () => void;
     handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
+    handleSaveDesign: () => Promise<void>;
     loading: boolean;
 }
 
@@ -75,6 +77,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleExport2D,
     handleExportRuimtebeslag,
     handleClearDesign,
+    handleSaveDesign,
     loading,
 }) => {
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
@@ -157,6 +160,17 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         setShowNameDialog(false);
         if (designName.trim()) {
             handleDownloadSelected();
+        }
+    };
+
+    const [saveLoading, setSaveLoading] = useState(false);
+
+    const handleSaveClick = async () => {
+        setSaveLoading(true);
+        try {
+            await handleSaveDesign();
+        } finally {
+            setSaveLoading(false);
         }
     };
 
@@ -401,12 +415,12 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
             </Stack>
             <Stack spacing={1} sx={stackStyle}>
                 <FormLabel>Downloads (GeoJSON)</FormLabel>
-                <InputLabel sx={{ fontSize: "11px" }}>Ontwerpnaam</InputLabel>
+                
                 <Input
                     value={designName}
                     onChange={handleDesignNameChange}
                     onBlur={handleDesignNameBlur}
-                    placeholder="Voer een ontwerpnaam in"
+                    placeholder="Naam ontwerpbestand"
                     size="small"
                     fullWidth
                 />
@@ -435,6 +449,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         ))}
                     </Select>
                 </FormControl>
+                
                 <Button
                     disabled={selectedDownloads.length === 0}
                     variant="contained"
@@ -445,6 +460,23 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     sx={buttonWithIconStyle}
                 >
                     Download geselecteerd ({selectedDownloads.length})
+                </Button>
+
+
+
+            </Stack>
+            <Stack spacing={1} sx={stackStyle}>
+                <FormLabel>Ontwerpen opslaan</FormLabel>
+                <Button
+                    disabled={!model.graphicsLayer3dPolygon?.graphics?.length || saveLoading}
+                    variant="contained"
+                    color="primary"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSaveClick}
+                    fullWidth
+                    sx={buttonWithIconStyle}
+                >
+                    {saveLoading ? "Opslaan..." : "3D ontwerp opslaan"}
                 </Button>
 
             </Stack>

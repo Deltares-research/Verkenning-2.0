@@ -45,6 +45,8 @@ import { array } from "@amcharts/amcharts5";
 import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
+    designFeatureLayer3dUrl?: string;
+    designFeatureLayer3dWeergaveName?: string;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -56,6 +58,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     loading: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
+    designFeatureLayer3dUrl: DikeDesignerModelProperties["designFeatureLayer3dUrl"];
+    designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -563,7 +567,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             elevationLayerUrl: {
                 serializeModes: ["initial"],
                 default: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
-            }
+            },
+            designFeatureLayer3dUrl: {
+                serializeModes: ["initial"],
+                default: "https://portal.wsrl.nl/kaarten/rest/services/Hosted/zwo_ontwerpen_3d/FeatureServer/0",
+            },
+            designFeatureLayer3dWeergaveName: {
+                serializeModes: ["initial"],
+                default: "3D vlakken - test",
+            },
         };
     }
 

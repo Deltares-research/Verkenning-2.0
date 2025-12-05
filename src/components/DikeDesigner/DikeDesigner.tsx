@@ -28,8 +28,9 @@ import {
     exportDesignLayer2DAsGeoJSON,
     exportRuimteslagLayerAsGeoJSON,
     exportInputLinesAsGeoJSON,
-    setMapDwpLocation
+    setMapDwpLocation,
 } from "./Functions/DesignFunctions";
+import { saveDesignToFeatureLayers } from "./Functions/SaveFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
@@ -329,6 +330,17 @@ const DikeDesigner = (
         exportInputLinesAsGeoJSON(model)
     }
 
+    const handleSaveDesign = async () => {
+        try {
+            const savedCount = await saveDesignToFeatureLayers(model);
+            // Optionally show success message to user
+            console.log(`Successfully saved ${savedCount} features`);
+        } catch (error) {
+            // Optionally show error message to user
+            console.error("Failed to save design:", error);
+        }
+    }
+
 
     useWatchAndRerender(model, "excavationVolume");
     useWatchAndRerender(model, "fillVolume");
@@ -440,6 +452,7 @@ const DikeDesigner = (
                         handleExportRuimtebeslag={handleExportRuimtebeslag}
                         handleClearDesign={handleClearDesign}
                         handleCreateCrossSection={handleCreateCrossSection}
+                        handleSaveDesign={handleSaveDesign}
                         loading={loading}
                     />
                 </CustomTabPanel>
