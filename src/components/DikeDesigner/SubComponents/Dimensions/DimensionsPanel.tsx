@@ -25,10 +25,7 @@ import FormLabel from "@vertigis/web/ui/FormLabel";
 import Checkbox from "@vertigis/web/ui/Checkbox";
 import ListItemText from "@vertigis/web/ui/ListItemText";
 import Input from "@vertigis/web/ui/Input";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@vertigis/web/ui/DialogTitle";
-import DialogContent from "@vertigis/web/ui/DialogContent";
-import DialogActions from "@vertigis/web/ui/DialogActions";
+import Alert from "@vertigis/web/ui/Alert";
 
 import React, { useState, useRef, useEffect } from "react";
 
@@ -81,10 +78,8 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     loading,
 }) => {
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
-    
-    // Initialize from model if it exists, otherwise empty string
     const [designName, setDesignName] = useState<string>(() => model.designName || "");
-    const [showNameDialog, setShowNameDialog] = useState(false);
+    const [showNameWarning, setShowNameWarning] = useState(false); // Changed from showNameDialog
     
     // Track if we've initialized to prevent resetting on re-renders
     const hasInitialized = useRef(false);
@@ -103,33 +98,15 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         }
     };
 
-    const handleDesignNameChange = (e) => {
-        // Update local state immediately for fast typing
-        setDesignName(e.target.value);
-    };
-
-    const handleCreateLine = () => {
-            model.startDrawingLine(model.graphicsLayerLine);
-    };
-
-    const downloadOptions = [
-        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
-        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
-        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
-        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
-    ];
-
-    const handleDownloadChange = (event) => {
-        const value = event.target.value;
-        setSelectedDownloads(typeof value === 'string' ? value.split(',') : value);
-    };
-
     const handleDownloadSelected = async () => {
         // Check if design name is filled in
         if (!designName.trim()) {
-            setShowNameDialog(true);
+            setShowNameWarning(true); // Show warning instead of dialog
             return;
         }
+
+        // Hide warning if name is valid
+        setShowNameWarning(false);
 
         // Update model with trimmed name
         model.designName = designName.trim();
@@ -156,11 +133,28 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         setSelectedDownloads([]);
     };
 
-    const handleDialogConfirm = () => {
-        setShowNameDialog(false);
-        if (designName.trim()) {
-            handleDownloadSelected();
+    const handleDesignNameChange = (e) => {
+        setDesignName(e.target.value);
+        // Hide warning when user starts typing
+        if (e.target.value.trim()) {
+            setShowNameWarning(false);
         }
+    };
+
+    const handleCreateLine = () => {
+            model.startDrawingLine(model.graphicsLayerLine);
+    };
+
+    const downloadOptions = [
+        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
+        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
+    ];
+
+    const handleDownloadChange = (event) => {
+        const value = event.target.value;
+        setSelectedDownloads(typeof value === 'string' ? value.split(',') : value);
     };
 
     const [saveLoading, setSaveLoading] = useState(false);
@@ -186,8 +180,54 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
     return (
         <Stack spacing={1}>
-            <Stack spacing={2} sx={stackStyle}>
-                <FormLabel>Referentielijn</FormLabel>
+            {/* Ontwerp naam - prominent bovenaan */}
+            <Stack spacing={1.5} sx={{
+                ...stackStyle,
+                // backgroundColor: '#fff3e0',
+                // border: '1px solid #ff9800',
+                borderRadius: '8px',
+            }}>
+                <FormLabel sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '14px',
+                    color: '#000000ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                }}>
+                    <EditIcon sx={{ fontSize: 18 }} />
+                    Ontwerp naam
+                </FormLabel>
+                
+                <Input
+                    value={designName}
+                    onChange={handleDesignNameChange}
+                    onBlur={handleDesignNameBlur}
+                    placeholder="Voer een ontwerpnaam in..."
+                    size="medium"
+                    fullWidth
+                    error={showNameWarning}
+                    sx={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        '& .MuiInputBase-input': {
+                            padding: '12px 14px',
+                        },
+                        backgroundColor: 'white',
+                    }}
+                />
+
+                {/* Alert onder de naam input */}
+                {showNameWarning && (
+                    <Alert severity="warning" sx={{ marginTop: 1 }}>
+                        Vul een ontwerp naam in voordat u bestanden downloadt of opslaat.
+                    </Alert>
+                )}
+            </Stack>
+            <Divider />
+
+            <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Stap 1: referentielijn bepalen</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
                         disabled={!model.sketchViewModel}
@@ -314,7 +354,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     onChange={handleFileChange}
                 />
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Ontwerpen</FormLabel>
+                <FormLabel>Stap 2: dwarsprofiel bepalen</FormLabel>
                 <Button
                     variant="contained"
                     color="primary"
@@ -353,7 +393,11 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     Verwijder uitrol
                 </Button>
 
-                <Button
+            </Stack>
+
+            <Stack spacing={1.5} sx={stackStyle}>
+                 <FormLabel>Stap 3: controleren dwarsprofiel</FormLabel>
+            <Button
                     variant="contained"
                     color="primary"
                     startIcon={<InsightsIcon />}
@@ -363,10 +407,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Controleer dwarsprofiel
                 </Button>
-
-                <Divider />
-
-            </Stack>
+                </Stack>
 
             <Stack spacing={1.5} sx={stackStyle}>
                     {loading && (
@@ -413,18 +454,9 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         </Table>
                     </TableContainer>
             </Stack>
-            <Stack spacing={1} sx={stackStyle}>
-                <FormLabel>Downloads (GeoJSON)</FormLabel>
+            <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Stap 4: bestanden downloaden</FormLabel>
                 
-                <Input
-                    value={designName}
-                    onChange={handleDesignNameChange}
-                    onBlur={handleDesignNameBlur}
-                    placeholder="Naam ontwerpbestand"
-                    size="small"
-                    fullWidth
-                />
-
                 <FormControl fullWidth size="small">
                     <InputLabel sx={{ fontSize: "11px" }}>Selecteer data om te downloaden</InputLabel>
                     <Select
@@ -465,8 +497,8 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
 
             </Stack>
-            <Stack spacing={1} sx={stackStyle}>
-                <FormLabel>Ontwerpen opslaan</FormLabel>
+            <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Stap 5: ontwerpen opslaan</FormLabel>
                 <Button
                     disabled={!model.graphicsLayer3dPolygon?.graphics?.length || saveLoading}
                     variant="contained"
@@ -481,31 +513,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
             </Stack>
 
-            {/* Name prompt dialog */}
-            <Dialog open={showNameDialog} onClose={() => setShowNameDialog(false)}>
-                <DialogTitle>Ontwerp naam vereist</DialogTitle>
-                <DialogContent>
-                    <Input
-                        autoFocus
-                        value={designName}
-                        onChange={handleDesignNameChange}
-                        onBlur={handleDesignNameBlur}
-                        placeholder="Voer een ontwerpnaam in"
-                        fullWidth
-                        sx={{ marginTop: 2 }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setShowNameDialog(false)}>Annuleren</Button>
-                    <Button 
-                        onClick={handleDialogConfirm} 
-                        variant="contained" 
-                        disabled={!designName.trim()}
-                    >
-                        Bevestigen
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Stack>
     );
 };
