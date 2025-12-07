@@ -47,6 +47,8 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
     designFeatureLayer3dUrl?: string;
     designFeatureLayer3dWeergaveName?: string;
+    designFeatureLayer2dRuimtebeslagUrl?: string;
+    designFeatureLayer2dRuimtebeslagWeergaveName?: string;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -60,6 +62,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
     designFeatureLayer3dUrl: DikeDesignerModelProperties["designFeatureLayer3dUrl"];
     designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
+    designFeatureLayer2dRuimtebeslagUrl: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagUrl"];
+    designFeatureLayer2dRuimtebeslagWeergaveName: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagWeergaveName"];
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -575,6 +579,14 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             designFeatureLayer3dWeergaveName: {
                 serializeModes: ["initial"],
                 default: "3D vlakken - test",
+            },
+            designFeatureLayer2dRuimtebeslagUrl: {
+                serializeModes: ["initial"],
+                default: "https://portal.wsrl.nl/kaarten/rest/services/Hosted/zwo_ruimtebeslag_2d/FeatureServer/0",
+            },
+            designFeatureLayer2dRuimtebeslagWeergaveName: {
+                serializeModes: ["initial"],
+                default: "2D ruimtebeslag - test",
             },
         };
     }

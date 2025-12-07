@@ -541,7 +541,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     fullWidth
                     sx={buttonWithIconStyle}
                 >
-                    {saveLoading ? "Opslaan..." : "3D ontwerp opslaan"}
+                    {saveLoading ? "Opslaan..." : "Ontwerpen opslaan"}
                 </Button>
             </Stack>
 
