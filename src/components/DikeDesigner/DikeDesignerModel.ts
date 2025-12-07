@@ -45,16 +45,21 @@ import { array } from "@amcharts/amcharts5";
 import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
+    designFeatureLayer3dUrl?: string;
+    designFeatureLayer3dWeergaveName?: string;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
 
+    designName: string = "";
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
 
     loading: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
+    designFeatureLayer3dUrl: DikeDesignerModelProperties["designFeatureLayer3dUrl"];
+    designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -86,6 +91,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     totalVolumeDifference: number = 0
     excavationVolume: number = 0
     fillVolume: number = 0
+    total3dArea: number = 0
+    total2dArea: number = 0
+    lineLength: number = 0
 
     chartData: any[] = []
     allChartData: Record<string, any[]> = {}
@@ -120,6 +128,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectedPointIndex: number | null = null
     selectingDwpLocation: boolean = false
     crossSectionLength: number = 100
+    
 
     lineLayerSymbol = {
         type: "simple-line",
@@ -178,6 +187,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
     intersectingPercelen: object[] = []
+    intersectingWegdelen2dRuimtebeslag: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",
@@ -557,7 +567,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             elevationLayerUrl: {
                 serializeModes: ["initial"],
                 default: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
-            }
+            },
+            designFeatureLayer3dUrl: {
+                serializeModes: ["initial"],
+                default: "https://portal.wsrl.nl/kaarten/rest/services/Hosted/zwo_ontwerpen_3d/FeatureServer/0",
+            },
+            designFeatureLayer3dWeergaveName: {
+                serializeModes: ["initial"],
+                default: "3D vlakken - test",
+            },
         };
     }
 

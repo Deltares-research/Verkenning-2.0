@@ -3,6 +3,7 @@ import ArchitectureIcon from "@mui/icons-material/Architecture";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SelectAllIcon from "@mui/icons-material/SelectAll";
+import BuildIcon from "@mui/icons-material/Build";
 
 import Box from "@vertigis/web/ui/Box";
 import Tab from "@vertigis/web/ui/Tab"
@@ -26,8 +27,10 @@ import {
     createCrossSection,
     exportDesignLayer2DAsGeoJSON,
     exportRuimteslagLayerAsGeoJSON,
-    setMapDwpLocation
+    exportInputLinesAsGeoJSON,
+    setMapDwpLocation,
 } from "./Functions/DesignFunctions";
+import { saveDesignToFeatureLayers } from "./Functions/SaveFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
@@ -182,6 +185,8 @@ const DikeDesigner = (
         model.crossSectionChartData = [];
         model.selectedLineLayerId = null;
         model.selectedDijkvakField = null;
+        model.lineLength = null;
+        model.view.analyses.removeAll()
     };
 
     const handleGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +258,10 @@ const DikeDesigner = (
         model.graphicsLayerTemp.removeAll();
         model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
+        model.view.analyses.removeAll()
+        model.total3dArea = null;
+        model.total2dArea = null;
+        model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
 
         setLoading(true); // Show loader
@@ -297,7 +306,12 @@ const DikeDesigner = (
         model.intersectingBomen = null;
         model.intersectingPercelen = null;
         model.userLinePoints = [];
+        model.view.analyses.removeAll()
+        model.total3dArea = null;
+        model.total2dArea = null;
+        model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
+
     };
 
     const handleExport3dDesign = () => {
@@ -311,6 +325,22 @@ const DikeDesigner = (
     const handleExportRuimtebeslag = () => {
         exportRuimteslagLayerAsGeoJSON(model)
     }
+
+    const handleExportInputLine = () => {
+        exportInputLinesAsGeoJSON(model)
+    }
+
+    const handleSaveDesign = async () => {
+        try {
+            const savedCount = await saveDesignToFeatureLayers(model);
+            // Optionally show success message to user
+            console.log(`Successfully saved ${savedCount} features`);
+        } catch (error) {
+            // Optionally show error message to user
+            console.error("Failed to save design:", error);
+        }
+    }
+
 
     useWatchAndRerender(model, "excavationVolume");
     useWatchAndRerender(model, "fillVolume");
@@ -375,7 +405,7 @@ const DikeDesigner = (
 
 
     return (
-        <LayoutElement {...props} style={{ width: "100%", overflowY: "scroll" }}>
+        <LayoutElement {...props} style={{ width: "100%", overflowY: "auto" }}>
             <Box
                 sx={{ width: '100%' }}
             >
@@ -385,15 +415,21 @@ const DikeDesigner = (
                         onChange={handleChange}
                         variant="scrollable"
                         scrollButtons="auto"
-
                         aria-label="scrollable auto tabs example"
-
                     >
-                        <Tab icon={<ArchitectureIcon />} label="Dimensioneren" {...a11yProps(0)}>
-                        </Tab>
-                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(1)} />
-                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(2)} />
-                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(3)} />
+                        <Tab 
+                            icon={<ArchitectureIcon />} 
+                            label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
+                            {...a11yProps(0)}
+                        />
+                        <Tab 
+                            icon={<BuildIcon />} 
+                            label={(<span>Dimensioneer<br />constructie</span>) as any}
+                            {...a11yProps(1)}
+                        />
+                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(2)} />
+                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(3)} />
+                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(4)} />
                     </Tabs>
                 </Box>
                 <CustomTabPanel value={value} index={0}>
@@ -411,15 +447,35 @@ const DikeDesigner = (
                         handleOpenOverview={handleOpenOverview}
                         handleCreateDesign={handleCreateDesign}
                         handleExport3dDesign={handleExport3dDesign}
+                        handleExportInputLine={handleExportInputLine}
                         handleExport2D={handleExport2D}
                         handleExportRuimtebeslag={handleExportRuimtebeslag}
                         handleClearDesign={handleClearDesign}
                         handleCreateCrossSection={handleCreateCrossSection}
+                        handleSaveDesign={handleSaveDesign}
                         loading={loading}
                     />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
+                    {/* TODO: Add Dimensioneer constructie panel content */}
+                    <Box sx={{ p: 2 }}>
+                        Dimensioneer constructie - Coming soon
+                    </Box>
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={2}>
                     <EffectAnalysisPanel model={model} />
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={3}>
+                    {/* TODO: Add Kosten panel content */}
+                    <Box sx={{ p: 2 }}>
+                        Kosten - Coming soon
+                    </Box>
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={4}>
+                    {/* TODO: Add Afwegen panel content */}
+                    <Box sx={{ p: 2 }}>
+                        Afwegen - Coming soon
+                    </Box>
                 </CustomTabPanel>
             </Box>
 

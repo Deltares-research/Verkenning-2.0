@@ -1,2 +1,38 @@
 build/
 node_modules/
+
+# Python backend
+/backend/venv/
+/backend/__pycache__/
+/backend/*.pyc
+/backend/.env
+/backend/.pytest_cache/
+/backend/*.egg-info/
+/backend/dist/
+/backend/build/
+/backend/.coverage
+/backend/htmlcov/
+/backend/.mypy_cache/
+/backend/.ruff_cache/
+
+# Python general
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+.installed.cfg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

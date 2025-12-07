@@ -6,6 +6,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import MapIcon from "@mui/icons-material/Map";
 import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import SaveIcon from "@mui/icons-material/Save";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -21,8 +22,12 @@ import TableCell from "@vertigis/web/ui/TableCell";
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
 import Divider from "@vertigis/web/ui/Divider";
 import FormLabel from "@vertigis/web/ui/FormLabel";
+import Checkbox from "@vertigis/web/ui/Checkbox";
+import ListItemText from "@vertigis/web/ui/ListItemText";
+import Input from "@vertigis/web/ui/Input";
+import Alert from "@vertigis/web/ui/Alert";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import { stackStyle } from "../../../styles";
 
@@ -42,9 +47,11 @@ interface DimensionsPanelProps {
     handleCreateCrossSection: () => () => void;
     handleCreateDesign: () => void;
     handleExport3dDesign: () => void;
+    handleExportInputLine: () => void;
     handleExport2D: () => void;
     handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
+    handleSaveDesign: () => Promise<void>;
     loading: boolean;
 }
 
@@ -63,14 +70,102 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleCreateCrossSection,
     handleCreateDesign,
     handleExport3dDesign,
+    handleExportInputLine,
     handleExport2D,
     handleExportRuimtebeslag,
     handleClearDesign,
+    handleSaveDesign,
     loading,
 }) => {
+    const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
+    const [designName, setDesignName] = useState<string>(() => model.designName || "");
+    const [showNameWarning, setShowNameWarning] = useState(false); // Changed from showNameDialog
+    
+    // Track if we've initialized to prevent resetting on re-renders
+    const hasInitialized = useRef(false);
+    
+    useEffect(() => {
+        if (!hasInitialized.current && model.designName) {
+            setDesignName(model.designName);
+            hasInitialized.current = true;
+        }
+    }, [model.designName]);
+
+    const handleDesignNameBlur = () => {
+        // Update model when input loses focus
+        if (designName.trim()) {
+            model.designName = designName.trim();
+        }
+    };
+
+    const handleDownloadSelected = async () => {
+        // Check if design name is filled in
+        if (!designName.trim()) {
+            setShowNameWarning(true); // Show warning instead of dialog
+            return;
+        }
+
+        // Hide warning if name is valid
+        setShowNameWarning(false);
+
+        // Update model with trimmed name
+        model.designName = designName.trim();
+
+        for (const downloadType of selectedDownloads) {
+            switch (downloadType) {
+                case 'inputline':
+                    handleExportInputLine();
+                    break;
+                case '3d':
+                    handleExport3dDesign();
+                    break;
+                case '2d':
+                    handleExport2D();
+                    break;
+                case 'ruimtebeslag':
+                    handleExportRuimtebeslag();
+                    break;
+            }
+            // Small delay between downloads to avoid browser blocking
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        // Clear selection after download
+        setSelectedDownloads([]);
+    };
+
+    const handleDesignNameChange = (e) => {
+        setDesignName(e.target.value);
+        // Hide warning when user starts typing
+        if (e.target.value.trim()) {
+            setShowNameWarning(false);
+        }
+    };
 
     const handleCreateLine = () => {
             model.startDrawingLine(model.graphicsLayerLine);
+    };
+
+    const downloadOptions = [
+        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
+        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
+    ];
+
+    const handleDownloadChange = (event) => {
+        const value = event.target.value;
+        setSelectedDownloads(typeof value === 'string' ? value.split(',') : value);
+    };
+
+    const [saveLoading, setSaveLoading] = useState(false);
+
+    const handleSaveClick = async () => {
+        setSaveLoading(true);
+        try {
+            await handleSaveDesign();
+        } finally {
+            setSaveLoading(false);
+        }
     };
 
     // Common button style for consistent icon alignment
@@ -85,8 +180,54 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
     return (
         <Stack spacing={1}>
-            <Stack spacing={2} sx={stackStyle}>
-                <FormLabel>Referentielijn</FormLabel>
+            {/* Ontwerp naam - prominent bovenaan */}
+            <Stack spacing={1.5} sx={{
+                ...stackStyle,
+                // backgroundColor: '#fff3e0',
+                // border: '1px solid #ff9800',
+                borderRadius: '8px',
+            }}>
+                <FormLabel sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '14px',
+                    color: '#000000ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                }}>
+                    <EditIcon sx={{ fontSize: 18 }} />
+                    Ontwerp naam
+                </FormLabel>
+                
+                <Input
+                    value={designName}
+                    onChange={handleDesignNameChange}
+                    onBlur={handleDesignNameBlur}
+                    placeholder="Voer een ontwerpnaam in..."
+                    size="medium"
+                    fullWidth
+                    error={showNameWarning}
+                    sx={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        '& .MuiInputBase-input': {
+                            padding: '12px 14px',
+                        },
+                        backgroundColor: 'white',
+                    }}
+                />
+
+                {/* Alert onder de naam input */}
+                {showNameWarning && (
+                    <Alert severity="warning" sx={{ marginTop: 1 }}>
+                        Vul een ontwerp naam in voordat u bestanden downloadt of opslaat.
+                    </Alert>
+                )}
+            </Stack>
+            <Divider />
+
+            <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Stap 1: referentielijn bepalen</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
                         disabled={!model.sketchViewModel}
@@ -213,7 +354,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     onChange={handleFileChange}
                 />
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Ontwerpen</FormLabel>
+                <FormLabel>Stap 2: dwarsprofiel bepalen</FormLabel>
                 <Button
                     variant="contained"
                     color="primary"
@@ -227,26 +368,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 </Button>
 
                  <Divider />
-                
-        
-
-                {/* Grid-size input */}
-                {/* <FormLabel>Grid grootte [m]</FormLabel>
-                <TextField
-                    value={model.gridSize}
-              
-                    type="number"
-                    // variant="outlined"
-                    size="medium"
-                    onChange={handleGridChange}
-                    sx={{ marginTop: 4 }}
-                    // InputProps={{
-                    //     sx: { fontSize: '12px', lineHeight: '2' },
-                    // // }}
-                    // InputLabelProps={{
-                    //     sx: { fontSize: '12px' }
-                    // }}
-                /> */}
 
                 <Button
                     disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length}
@@ -258,61 +379,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     sx={buttonWithIconStyle}
                 >
                     Uitrollen in 3D
-                </Button>
-
-                {/* <Button
-                    disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length || !model.selectedDijkvakField}
-                    variant="contained"
-                    color="primary"
-                    startIcon={<PlayCircleFilledWhiteIcon />}
-                    onClick={handleCreateDesign}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Uitrollen over dijkvakken
-                </Button> */}
-                {/* <Button
-                    disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length || !model.selectedDijkvakField}
-                    variant="contained"
-                    color="primary"
-                    startIcon={<TravelExploreIcon />}
-                    onClick={handle2DAnalysis}
-                    fullWidth
-                >
-                    Ruimtebeslag analyse (2D)
-                </Button> */}
-                <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleExport3dDesign}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download 3D ontwerpdata (GeoJSON)
-                </Button>
-                <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleExport2D}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download 2D ontwerpdata (GeoJSON)
-                </Button>
-                <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleExportRuimtebeslag}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download 2D ruimtebeslag (GeoJSON)
                 </Button>
 
                 <Button
@@ -327,8 +393,11 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     Verwijder uitrol
                 </Button>
 
-                <Button
-                    // disabled={!model.chartData?.length}
+            </Stack>
+
+            <Stack spacing={1.5} sx={stackStyle}>
+                 <FormLabel>Stap 3: controleren dwarsprofiel</FormLabel>
+            <Button
                     variant="contained"
                     color="primary"
                     startIcon={<InsightsIcon />}
@@ -338,8 +407,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Controleer dwarsprofiel
                 </Button>
-
-            </Stack>
+                </Stack>
 
             <Stack spacing={1.5} sx={stackStyle}>
                     {loading && (
@@ -386,6 +454,65 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         </Table>
                     </TableContainer>
             </Stack>
+            <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Stap 4: bestanden downloaden</FormLabel>
+                
+                <FormControl fullWidth size="small">
+                    <InputLabel sx={{ fontSize: "11px" }}>Selecteer data om te downloaden</InputLabel>
+                    <Select
+                        multiple
+                        value={selectedDownloads}
+                        onChange={handleDownloadChange}
+                        renderValue={(selected) => (selected as string[]).map(val => 
+                            downloadOptions.find(opt => opt.value === val)?.label
+                        ).join(', ')}
+                 
+                    >
+                        {downloadOptions.map((option) => (
+                            <MenuItem 
+                                key={option.value} 
+                                value={option.value}
+                                disabled={option.disabled}
+    
+                            >
+                                <Checkbox checked={selectedDownloads.indexOf(option.value) > -1} />
+                                <ListItemText primary={option.label} />
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                
+                <Button
+                    disabled={selectedDownloads.length === 0}
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<CloudDownloadIcon />}
+                    onClick={handleDownloadSelected}
+                    fullWidth
+                    sx={buttonWithIconStyle}
+                >
+                    Download geselecteerd ({selectedDownloads.length})
+                </Button>
+
+
+
+            </Stack>
+            <Stack spacing={1.5} sx={stackStyle}>
+                <FormLabel>Stap 5: ontwerpen opslaan</FormLabel>
+                <Button
+                    disabled={!model.graphicsLayer3dPolygon?.graphics?.length || saveLoading}
+                    variant="contained"
+                    color="primary"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSaveClick}
+                    fullWidth
+                    sx={buttonWithIconStyle}
+                >
+                    {saveLoading ? "Opslaan..." : "3D ontwerp opslaan"}
+                </Button>
+
+            </Stack>
+
         </Stack>
     );
 };

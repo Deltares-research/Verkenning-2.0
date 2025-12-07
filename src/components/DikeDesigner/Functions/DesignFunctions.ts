@@ -340,26 +340,26 @@ export async function calculateVolume(model): Promise<void> {
 
     // **PROJECT MESH EXTENT TO RD NEW FOR PROPER METER-BASED GRID**
     const extent = model.meshGraphic.geometry.extent;
-    
+
     // RD New spatial reference (EPSG:28992) where 1 unit = 1 meter
     const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
     await projection.load();
-    
+
     // Create extent polygon and project to RD New
     const extentPolygon = new Polygon({
         rings: [[
             [extent.xmin, extent.ymin],
-            [extent.xmax, extent.ymin], 
+            [extent.xmax, extent.ymin],
             [extent.xmax, extent.ymax],
             [extent.xmin, extent.ymax],
             [extent.xmin, extent.ymin]
         ]],
         spatialReference: extent.spatialReference
     });
-    
+
     const projectedExtent = projection.project(extentPolygon, rdNewSpatialRef) as Polygon;
     const rdExtent = projectedExtent.extent;
-    
+
     console.log(`Original extent (Web Mercator): xmin=${extent.xmin.toFixed(2)}, xmax=${extent.xmax.toFixed(2)}, ymin=${extent.ymin.toFixed(2)}, ymax=${extent.ymax.toFixed(2)}`);
     console.log(`RD extent: xmin=${rdExtent.xmin.toFixed(2)}, xmax=${rdExtent.xmax.toFixed(2)}, ymin=${rdExtent.ymin.toFixed(2)}, ymax=${rdExtent.ymax.toFixed(2)}`);
 
@@ -369,25 +369,25 @@ export async function calculateVolume(model): Promise<void> {
     // **GENERATE GRID IN RD NEW COORDINATES WITH PROPER METER SPACING**
     let pointCount = 0;
     let validPoints = 0;
-    
+
     for (let rdX = rdExtent.xmin; rdX <= rdExtent.xmax; rdX += gridSize) {
         for (let rdY = rdExtent.ymin; rdY <= rdExtent.ymax; rdY += gridSize) {
             pointCount++;
-            
+
             // **PROJECT EACH GRID POINT BACK TO WEB MERCATOR FOR ELEVATION SAMPLING**
             const rdPoint = new Point({
                 x: rdX,
                 y: rdY,
                 spatialReference: rdNewSpatialRef
             });
-            
+
             const webMercatorPoint = projection.project(rdPoint, SpatialReference.WebMercator) as Point;
-            
+
             // Query the elevation at the point
             const elevation = elevationSampler.elevationAt(webMercatorPoint.x, webMercatorPoint.y);
             if (elevation) {
                 validPoints++;
-                
+
                 // Add control point graphic using Web Mercator coordinates
                 // model.graphicsLayerControlPoints.add(new Graphic({ 
                 //     geometry: webMercatorPoint, 
@@ -402,11 +402,11 @@ export async function calculateVolume(model): Promise<void> {
             }
         }
     }
-    
+
     // **ADD VERIFICATION LOGGING TO CHECK ACTUAL DISTANCES**
     console.log(`Total grid points generated: ${pointCount}`);
     console.log(`Valid points with elevation: ${validPoints}`);
-    
+
     if (validPoints >= 2) {
         // Check distance between first two points
         const point1WM = new Point({
@@ -415,19 +415,19 @@ export async function calculateVolume(model): Promise<void> {
             spatialReference: SpatialReference.WebMercator
         });
         const point2WM = new Point({
-            x: pointCoordsForVolume[1][0], 
+            x: pointCoordsForVolume[1][0],
             y: pointCoordsForVolume[1][1],
             spatialReference: SpatialReference.WebMercator
         });
-        
+
         // Project to RD for accurate distance measurement
         const point1RD = projection.project(point1WM, rdNewSpatialRef) as Point;
         const point2RD = projection.project(point2WM, rdNewSpatialRef) as Point;
-        
+
         const actualDistance = Math.sqrt(
             Math.pow(point2RD.x - point1RD.x, 2) + Math.pow(point2RD.y - point1RD.y, 2)
         );
-        
+
         console.log(`Verification: Actual distance between first two control points: ${actualDistance.toFixed(2)}m (expected: ${gridSize}m)`);
     }
 
@@ -745,18 +745,16 @@ export function export3dGraphicsLayerAsGeoJSON(model): void {
         type: "FeatureCollection",
         crs: {
             type: "name",
-            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
+            properties: { name: "EPSG:4326" },
         },
         features: [],
     };
 
-    // Ensure the projection module is loaded
     projection.load().then(() => {
         model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
-                // Project the geometry to WGS84 (EPSG:4326)
                 const projectedGeometry = projection.project(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
@@ -765,33 +763,28 @@ export function export3dGraphicsLayerAsGeoJSON(model): void {
                 if (projectedGeometry) {
                     let feature: any = {
                         type: "Feature",
-                        geometry: null,
-                        properties: graphic.attributes || {}, // Include graphic attributes as properties
-                    };
-
-         
-                    feature.geometry = {
-                        type: "Polygon",
-                        coordinates: (projectedGeometry as __esri.Polygon).rings,
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: (projectedGeometry as __esri.Polygon).rings,
+                        },
+                        properties: graphic.attributes || {},
                     };
                     geojson.features.push(feature);
-                    
-
-                    // geojson.features.push(feature);
                 }
             }
         });
 
-        // Create and download the GeoJSON file
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_3d.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_ontwerp_3d.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
@@ -800,54 +793,46 @@ export function exportRuimteslagLayerAsGeoJSON(model): void {
         type: "FeatureCollection",
         crs: {
             type: "name",
-            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
+            properties: { name: "EPSG:4326" },
         },
         features: [],
     };
 
-    // Ensure the projection module is loaded
     projection.load().then(() => {
         model.graphicsLayerRuimtebeslag.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
-                // Project the geometry to WGS84 (EPSG:4326)
                 const projectedGeometry = projection.project(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
 
-                if (projectedGeometry) {
+                if (projectedGeometry && !Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
                     let feature: any = {
                         type: "Feature",
-                        geometry: null,
-                        properties: graphic.attributes || {}, // Include graphic attributes as properties
-                    };
-
-                    // Handle different geometry types
-                    if (!Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
-                        feature.geometry = {
+                        geometry: {
                             type: "Polygon",
                             coordinates: (projectedGeometry as __esri.Polygon).rings,
-                        };
-                        geojson.features.push(feature);
-                    }
-
-                    // geojson.features.push(feature);
+                        },
+                        properties: graphic.attributes || {},
+                    };
+                    geojson.features.push(feature);
                 }
             }
         });
 
-        // Create and download the GeoJSON file
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_ruimtebeslag_2d.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_ruimtebeslag_2d.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
@@ -869,16 +854,62 @@ export function exportDesignLayer2DAsGeoJSON(model): void {
             })),
         };
 
-        // Create and download the GeoJSON file
         const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ontwerp_export_2d.geojson";
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_ontwerp_2d.geojson`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+}
+
+export function exportInputLinesAsGeoJSON(model): void {
+    const geojson = {
+        type: "FeatureCollection",
+        crs: {
+            type: "name",
+            properties: { name: "EPSG:4326" },
+        },
+        features: [],
+    };
+    
+    projection.load().then(() => {
+        model.graphicsLayerLine.graphics.forEach((graphic) => {
+            const geometry = graphic.geometry;
+            if (geometry) {
+                const projectedGeometry = projection.project(
+                    geometry,
+                    new SpatialReference({ wkid: 4326 })
+                );
+                if (projectedGeometry) {
+                    let feature: any = {
+                        type: "Feature",
+                        geometry: {
+                            type: "LineString",
+                            coordinates: (projectedGeometry as __esri.Polyline).paths[0],
+                        },
+                        properties: graphic.attributes || {},
+                    };
+                    geojson.features.push(feature);
+                }
+            }
+        });
+        
+        const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const prefix = model.designName ? `${model.designName}_` : "";
+        a.download = `${prefix}_input_lines.geojson`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
