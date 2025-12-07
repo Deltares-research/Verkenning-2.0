@@ -178,6 +178,9 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         // },
     };
 
+    // Check if reference line exists
+    const hasReferenceLine = Boolean(model.graphicsLayerLine?.graphics.length);
+
     return (
         <Stack spacing={1}>
             {/* Ontwerp naam - prominent bovenaan */}
@@ -353,7 +356,12 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     hidden
                     onChange={handleFileChange}
                 />
-            <Stack spacing={1.5} sx={stackStyle}>
+            <Stack spacing={1.5}                 
+                    sx={{
+                    ...stackStyle,
+                    opacity: hasReferenceLine ? 1 : 0.5,
+                    pointerEvents: hasReferenceLine ? 'auto' : 'none'
+                }}>
                 <FormLabel>Stap 2: dwarsprofiel bepalen</FormLabel>
                 <Button
                     variant="contained"
@@ -361,7 +369,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     startIcon={<FilterIcon />}
                     onClick={handleOpenOverview}
                     fullWidth
-                    disabled={model.designPanelVisible}
+                    disabled={!hasReferenceLine || model.designPanelVisible}
                     sx={buttonWithIconStyle}
                 >
                     Open 2D-ontwerpen
@@ -370,7 +378,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                  <Divider />
 
                 <Button
-                    disabled={!model.chartData?.length || !model.graphicsLayerLine?.graphics.length}
+                    disabled={!hasReferenceLine || !model.chartData?.length}
                     variant="contained"
                     color="primary"
                     startIcon={<PlayCircleFilledWhiteIcon />}
@@ -382,7 +390,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 </Button>
 
                 <Button
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
+                    disabled={!hasReferenceLine || !model.graphicsLayerTemp?.graphics.length}
                     variant="outlined"
                     color="primary"
                     startIcon={<ClearIcon />}
@@ -392,12 +400,19 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Verwijder uitrol
                 </Button>
-
             </Stack>
 
-            <Stack spacing={1.5} sx={stackStyle}>
+            <Stack 
+                spacing={1.5} 
+                sx={{
+                    ...stackStyle,
+                    opacity: hasReferenceLine ? 1 : 0.5,
+                    pointerEvents: hasReferenceLine ? 'auto' : 'none'
+                }}
+            >
                  <FormLabel>Stap 3: controleren dwarsprofiel</FormLabel>
-            <Button
+                <Button
+                    disabled={!hasReferenceLine}
                     variant="contained"
                     color="primary"
                     startIcon={<InsightsIcon />}
@@ -407,54 +422,68 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Controleer dwarsprofiel
                 </Button>
-                </Stack>
-
-            <Stack spacing={1.5} sx={stackStyle}>
-                    {loading && (
-                        <LinearProgress
-                            sx={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                zIndex: 1,
-                                borderRadius: "8px 8px 0 0"
-                            }}
-                        />
-                    )}
-                    <TableContainer sx={{ marginTop: 0, opacity: loading ? 0.5 : 1 }}>
-                        <FormLabel>Volume overzicht</FormLabel>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell sx={{border: "none", padding: "4px 8px" }} align="left">
-                                        Verschil [m³]
-                                    </TableCell>
-                                    <TableCell sx={{  border: "none", padding: "4px 8px", fontWeight: "bold" }} align="right">
-                                        {model.totalVolumeDifference ?? "-"}
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
-                                        Uitgraven [m³]
-                                    </TableCell>
-                                    <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#d32f2f" }} align="right">
-                                        {model.excavationVolume ?? "-"}
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
-                                        Opvullen [m³]
-                                    </TableCell>
-                                    <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#2e7d32" }} align="right">
-                                        {model.fillVolume ?? "-"}
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
             </Stack>
-            <Stack spacing={1.5} sx={stackStyle}>
+
+            <Stack 
+                spacing={1.5} 
+                sx={{
+                    ...stackStyle,
+                    opacity: hasReferenceLine ? 1 : 0.5,
+                    pointerEvents: hasReferenceLine ? 'auto' : 'none'
+                }}
+            >
+                {loading && (
+                    <LinearProgress
+                        sx={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            zIndex: 1,
+                            borderRadius: "8px 8px 0 0"
+                        }}
+                    />
+                )}
+                <TableContainer sx={{ marginTop: 0, opacity: loading ? 0.5 : 1 }}>
+                    <FormLabel>Volume overzicht</FormLabel>
+                    <Table>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell sx={{border: "none", padding: "4px 8px" }} align="left">
+                                    Verschil [m³]
+                                </TableCell>
+                                <TableCell sx={{  border: "none", padding: "4px 8px", fontWeight: "bold" }} align="right">
+                                    {model.totalVolumeDifference ?? "-"}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
+                                    Uitgraven [m³]
+                                </TableCell>
+                                <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#d32f2f" }} align="right">
+                                    {model.excavationVolume ?? "-"}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
+                                    Opvullen [m³]
+                                </TableCell>
+                                <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#2e7d32" }} align="right">
+                                    {model.fillVolume ?? "-"}
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Stack>
+            <Stack 
+                spacing={1.5} 
+                sx={{
+                    ...stackStyle,
+                    opacity: hasReferenceLine ? 1 : 0.5,
+                    pointerEvents: hasReferenceLine ? 'auto' : 'none'
+                }}
+            >
                 <FormLabel>Stap 4: bestanden downloaden</FormLabel>
                 
                 <FormControl fullWidth size="small">
@@ -483,7 +512,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 </FormControl>
                 
                 <Button
-                    disabled={selectedDownloads.length === 0}
+                    disabled={!hasReferenceLine || selectedDownloads.length === 0}
                     variant="contained"
                     color="secondary"
                     startIcon={<CloudDownloadIcon />}
@@ -493,14 +522,18 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Download geselecteerd ({selectedDownloads.length})
                 </Button>
-
-
-
             </Stack>
-            <Stack spacing={1.5} sx={stackStyle}>
+            <Stack 
+                spacing={1.5} 
+                sx={{
+                    ...stackStyle,
+                    opacity: hasReferenceLine ? 1 : 0.5,
+                    pointerEvents: hasReferenceLine ? 'auto' : 'none'
+                }}
+            >
                 <FormLabel>Stap 5: ontwerpen opslaan</FormLabel>
                 <Button
-                    disabled={!model.graphicsLayer3dPolygon?.graphics?.length || saveLoading}
+                    disabled={!hasReferenceLine || !model.graphicsLayer3dPolygon?.graphics?.length || saveLoading}
                     variant="contained"
                     color="primary"
                     startIcon={<SaveIcon />}
@@ -510,7 +543,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     {saveLoading ? "Opslaan..." : "3D ontwerp opslaan"}
                 </Button>
-
             </Stack>
 
         </Stack>
