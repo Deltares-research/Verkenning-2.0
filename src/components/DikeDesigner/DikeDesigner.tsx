@@ -18,18 +18,24 @@ import type { ReactElement } from "react";
 import type DikeDesignerModel from "./DikeDesignerModel";
 import {
     calculateVolume,
+    calculateDesignValues,
     cleanFeatureLayer,
     createDesigns,
-    export3dGraphicsLayerAsGeoJSON,
-    initializeChart,
-    initializeCrossSectionChart,
     setInputLineFromFeatureLayer,
     createCrossSection,
+    setMapDwpLocation,
+} from "./Functions/DesignFunctions";
+
+import {
+    export3dGraphicsLayerAsGeoJSON,
     exportDesignLayer2DAsGeoJSON,
     exportRuimteslagLayerAsGeoJSON,
     exportInputLinesAsGeoJSON,
-    setMapDwpLocation,
-} from "./Functions/DesignFunctions";
+} from "./Functions/ExportFunctions";
+
+import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
+
+
 import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer } from "./Functions/SaveFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
@@ -266,20 +272,16 @@ const DikeDesigner = (
 
         setLoading(true); // Show loader
         try {
-            createDesigns(model).then(() => {
-                console.log("Designs created");
-                calculateVolume(model).then(() => {
-                    console.log("Volume calculated");
-                }).catch((error) => {
-                    console.error("Error calculating volume:", error);
-                });
-            }).catch((error) => {
-                console.error("Error creating designs:", error);
-            });
+            await createDesigns(model);
+            console.log("Designs created");
             
-            // console.log("All done...");
+            await calculateVolume(model);
+            console.log("Volume calculated");
+            
+            await calculateDesignValues(model);
+            console.log("Design values calculated");
         } catch (error) {
-            console.error("Error during design creation or volume calculation:", error);
+            console.error("Error during design creation:", error);
         } finally {
             setLoading(false); // Hide loader
         }

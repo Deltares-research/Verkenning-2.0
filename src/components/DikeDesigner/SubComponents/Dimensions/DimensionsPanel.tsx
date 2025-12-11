@@ -7,6 +7,7 @@ import MapIcon from "@mui/icons-material/Map";
 import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SaveIcon from "@mui/icons-material/Save";
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -19,6 +20,8 @@ import Table from "@vertigis/web/ui/Table";
 import TableBody from "@vertigis/web/ui/TableBody";
 import TableRow from "@vertigis/web/ui/TableRow";
 import TableCell from "@vertigis/web/ui/TableCell";
+import TableHead from "@vertigis/web/ui/TableHead";
+import Paper from "@vertigis/web/ui/Paper";
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
 import Divider from "@vertigis/web/ui/Divider";
 import FormLabel from "@vertigis/web/ui/FormLabel";
@@ -30,6 +33,8 @@ import Alert from "@vertigis/web/ui/Alert";
 import React, { useState, useRef, useEffect } from "react";
 
 import { stackStyle } from "../../../styles";
+import { useWatchAndRerender } from "@vertigis/web/ui";
+import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 
 
 interface DimensionsPanelProps {
@@ -83,6 +88,16 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     
     // Track if we've initialized to prevent resetting on re-renders
     const hasInitialized = useRef(false);
+
+
+    const handle3dAreaLayerclear = () => {
+        model.view.analyses.removeAll();
+    };
+
+    useWatchAndRerender(model, "total3dArea");
+    useWatchAndRerender(model, "total2dArea");
+    useWatchAndRerender(model, "lineLength");
+    useWatchAndRerender(model, "graphicsLayerLine");
     
     useEffect(() => {
         if (!hasInitialized.current && model.designName) {
@@ -230,7 +245,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
             <Divider />
 
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Stap 1: referentielijn bepalen</FormLabel>
+                <FormLabel>Stap 1: referentielijn bepalen (kies een van de drie)</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
                         disabled={!model.sketchViewModel}
@@ -444,32 +459,62 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         }}
                     />
                 )}
-                <TableContainer sx={{ marginTop: 0, opacity: loading ? 0.5 : 1 }}>
-                    <FormLabel>Volume overzicht</FormLabel>
+                <FormLabel>Ontwerp overzicht</FormLabel>
+                <TableContainer component={Paper} sx={{ marginTop: 0, opacity: loading ? 0.5 : 1 }}>
                     <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>Ontwerp element</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Waarde</TableCell>
+                            </TableRow>
+                        </TableHead>
                         <TableBody>
                             <TableRow>
-                                <TableCell sx={{border: "none", padding: "4px 8px" }} align="left">
+                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                                    Lengte traject [m]
+                                </TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                    {model.lineLength ?? "-"}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }} align="left">
                                     Verschil [m³]
                                 </TableCell>
-                                <TableCell sx={{  border: "none", padding: "4px 8px", fontWeight: "bold" }} align="right">
+                                <TableCell sx={{ fontSize: "11px"}} align="right">
                                     {model.totalVolumeDifference ?? "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
+                                <TableCell sx={{ fontSize: "11px" }} align="left">
                                     Uitgraven [m³]
                                 </TableCell>
-                                <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#d32f2f" }} align="right">
+                                <TableCell sx={{ fontSize: "11px" }} align="right">
                                     {model.excavationVolume ?? "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ border: "none", padding: "4px 8px" }} align="left">
+                                <TableCell sx={{ fontSize: "11px" }} align="left">
                                     Opvullen [m³]
                                 </TableCell>
-                                <TableCell sx={{ border: "none", padding: "4px 8px", fontWeight: "bold", color: "#2e7d32" }} align="right">
+                                <TableCell sx={{ fontSize: "11px" }} align="right">
                                     {model.fillVolume ?? "-"}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                                    3D Oppervlakte [m²]
+                                </TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                    {model.total3dArea ?? "-"}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                                    2D Oppervlakte [m²]
+                                </TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                    {model.total2dArea ?? "-"}
                                 </TableCell>
                             </TableRow>
                         </TableBody>

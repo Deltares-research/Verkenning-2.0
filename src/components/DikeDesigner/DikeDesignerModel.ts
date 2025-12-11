@@ -40,7 +40,8 @@ import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 
-import { initializeChart, getLineFeatureLayers } from "./Functions/DesignFunctions";
+import { getLineFeatureLayers } from "./Functions/DesignFunctions";
+import { initializeChart } from "./Functions/ChartFunctions";
 import { array } from "@amcharts/amcharts5";
 import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {

@@ -1,6 +1,8 @@
 import AdsClickIcon from '@mui/icons-material/AdsClick';
 import ControlPointIcon from '@mui/icons-material/ControlPoint';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import TuneIcon from '@mui/icons-material/Tune';
 
 
 import Box from "@vertigis/web/ui/Box";
@@ -26,6 +28,13 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   
   const [rivierzijdeAnchorEl, setRivierzijdeAnchorEl] = useState<null | HTMLElement>(null);
   const rivierzijdeOpen = Boolean(rivierzijdeAnchorEl);
+
+  // Add new state for options menu
+  const [optionsAnchorEl, setOptionsAnchorEl] = useState<null | HTMLElement>(null);
+  const optionsOpen = Boolean(optionsAnchorEl);
+
+  // Force re-render state
+  const [, forceUpdate] = useState({});
 
   const handleDwpLocationMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setDwpLocationAnchorEl(event.currentTarget);
@@ -60,6 +69,54 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
     });
   };
 
+  const handleOptionsMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // If taludlijn is active, toggle it off instead of opening menu
+    if (model.isDrawingTaludlijn) {
+      model.isDrawingTaludlijn = false;
+      forceUpdate({}); // Force re-render to immediately update button state
+    } else {
+      setOptionsAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleOptionsMenuClose = () => {
+    setOptionsAnchorEl(null);
+  };
+
+  const handleOptionSelect = (option: 'taludlijn' | 'dwp_length') => {
+    // Reset all drawing modes
+    model.isDrawingTaludlijn = false;
+    
+    // Enable selected mode
+    if (option === 'taludlijn') {
+      model.isDrawingTaludlijn = true;
+      model.isPlacingDwpProfile = false; // Deactivate teken profielpunten
+      model.userLinePoints = []; // Reset points when starting new taludlijn
+      model.messages.commands.ui.displayNotification.execute({
+        title: "Teken taludlijn",
+        message: "Klik op de grafiek om taludlijn te tekenen",
+        type: "info",
+      });
+    } else if (option === 'dwp_length') {
+      handleToggleLengthSlider();
+    }
+    
+    handleOptionsMenuClose();
+  };
+
+  const handleTekenProfielpunten = () => {
+    model.isPlacingDwpProfile = !model.isPlacingDwpProfile;
+    
+    if (model.isPlacingDwpProfile) {
+      model.isDrawingTaludlijn = false; // Deactivate tekenen taludlijn
+      model.messages.commands.ui.displayNotification.execute({
+        title: "Teken profielpunten",
+        message: "Klik op de grafiek om profielpunten te plaatsen",
+        type: "info",
+      });
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -76,7 +133,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         scrollbarWidth: 'thin'
       }}
     >
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center", flex: 1 }}>
         <Button
           variant="contained"
           size="medium"
@@ -85,16 +142,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           onClick={() => locateDwpProfile(model)}
           disabled={model.graphicsLayerLine?.graphics?.length === 0}
         >
-          Genereer dwarsprofiel
-        </Button>
-
-        <Button
-          variant="outlined"
-          size="medium"
-          onClick={handleToggleLengthSlider}
-          sx={{ minWidth: '160px' }}
-        >
-          DWP-lengte: {model.crossSectionLength}m
+          1 Trek dwarsprofiel
         </Button>
 
         <Button
@@ -102,12 +150,17 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           size="medium"
           startIcon={<ControlPointIcon />}
           color={model.isPlacingDwpProfile ? "secondary" : "primary"}
-          onClick={() => {
-            model.isPlacingDwpProfile = !model.isPlacingDwpProfile;
-          }}
-          disabled={model.graphicsLayerLine?.graphics?.length === 0 || !model.chartDataElevation?.length}
+          onClick={handleTekenProfielpunten}
+          disabled={model.graphicsLayerLine?.graphics?.length === 0}
+          sx={model.isPlacingDwpProfile ? {
+            fontWeight: 'bold',
+            boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+            '&:hover': {
+              boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+            }
+          } : {}}
         >
-          Teken profielpunten {model.isPlacingDwpProfile ? "(Actief)" : ""}
+          2 Teken profielpunten
         </Button>
 
         <Button
@@ -118,26 +171,45 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           onClick={() => clearDwpProfile(model)}
           disabled={model.chartData?.length === 0}
         >
-          Verwijder profielpunten
+          3 Verwijder profielpunten
         </Button>
 
         <Button
           variant="contained"
-          size="large"
+          size="medium"
+          startIcon={<LocationOnIcon />}
           onClick={handleDwpLocationMenuClick}
-          color="secondary"
+          color={model.selectingDwpLocation ? "secondary" : "primary"}
           disabled={!model.selectingDwpLocation}
+          sx={model.selectingDwpLocation ? {
+            fontWeight: 'bold',
+            boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+            '&:hover': {
+              boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+            }
+          } : {}}
         >
-          Locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
+          4 Benoem locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
         </Button>
+      </Box>
 
-        {/* <Button
-          variant="outlined"
-          size="large"
-          onClick={handleRivierzijdeMenuClick}
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Button
+          variant={model.isDrawingTaludlijn ? "contained" : "outlined"}
+          size="medium"
+          startIcon={<TuneIcon />}
+          onClick={handleOptionsMenuClick}
+          color={model.isDrawingTaludlijn ? "secondary" : "primary"}
+          sx={model.isDrawingTaludlijn ? {
+            fontWeight: 'bold',
+            boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+            '&:hover': {
+              boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+            }
+          } : {}}
         >
-          Rivierzijde: {model.rivierzijde || 'rechts'}
-        </Button> */}
+          {model.isDrawingTaludlijn ? "Tekenen taludlijn" : "Teken opties"}
+        </Button>
       </Box>
 
       {/* DWP Location Menu */}
@@ -169,6 +241,24 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       >
         <MenuItem onClick={() => handleRivierzijdeSelect('rechts')}>Rechts</MenuItem>
         <MenuItem onClick={() => handleRivierzijdeSelect('links')}>Links</MenuItem>
+      </Menu>
+
+      {/* Options Menu */}
+      <Menu
+        anchorEl={optionsAnchorEl}
+        open={optionsOpen}
+        onClose={handleOptionsMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        PaperProps={{
+          sx: { minWidth: optionsAnchorEl?.offsetWidth || 'auto' }
+        }}
+      >
+        <MenuItem onClick={() => handleOptionSelect('dwp_length')}>
+          DWP lengte aanpassen
+        </MenuItem>
+        <MenuItem onClick={() => handleOptionSelect('taludlijn')}>
+          Teken taludlijn
+        </MenuItem>
       </Menu>
     </Box>
   );

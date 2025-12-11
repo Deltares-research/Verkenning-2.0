@@ -205,7 +205,7 @@ export async function calculate3dAreas(model) {
                     }
 
                     // Optionally remove the analysis after measurement
-                    // model.view.analyses.remove(areaMeasurement);
+                    model.view.analyses.remove(areaMeasurement);
 
                 } catch (areaError) {
                     console.error("Error measuring area for polygon part:", areaError);
