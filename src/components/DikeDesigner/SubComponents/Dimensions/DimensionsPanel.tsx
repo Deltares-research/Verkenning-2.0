@@ -113,11 +113,11 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         }
     };
 
-    const handleDownloadSelected = async () => {
+    const validateDesignName = (): boolean => {
         // Check if design name is filled in
         if (!designName.trim()) {
-            setShowNameWarning(true); // Show warning instead of dialog
-            return;
+            setShowNameWarning(true);
+            return false;
         }
 
         // Hide warning if name is valid
@@ -125,6 +125,13 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
         // Update model with trimmed name
         model.designName = designName.trim();
+        return true;
+    };
+
+    const handleDownloadSelected = async () => {
+        if (!validateDesignName()) {
+            return;
+        }
 
         for (const downloadType of selectedDownloads) {
             switch (downloadType) {
@@ -175,6 +182,10 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     const [saveLoading, setSaveLoading] = useState(false);
 
     const handleSaveClick = async () => {
+        if (!validateDesignName()) {
+            return;
+        }
+
         setSaveLoading(true);
         try {
             await handleSaveDesign();

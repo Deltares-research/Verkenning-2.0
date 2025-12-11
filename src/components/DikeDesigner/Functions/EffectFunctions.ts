@@ -174,8 +174,9 @@ export async function calculate3dAreas(model) {
                 })
             });
 
-            // Update the graphic geometry
-            graphic.geometry = clipped3D;
+            // Create a copy of the graphic with the new clipped3D geometry (don't modify original)
+            const graphicCopy = graphic.clone();
+            graphicCopy.geometry = clipped3D;
 
             // Split multi-ring polygons into single-ring polygons
             const singlePartPolygons = clipped3D.rings.length > 1
@@ -212,9 +213,8 @@ export async function calculate3dAreas(model) {
                 }
             }
 
-            // Store total area for this graphic
             graphic.attributes = {
-                ...graphic.attributes,
+                ...graphicCopy.attributes,
                 "area_3d": graphicTotalArea
             };
 
