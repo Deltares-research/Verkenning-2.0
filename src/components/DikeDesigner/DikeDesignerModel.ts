@@ -46,6 +46,7 @@ import { array } from "@amcharts/amcharts5";
 import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
+    apiKey?: string;
     designFeatureLayer3dUrl?: string;
     designFeatureLayer3dWeergaveName?: string;
     designFeatureLayer2dRuimtebeslagUrl?: string;
@@ -61,6 +62,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     loading: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
+    apiKey: DikeDesignerModelProperties["apiKey"];
     designFeatureLayer3dUrl: DikeDesignerModelProperties["designFeatureLayer3dUrl"];
     designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
     designFeatureLayer2dRuimtebeslagUrl: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagUrl"];
@@ -398,52 +400,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         }
     }
 
-    // here we need to make chartData contain all the sheets and forget about the excelsheets later
-    // handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    //     const fileInput = event.target; // Reference to the file input
-    //     const file = fileInput.files?.[0];
-    //     if (file) {
-    //         const reader = new FileReader();
-    //         reader.onload = (e) => {
-    //             const data = new Uint8Array(e.target?.result as ArrayBuffer);
-    //             const workbook = XLSX.read(data, { type: "array" });
 
-    //             // Extract all sheets
-    //             const sheets: Record<string, any[]> = {};
-    //             const allChartData: Record<string, any[]> = {};
-    //             workbook.SheetNames.forEach((sheetName) => {
-    //                 const sheet = workbook.Sheets[sheetName];
-    //                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    //                 sheets[sheetName] = jsonData;
-
-    //                 // Prepare chart data for each sheet
-    //                 if (jsonData.length > 1) {
-    //                     allChartData[sheetName] = jsonData
-    //                         .slice(1) // Skip the header row
-    //                         .map((row: any[]) => ({
-    //                             locatie: row[0], // Location name
-    //                             afstand: row[1], // X-axis value
-    //                             hoogte: row[2], // Y-axis value
-    //                         }))
-    //                         .sort((a, b) => a.afstand - b.afstand); // Sort by afstand
-    //                 }
-    //             });
-    //             this.allChartData = allChartData; // Store all chart data
-    //             console.log("All chart data:", this.allChartData);
-
-
-    //             // Set the first sheet as the default table data
-    //             const firstSheetName = workbook.SheetNames[0];
-    //             this.chartData = allChartData[firstSheetName];
-    //             this.activeSheet = firstSheetName;
-    //         };
-    //         reader.readAsArrayBuffer(file);
-    //     }
-
-    //     // Reset the file input value to allow reuploading the same file
-    //     fileInput.value = "";
-    //     this.overviewVisible = true;
-    // };
 
     handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>, model) => {
         const fileInput = event.target;
@@ -572,6 +529,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             elevationLayerUrl: {
                 serializeModes: ["initial"],
                 default: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
+            },
+            apiKey: {
+                serializeModes: ["initial"],
+                default: "",
             },
             designFeatureLayer3dUrl: {
                 serializeModes: ["initial"],
