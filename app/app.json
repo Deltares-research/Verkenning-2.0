@@ -42,7 +42,7 @@
             "id": "stack-config-3",
             "title": "Lagen",
             "$type": "stack"
-        }
+        },
         {
             "id": "dike-designer-model-1",
             "$type": "dike-designer-model",
