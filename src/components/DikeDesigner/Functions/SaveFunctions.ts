@@ -51,10 +51,12 @@ export async function save3dDesignToFeatureLayer(model): Promise<number> {
             const errorCount = result.addFeatureResults.filter(r => r.error).length;
             
             console.log(`Successfully saved ${successCount} features`);
-            model.messages.commands.ui.alert.execute({
+            model.messages.commands.ui.displayNotification.execute({
                 message: `Het ontwerp, bestaande uit ${successCount} onderdelen is succesvol opgeslagen.`,
                 title: "Opslaan geslaagd",
+                type: "info"
             });
+
             if (errorCount > 0) {
                 console.warn(`Failed to save ${errorCount} features`);
                 result.addFeatureResults.filter(r => r.error).forEach(r => {
@@ -115,9 +117,10 @@ export async function save2dRuimtebeslagToFeatureLayer(model): Promise<number> {
             const successCount = result.addFeatureResults.filter(r => !r.error).length;
             const errorCount = result.addFeatureResults.filter(r => r.error).length;
             console.log(`Successfully saved ${successCount} 2D ruimtebeslag features`);
-            model.messages.commands.ui.alert.execute({
+            model.messages.commands.ui.displayNotification.execute({
                 message: `Het 2D ruimtebeslag, bestaande uit ${successCount} onderdelen is succesvol opgeslagen.`,
                 title: "Opslaan 2D Ruimtebeslag geslaagd",
+                type: "info"
             });
             if (errorCount > 0) {
                 console.warn(`Failed to save ${errorCount} 2D ruimtebeslag features`);

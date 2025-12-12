@@ -83,7 +83,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
     setOptionsAnchorEl(null);
   };
 
-  const handleOptionSelect = (option: 'taludlijn' | 'dwp_length') => {
+  const handleOptionSelect = (option: 'taludlijn' | 'dwp_length' | 'clear_taludlijn') => {
     // Reset all drawing modes
     model.isDrawingTaludlijn = false;
     
@@ -99,6 +99,22 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       });
     } else if (option === 'dwp_length') {
       handleToggleLengthSlider();
+    } else if (option === 'clear_taludlijn') {
+      model.userLinePoints = [];
+      // Update the series data if available
+      if (model.userSeries) {
+        model.userSeries.data.setAll([]);
+      }
+      // Remove slope labels
+      if (model.slopeLabels) {
+        model.slopeLabels.forEach(label => label.dispose());
+        model.slopeLabels = [];
+      }
+      model.messages.commands.ui.displayNotification.execute({
+        title: "Taludlijn verwijderd",
+        message: "De taludlijn is succesvol verwijderd",
+        type: "success",
+      });
     }
     
     handleOptionsMenuClose();
@@ -258,6 +274,12 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         </MenuItem>
         <MenuItem onClick={() => handleOptionSelect('taludlijn')}>
           Teken taludlijn
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleOptionSelect('clear_taludlijn')}
+          disabled={!model.userLinePoints || model.userLinePoints.length === 0}
+        >
+          Verwijder taludlijn
         </MenuItem>
       </Menu>
     </Box>

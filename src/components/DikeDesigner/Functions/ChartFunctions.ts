@@ -312,6 +312,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
     // Store the userSeries reference
     refs.userSeriesRef.current = userSeries;
+    model.userSeries = userSeries; // Store on model for external access
 
     // Initialize userLinePoints if it doesn't exist
     if (!model.userLinePoints) {
@@ -432,38 +433,6 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     userSeries.strokes.template.setAll({
         stroke: am5.color(0x00cc00),
         strokeWidth: 2,
-    });
-
-    const clearButton = chart.children.push(
-        am5.Button.new(root, {
-            label: am5.Label.new(root, { text: "Verwijder taludlijn", fontSize: 14 }),
-            x: 50,
-            y: 35,
-            centerX: am5.p0,
-            centerY: am5.p0,
-            // paddingLeft: 25,
-            // paddingRight: 25,
-            // paddingTop: 5,
-            // paddingBottom: 5,
-            // background: am5.RoundedRectangle.new(root, {
-            //     fill: am5.color(0xffcccc),
-            //     fillOpacity: 1,
-            //     cornerRadiusTL: 8,
-            //     cornerRadiusTR: 8,
-            //     cornerRadiusBL: 8,
-            //     cornerRadiusBR: 8,
-            // }),
-        })
-    );
-
-    clearButton.events.on("click", () => {
-        model.userLinePoints = [];
-        userSeries.data.setAll([]);
-        // Remove slope labels
-        if (model.slopeLabels) {
-            model.slopeLabels.forEach(label => label.dispose());
-            model.slopeLabels = [];
-        }
     });
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
@@ -615,6 +584,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
     // Store the userSeries reference
     refs.userSeriesRef.current = userSeries;
+    model.userSeries = userSeries; // Store on model for external access
 
     // Set initial data for userSeries
     model.userLinePoints = [];
@@ -672,40 +642,6 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
         stroke: am5.color(0x00cc00),
         strokeWidth: 2,
     });
-
-    const clearButton = chart.children.push(
-        am5.Button.new(root, {
-            label: am5.Label.new(root, { text: "Verwijder taludlijn", fontSize: 14 }),
-            x: 50,
-            y: 35,
-            centerX: am5.p0,
-            centerY: am5.p0,
-            // paddingLeft: 25,
-            // paddingRight: 25,
-            // paddingTop: 5,
-            // paddingBottom: 5,
-            // background: am5.RoundedRectangle.new(root, {
-            //     fill: am5.color(0xffcccc),
-            //     fillOpacity: 1,
-            //     cornerRadiusTL: 8,
-            //     cornerRadiusTR: 8,
-            //     cornerRadiusBL: 8,
-            //     cornerRadiusBR: 8,
-            // }),
-        })
-    );
-
-    clearButton.events.on("click", () => {
-        model.userLinePoints = [];
-        userSeries.data.setAll([]);
-        // Remove slope labels
-        if (model.slopeLabels) {
-            model.slopeLabels.forEach(label => label.dispose());
-            model.slopeLabels = [];
-        }
-    });
-
-
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
     let cursor = chart.get("cursor");
