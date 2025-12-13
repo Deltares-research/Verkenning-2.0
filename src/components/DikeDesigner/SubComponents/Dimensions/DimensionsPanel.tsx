@@ -58,6 +58,9 @@ interface DimensionsPanelProps {
     handleClearDesign: () => void;
     handleSaveDesign: () => Promise<void>;
     loading: boolean;
+    setShowNameWarning: (show: boolean) => void;
+    selectedDownloads: string[];
+    setSelectedDownloads: (downloads: string[]) => void;
 }
 
 const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
@@ -81,13 +84,10 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleClearDesign,
     handleSaveDesign,
     loading,
+    setShowNameWarning,
+    selectedDownloads,
+    setSelectedDownloads,
 }) => {
-    const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
-    const [designName, setDesignName] = useState<string>(() => model.designName || "");
-    const [showNameWarning, setShowNameWarning] = useState(false); // Changed from showNameDialog
-    
-    // Track if we've initialized to prevent resetting on re-renders
-    const hasInitialized = useRef(false);
 
 
     const handle3dAreaLayerclear = () => {
@@ -98,33 +98,16 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     useWatchAndRerender(model, "total2dArea");
     useWatchAndRerender(model, "lineLength");
     useWatchAndRerender(model, "graphicsLayerLine");
-    
-    useEffect(() => {
-        if (!hasInitialized.current && model.designName) {
-            setDesignName(model.designName);
-            hasInitialized.current = true;
-        }
-    }, [model.designName]);
-
-    const handleDesignNameBlur = () => {
-        // Update model when input loses focus
-        if (designName.trim()) {
-            model.designName = designName.trim();
-        }
-    };
 
     const validateDesignName = (): boolean => {
         // Check if design name is filled in
-        if (!designName.trim()) {
+        if (!model.designName || !model.designName.trim()) {
             setShowNameWarning(true);
             return false;
         }
 
         // Hide warning if name is valid
         setShowNameWarning(false);
-
-        // Update model with trimmed name
-        model.designName = designName.trim();
         return true;
     };
 
@@ -153,14 +136,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         }
         // Clear selection after download
         setSelectedDownloads([]);
-    };
-
-    const handleDesignNameChange = (e) => {
-        setDesignName(e.target.value);
-        // Hide warning when user starts typing
-        if (e.target.value.trim()) {
-            setShowNameWarning(false);
-        }
     };
 
     const handleCreateLine = () => {
@@ -209,52 +184,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
 
     return (
         <Stack spacing={1}>
-            {/* Ontwerp naam - prominent bovenaan */}
-            <Stack spacing={1.5} sx={{
-                ...stackStyle,
-                // backgroundColor: '#fff3e0',
-                // border: '1px solid #ff9800',
-                borderRadius: '8px',
-            }}>
-                <FormLabel sx={{ 
-                    fontWeight: 'bold', 
-                    fontSize: '14px',
-                    color: '#000000ff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                }}>
-                    <EditIcon sx={{ fontSize: 18 }} />
-                    Ontwerp naam
-                </FormLabel>
-                
-                <Input
-                    value={designName}
-                    onChange={handleDesignNameChange}
-                    onBlur={handleDesignNameBlur}
-                    placeholder="Voer een ontwerpnaam in..."
-                    size="medium"
-                    fullWidth
-                    error={showNameWarning}
-                    sx={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        '& .MuiInputBase-input': {
-                            padding: '12px 14px',
-                        },
-                        backgroundColor: 'white',
-                    }}
-                />
-
-                {/* Alert onder de naam input */}
-                {showNameWarning && (
-                    <Alert severity="warning" sx={{ marginTop: 1 }}>
-                        Vul een ontwerp naam in voordat u bestanden downloadt of opslaat.
-                    </Alert>
-                )}
-            </Stack>
-            <Divider />
-
             <Stack spacing={1.5} sx={stackStyle}>
                 <FormLabel>Stap 1: referentielijn bepalen (kies een van de drie)</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>

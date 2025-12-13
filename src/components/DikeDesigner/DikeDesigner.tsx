@@ -4,10 +4,15 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SelectAllIcon from "@mui/icons-material/SelectAll";
 import BuildIcon from "@mui/icons-material/Build";
+import EditIcon from "@mui/icons-material/Edit";
 
 import Box from "@vertigis/web/ui/Box";
 import Tab from "@vertigis/web/ui/Tab"
 import Tabs from "@vertigis/web/ui/Tabs"
+import Stack from "@vertigis/web/ui/Stack";
+import FormLabel from "@vertigis/web/ui/FormLabel";
+import Input from "@vertigis/web/ui/Input";
+import Alert from "@vertigis/web/ui/Alert"
 
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
@@ -60,6 +65,9 @@ const DikeDesigner = (
     const [loading, setLoading] = useState(false); // State to track loading status
     const [value, setValue] = React.useState(0);
     const [isLayerListVisible, setIsLayerListVisible] = useState(false);
+    const [designName, setDesignName] = useState<string>(() => model.designName || "");
+    const [showNameWarning, setShowNameWarning] = useState(false);
+    const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
 
     function setcrossSectionPanelVisible(value: boolean) {
         model.crossSectionPanelVisible = value;
@@ -77,6 +85,21 @@ const DikeDesigner = (
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
+    };
+
+    const handleDesignNameChange = (e) => {
+        setDesignName(e.target.value);
+        // Hide warning when user starts typing
+        if (e.target.value.trim()) {
+            setShowNameWarning(false);
+        }
+    };
+
+    const handleDesignNameBlur = () => {
+        // Update model when input loses focus
+        if (designName.trim()) {
+            model.designName = designName.trim();
+        }
     };
 
     const seriesRef = useRef<am5xy.LineSeries | null>(null);
@@ -413,6 +436,48 @@ const DikeDesigner = (
             <Box
                 sx={{ width: '100%' }}
             >
+                {/* Ontwerp naam - prominent bovenaan */}
+                <Stack spacing={1.5} sx={{
+                    padding: '16px',
+                    borderRadius: '8px',
+                }}>
+                    <FormLabel sx={{ 
+                        fontWeight: 'bold', 
+                        fontSize: '14px',
+                        color: '#000000ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                    }}>
+                        <EditIcon sx={{ fontSize: 18 }} />
+                        Ontwerp naam
+                    </FormLabel>
+                    
+                    <Input
+                        value={designName}
+                        onChange={handleDesignNameChange}
+                        onBlur={handleDesignNameBlur}
+                        placeholder="Voer een ontwerpnaam in..."
+                        size="medium"
+                        fullWidth
+                        error={showNameWarning}
+                        sx={{
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            '& .MuiInputBase-input': {
+                                padding: '12px 14px',
+                            },
+                            backgroundColor: 'white',
+                        }}
+                    />
+
+                    {/* Alert onder de naam input */}
+                    {showNameWarning && (
+                        <Alert severity="warning" sx={{ marginTop: 1 }}>
+                            Vul een ontwerp naam in voordat u bestanden downloadt of opslaat.
+                        </Alert>
+                    )}
+                </Stack>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs
                         value={value}
@@ -458,6 +523,9 @@ const DikeDesigner = (
                         handleCreateCrossSection={handleCreateCrossSection}
                         handleSaveDesign={handleSaveDesign}
                         loading={loading}
+                        setShowNameWarning={setShowNameWarning}
+                        selectedDownloads={selectedDownloads}
+                        setSelectedDownloads={setSelectedDownloads}
                     />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
