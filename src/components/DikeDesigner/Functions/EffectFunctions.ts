@@ -10,7 +10,7 @@ import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
-export async function getIntersectingFeatures(model, layerTitle) {
+export async function getIntersectingFeatures(model, layerTitle, whereClause = null): Promise<object[]> {
 
     const layerToQuery = model.map.allLayers.items.find(
         (layer) => layer.title === layerTitle
@@ -37,6 +37,9 @@ export async function getIntersectingFeatures(model, layerTitle) {
     query.outFields = ["*"];
     query.geometry = unionGeometry;
     query.spatialRelationship = "intersects";
+    if (whereClause) {
+        query.where = whereClause;
+    }
 
     try {
         const result = await layerToQuery.queryFeatures(query);
@@ -49,7 +52,7 @@ export async function getIntersectingFeatures(model, layerTitle) {
 
 }
 
-export async function getIntersectingArea2dRuimtebeslag(model, layerTitle) {
+export async function getIntersectingArea2dRuimtebeslag(model, layerTitle, whereClause = null): Promise<number> {
     const layerToQuery = model.map.allLayers.items.find(
         (layer) => layer.title === layerTitle
     ) as FeatureLayer;
@@ -76,6 +79,9 @@ export async function getIntersectingArea2dRuimtebeslag(model, layerTitle) {
     query.outFields = ["*"];
     query.geometry = unionGeometry;
     query.spatialRelationship = "intersects";
+    if (whereClause) {
+        query.where = whereClause;
+    }
 
     try {
         const result = await layerToQuery.queryFeatures(query);

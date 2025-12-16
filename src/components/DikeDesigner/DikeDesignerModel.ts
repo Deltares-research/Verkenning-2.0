@@ -195,6 +195,11 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingBomen: object[] = []
     intersectingPercelen: object[] = []
     intersectingWegdelen2dRuimtebeslag: number = 0
+    intersectingInritten2dRuimtebeslag: number = 0
+    intersectingInritten2dRuimtebeslagCount: object[] = []
+    intersectingNatura2000: number = 0
+    intersectingGNN: number = 0
+    intersectingBeheertypen: object[] = []
 
     dwpLocations: string[] = [
         "buitenteen",

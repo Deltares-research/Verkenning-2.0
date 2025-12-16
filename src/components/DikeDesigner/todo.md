@@ -1,0 +1,1 @@
+- implement proper loading indicator while values are loading (frontend and backend)

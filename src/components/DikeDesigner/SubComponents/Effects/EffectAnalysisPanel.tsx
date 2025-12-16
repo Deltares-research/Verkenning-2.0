@@ -55,12 +55,44 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
             console.error("Error fetching intersecting area:", error);
         });
 
+        await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
+            model.intersectingInritten2dRuimtebeslag = result;
+            console.log("Total 2D intersecting area:", result);
+        }).catch((error) => {
+            console.error("Error fetching intersecting area:", error);
+        });
+
+        await getIntersectingFeatures(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
+            model.intersectingInritten2dRuimtebeslagCount = result;
+            console.log("Intersecting inritten:", result);
+        }).catch((error) => {
+            console.error("Error fetching intersecting features:", error);
+        });
+
+        await getIntersectingArea2dRuimtebeslag(model, "Natura 2000").then((result) => {
+            model.intersectingNatura2000 = result;
+            console.log("Total Natura 2000 intersecting area:", result);
+        }).catch((error) => {
+            console.error("Error fetching intersecting area:", error);
+        });
+
+        await getIntersectingArea2dRuimtebeslag(model, "Groene Ontwikkelingszone en Gelders NatuurNetwerk").then((result) => {
+            model.intersectingGNN = result;
+            console.log("Total GNN intersecting area:", result);
+        }).catch((error) => {
+            console.error("Error fetching intersecting area:", error);
+        });
+
     };
 
     useWatchAndRerender(model, "intersectingPanden")
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
     useWatchAndRerender(model, "intersectingWegdelen2dRuimtebeslag")
+    useWatchAndRerender(model, "intersectingInritten2dRuimtebeslag")
+    useWatchAndRerender(model, "intersectingInritten2dRuimtebeslagCount")
+    useWatchAndRerender(model, "intersectingNatura2000")
+    useWatchAndRerender(model, "intersectingGNN")
 
 
     return (
@@ -100,9 +132,58 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "11px" }}>Percelen [aantal]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelen?.length}</TableCell>
                             </TableRow>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                
+                {/* Natuur Table */}
+                <TableContainer component={Paper} sx={{}}>
+                    <Table>
+                        <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>BGT wegdelen overlappend [m²]</TableCell>
+                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>2. Natuur</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}></TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Natura 2000 [m2]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingNatura2000?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>GNN [m2]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingGNN?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Beheertypen</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBeheertypen?.map((item) => item).join(", ")}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                {/* Verkeer Table */}
+                <TableContainer component={Paper} sx={{}}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>3. Verkeer</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}></TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>BGT wegdelen (m2)</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingWegdelen2dRuimtebeslag?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>BGT afritten (m2)</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslag?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>BGT afritten (aantal)</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslagCount?.length}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
