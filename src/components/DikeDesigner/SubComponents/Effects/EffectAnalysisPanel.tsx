@@ -15,7 +15,7 @@ import { useWatchAndRerender } from "@vertigis/web/ui";
 import React from "react";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { getIntersectingFeatures, getIntersectingArea2dRuimtebeslag } from "../../Functions/EffectFunctions";
+import { handleEffectAnalysis } from "../../Functions/EffectFunctions";
 
 interface EffectAnalysisPanelProps {
     model: DikeDesignerModel;
@@ -26,64 +26,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
 }) => {
 
-    const handleEffectAnalysis = async () => {
-        await getIntersectingFeatures(model, "BAG 2D").then((result) => {
-            model.intersectingPanden = result;
-            console.log("Intersecting panden:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting features:", error);
-        });
 
-        await getIntersectingFeatures(model, "Bomenregister 2015").then((result) => {
-            model.intersectingBomen = result;
-            console.log("Intersecting bomen:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting features:", error);
-        });
-
-        await getIntersectingFeatures(model, "DKK - perceel").then((result) => {
-            model.intersectingPercelen = result;
-            console.log("Intersecting percelen:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting features:", error);
-        });
-
-        await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel").then((result) => {
-            model.intersectingWegdelen2dRuimtebeslag = result;
-            console.log("Total 2D intersecting area:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting area:", error);
-        });
-
-        await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
-            model.intersectingInritten2dRuimtebeslag = result;
-            console.log("Total 2D intersecting area:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting area:", error);
-        });
-
-        await getIntersectingFeatures(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
-            model.intersectingInritten2dRuimtebeslagCount = result;
-            console.log("Intersecting inritten:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting features:", error);
-        });
-
-        await getIntersectingArea2dRuimtebeslag(model, "Natura 2000").then((result) => {
-            model.intersectingNatura2000 = result;
-            console.log("Total Natura 2000 intersecting area:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting area:", error);
-        });
-
-        await getIntersectingArea2dRuimtebeslag(model, "Groene Ontwikkelingszone en Gelders NatuurNetwerk").then((result) => {
-            model.intersectingGNN = result;
-            console.log("Total GNN intersecting area:", result);
-        }).catch((error) => {
-            console.error("Error fetching intersecting area:", error);
-        });
-
-    };
 
     useWatchAndRerender(model, "intersectingPanden")
     useWatchAndRerender(model, "intersectingBomen")
@@ -93,6 +36,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingInritten2dRuimtebeslagCount")
     useWatchAndRerender(model, "intersectingNatura2000")
     useWatchAndRerender(model, "intersectingGNN")
+    useWatchAndRerender(model, "intersectingBeheertypen")
 
 
     return (
@@ -103,7 +47,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                     variant="contained"
                     color="primary"
                     startIcon={<AssessmentIcon />}
-                    onClick={handleEffectAnalysis}
+                    onClick={() => handleEffectAnalysis(model)}
                     fullWidth
                     disabled={!model.graphicsLayerTemp?.graphics.length}
                 >

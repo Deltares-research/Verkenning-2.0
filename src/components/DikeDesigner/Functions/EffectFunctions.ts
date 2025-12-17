@@ -286,3 +286,93 @@ export function getLineLength(profileLine: any): number {
         return 0;
     }
 }
+
+export async function handleEffectAnalysis(model) {
+    await getIntersectingFeatures(model, "BAG 2D").then((result) => {
+        model.intersectingPanden = result;
+        console.log("Intersecting panden:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingFeatures(model, "Bomenregister 2015").then((result) => {
+        model.intersectingBomen = result;
+        console.log("Intersecting bomen:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingFeatures(model, "DKK - perceel").then((result) => {
+        model.intersectingPercelen = result;
+        console.log("Intersecting percelen:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel").then((result) => {
+        model.intersectingWegdelen2dRuimtebeslag = result;
+        console.log("Total 2D intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
+    });
+
+    await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
+        model.intersectingInritten2dRuimtebeslag = result;
+        console.log("Total 2D intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
+    });
+
+    await getIntersectingFeatures(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
+        model.intersectingInritten2dRuimtebeslagCount = result;
+        console.log("Intersecting inritten:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingArea2dRuimtebeslag(model, "Natura 2000").then((result) => {
+        model.intersectingNatura2000 = result;
+        console.log("Total Natura 2000 intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
+    });
+
+    await getIntersectingArea2dRuimtebeslag(model, "Groene Ontwikkelingszone en Gelders NatuurNetwerk", "objectnaam = 'Gelders natuurnetwerk'").then((result) => {
+        model.intersectingGNN = result;
+        console.log("Total GNN intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
+    });
+
+    await getIntersectingFeatures(model, "Natuurbeheerplan 2026 Gelderland").then((result) => {
+        // Get unique beheertype values
+        const beheertypeValues = result.map((feature: any) => feature.getAttribute("beheertype")).filter((value, index, self) => self.indexOf(value) === index);
+
+        // Get the layer to access field domains
+        const natuurbeheerLayer = model.map.allLayers.items.find((layer) => layer.title === "Natuurbeheerplan 2026 Gelderland");
+
+        // Map coded values to their descriptions if domain exists
+        if (natuurbeheerLayer && natuurbeheerLayer.fields) {
+            const beheertypeField = natuurbeheerLayer.fields.find((field: any) => field.name === "beheertype");
+
+            if (beheertypeField && beheertypeField.domain && beheertypeField.domain.codedValues) {
+                // Map codes to their names
+                model.intersectingBeheertypen = beheertypeValues.map((code) => {
+                    const codedValue = beheertypeField.domain.codedValues.find((cv: any) => cv.code === code);
+                    return codedValue ? codedValue.name : code; // Return description or code if not found
+                });
+                console.log("Intersecting beheertypen (decoded):", model.intersectingBeheertypen);
+            } else {
+                // No domain found, use raw values
+                model.intersectingBeheertypen = beheertypeValues;
+                console.log("Intersecting beheertypen (no domain):", model.intersectingBeheertypen);
+            }
+        } else {
+            model.intersectingBeheertypen = beheertypeValues;
+        }
+
+        console.log("Intersecting features:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+}

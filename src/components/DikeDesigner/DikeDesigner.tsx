@@ -327,14 +327,24 @@ const DikeDesigner = (
         model.totalVolumeDifference = null;
         model.excavationVolume = null;
         model.fillVolume = null;
-        model.intersectingPanden = null;
-        model.intersectingBomen = null;
-        model.intersectingPercelen = null;
+
         model.userLinePoints = [];
         model.view.analyses.removeAll()
         model.total3dArea = null;
         model.total2dArea = null;
         model.lineLength = null;
+
+        // intersection resets
+        model.intersectingPanden = null;
+        model.intersectingBomen = null;
+        model.intersectingPercelen = null;
+        model.intersectingNatura2000 = 0;
+        model.intersectingGNN = 0;
+        model.intersectingBeheertypen = [];
+        model.intersectingWegdelen2dRuimtebeslag = 0;
+        model.intersectingInritten2dRuimtebeslag = 0;
+        model.intersectingInritten2dRuimtebeslagCount = [];
+        
         cleanFeatureLayer(model.designLayer2D);
 
     };
