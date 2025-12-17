@@ -344,6 +344,9 @@ const DikeDesigner = (
         model.intersectingWegdelen2dRuimtebeslag = 0;
         model.intersectingInritten2dRuimtebeslag = 0;
         model.intersectingInritten2dRuimtebeslagCount = [];
+        model.intersectingPandenArea = 0;
+        model.intersectingPandenBuffer = [];
+        model.intersectingPandenBufferArea = 0;
         
         cleanFeatureLayer(model.designLayer2D);
 

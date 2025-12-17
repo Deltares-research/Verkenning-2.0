@@ -200,6 +200,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingNatura2000: number = 0
     intersectingGNN: number = 0
     intersectingBeheertypen: object[] = []
+    intersectingPandenArea: number = 0
+    intersectingPandenBuffer: object [] = []
+    intersectingPandenBufferArea: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",

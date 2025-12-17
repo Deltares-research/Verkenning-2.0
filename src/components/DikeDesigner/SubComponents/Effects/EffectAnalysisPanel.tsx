@@ -29,6 +29,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
 
     useWatchAndRerender(model, "intersectingPanden")
+    useWatchAndRerender(model, "intersectingPandenArea")
+    useWatchAndRerender(model, "intersectingPandenBuffer")
+    useWatchAndRerender(model, "intersectingPandenBufferArea")
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
     useWatchAndRerender(model, "intersectingWegdelen2dRuimtebeslag")
@@ -37,6 +40,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingNatura2000")
     useWatchAndRerender(model, "intersectingGNN")
     useWatchAndRerender(model, "intersectingBeheertypen")
+    useWatchAndRerender(model, "intersectingPandenBuffer")
+    useWatchAndRerender(model, "intersectingPandenBufferArea")
+
 
 
     return (
@@ -59,14 +65,21 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                     <Table >
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>Onderdeel</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Waarde</TableCell>
+                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>1. Wonen en leefomgeving</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Aantal</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>BAG panden [aantal]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>BAG panden</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPanden?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenArea.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Invloedzone BAG panden</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBuffer?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBufferArea.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
                                 <TableCell sx={{ fontSize: "11px" }}>Bomen [aantal]</TableCell>
@@ -92,11 +105,11 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                         </TableHead>
                         <TableBody>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>Natura 2000 [m2]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>Natura 2000 [m²]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingNatura2000?.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>GNN [m2]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>GNN [m²]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingGNN?.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
@@ -118,15 +131,15 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                         </TableHead>
                         <TableBody>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>BGT wegdelen (m2)</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>BGT wegdelen [m²]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingWegdelen2dRuimtebeslag?.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>BGT afritten (m2)</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>BGT afritten [m²]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslag?.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>BGT afritten (aantal)</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>BGT afritten [aantal]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslagCount?.length}</TableCell>
                             </TableRow>
                         </TableBody>

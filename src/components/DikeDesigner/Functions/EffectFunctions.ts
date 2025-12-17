@@ -10,7 +10,7 @@ import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
-export async function getIntersectingFeatures(model, layerTitle, whereClause = null): Promise<object[]> {
+export async function getIntersectingFeatures(model, layerTitle, whereClause = null, bufferDistance = 0): Promise<object[]> {
 
     const layerToQuery = model.map.allLayers.items.find(
         (layer) => layer.title === layerTitle
@@ -40,10 +40,33 @@ export async function getIntersectingFeatures(model, layerTitle, whereClause = n
     if (whereClause) {
         query.where = whereClause;
     }
+    if (bufferDistance > 0) {
+        query.distance = bufferDistance;
+        query.units = "meters";
+    }
 
     try {
         const result = await layerToQuery.queryFeatures(query);
         console.log("Intersecting features:", result);
+        
+        // If buffer distance is specified, buffer features and filter by intersection
+        if (bufferDistance > 0) {
+            const bufferedFeatures = result.features
+                .map(feature => {
+                    const bufferedGeometry = geometryEngine.buffer(feature.geometry, bufferDistance, "meters");
+                    // Handle case where buffer returns an array
+                    const geometry = Array.isArray(bufferedGeometry) ? bufferedGeometry[0] : bufferedGeometry;
+                    return {
+                        ...feature,
+                        geometry: geometry
+                    };
+                })
+                .filter(bufferedFeature => 
+                    geometryEngine.intersects(bufferedFeature.geometry, unionGeometry)
+                );
+            return bufferedFeatures;
+        }
+        
         return result.features;
     } catch (error) {
         console.error("Error querying features:", error);
@@ -52,7 +75,7 @@ export async function getIntersectingFeatures(model, layerTitle, whereClause = n
 
 }
 
-export async function getIntersectingArea2dRuimtebeslag(model, layerTitle, whereClause = null): Promise<number> {
+export async function getIntersectingArea2dRuimtebeslag(model, layerTitle, whereClause = null, bufferDistance = 0): Promise<number> {
     const layerToQuery = model.map.allLayers.items.find(
         (layer) => layer.title === layerTitle
     ) as FeatureLayer;
@@ -82,6 +105,10 @@ export async function getIntersectingArea2dRuimtebeslag(model, layerTitle, where
     if (whereClause) {
         query.where = whereClause;
     }
+    if (bufferDistance > 0) {
+        query.distance = bufferDistance;
+        query.units = "meters";
+    }
 
     try {
         const result = await layerToQuery.queryFeatures(query);
@@ -91,8 +118,16 @@ export async function getIntersectingArea2dRuimtebeslag(model, layerTitle, where
 
         // Calculate intersection area for each feature (synchronous operations, no await needed)
         result.features.forEach((feature) => {
+            // Buffer feature if bufferDistance is specified
+            let featureGeometry = feature.geometry;
+            if (bufferDistance > 0) {
+                const buffered = geometryEngine.buffer(feature.geometry, bufferDistance, "meters");
+                // Handle case where buffer returns an array
+                featureGeometry = (Array.isArray(buffered) ? buffered[0] : buffered) as Polygon;
+            }
+            
             const intersection = geometryEngine.intersect(
-                feature.geometry,
+                featureGeometry,
                 unionGeometry
             );
 
@@ -295,6 +330,13 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting features:", error);
     });
 
+    await getIntersectingArea2dRuimtebeslag(model, "BAG 2D").then((result) => {
+        model.intersectingPandenArea = result;
+        console.log("Total BAG intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
+    });
+
     await getIntersectingFeatures(model, "Bomenregister 2015").then((result) => {
         model.intersectingBomen = result;
         console.log("Intersecting bomen:", result);
@@ -374,5 +416,19 @@ export async function handleEffectAnalysis(model) {
         console.log("Intersecting features:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingFeatures(model, "BAG 2D", null, 2).then((result) => {
+        model.intersectingPandenBuffer = result;
+        console.log("Intersecting panden:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingArea2dRuimtebeslag(model, "BAG 2D", null, 2).then((result) => {
+        model.intersectingPandenBufferArea = result;
+        console.log("Total BAG intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
     });
 }
