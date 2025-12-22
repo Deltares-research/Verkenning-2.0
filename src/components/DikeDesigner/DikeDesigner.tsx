@@ -338,6 +338,7 @@ const DikeDesigner = (
         model.intersectingPanden = null;
         model.intersectingBomen = null;
         model.intersectingPercelen = null;
+        model.intersectingPercelenArea = 0;
         model.intersectingNatura2000 = 0;
         model.intersectingGNN = 0;
         model.intersectingBeheertypen = [];
@@ -347,6 +348,8 @@ const DikeDesigner = (
         model.intersectingPandenArea = 0;
         model.intersectingPandenBuffer = [];
         model.intersectingPandenBufferArea = 0;
+        model.intersectingErven = [];
+        model.intersectingErvenArea = 0;
         
         cleanFeatureLayer(model.designLayer2D);
 

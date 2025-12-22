@@ -208,6 +208,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingPandenArea: number = 0
     intersectingPandenBuffer: object [] = []
     intersectingPandenBufferArea: number = 0
+    intersectingErven: object[] = []
+    intersectingErvenArea: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",

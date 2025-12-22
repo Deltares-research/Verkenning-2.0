@@ -43,6 +43,8 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingBeheertypen")
     useWatchAndRerender(model, "intersectingPandenBuffer")
     useWatchAndRerender(model, "intersectingPandenBufferArea")
+    useWatchAndRerender(model, "intersectingErven")
+    useWatchAndRerender(model, "intersectingErvenArea")
 
 
 
@@ -82,14 +84,19 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBuffer?.length}</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBufferArea.toFixed(2)}</TableCell>
                             </TableRow>
-                            <TableRow>
+                            {/* <TableRow>
                                 <TableCell sx={{ fontSize: "11px" }}>Bomen [aantal]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBomen?.length}</TableCell>
-                            </TableRow>
+                            </TableRow> */}
                             <TableRow>
                                 <TableCell sx={{ fontSize: "11px" }}>Percelen geen eigendom Waterschap [aantal]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelen?.length}</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelenArea.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Erven [aantal]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingErven?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingErvenArea.toFixed(2)}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>

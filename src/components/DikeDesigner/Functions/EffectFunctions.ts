@@ -479,6 +479,20 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting area:", error);
     });
 
+    await getIntersectingFeatures(model, "BGT - onbegroeid terreindeel", "fysiekvoorkomen='erf'").then((result) => {
+        model.intersectingErven = result;
+        console.log("Intersecting erven:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting features:", error);
+    });
+
+    await getIntersectingArea2dRuimtebeslag(model, "BGT - onbegroeid terreindeel", "fysiekvoorkomen='erf'").then((result) => {
+        model.intersectingErvenArea = result;
+        console.log("Total erven intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching intersecting area:", error);
+    });
+
 
 
 
