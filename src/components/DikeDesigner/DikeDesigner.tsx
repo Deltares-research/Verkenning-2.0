@@ -335,9 +335,9 @@ const DikeDesigner = (
         model.lineLength = null;
 
         // intersection resets
-        model.intersectingPanden = null;
-        model.intersectingBomen = null;
-        model.intersectingPercelen = null;
+        model.intersectingPanden = [];
+        model.intersectingBomen = [];
+        model.intersectingPercelen = [];
         model.intersectingPercelenArea = 0;
         model.intersectingNatura2000 = 0;
         model.intersectingGNN = 0;
