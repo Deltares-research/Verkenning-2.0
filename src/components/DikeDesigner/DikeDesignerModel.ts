@@ -69,7 +69,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
     designFeatureLayer2dRuimtebeslagUrl: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagUrl"];
     designFeatureLayer2dRuimtebeslagWeergaveName: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagWeergaveName"];
-    natuurbeheerplanLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
+    natuurbeheerplanLayerName: DikeDesignerModelProperties["natuurbeheerplanLayerName"];
     percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
 
     graphicsLayerLine: GraphicsLayer;

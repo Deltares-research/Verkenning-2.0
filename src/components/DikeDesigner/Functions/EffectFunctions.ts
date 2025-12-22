@@ -348,11 +348,10 @@ export async function handleEffectAnalysis(model) {
     const percelenIntersectPromise = getIntersectingFeatures(model, "DKK - perceel");
     // Get all waterschap percelen that intersect with ruimtebeslag
     const percelenWaterschapIntersectPromise = getIntersectingFeatures(model, model.percelenWaterschapLayerName);
+    console.log(model.percelenWaterschapLayerName, "percelenWaterschapLayerName");
 
     Promise.all([percelenIntersectPromise, percelenWaterschapIntersectPromise])
         .then(([percelenIntersect, percelenWaterschapIntersect]) => {
-            // 🥇 BEST & robust: area-based intersection
-            // This is the most reliable and explicit.
             // Filter out features without valid geometry
             const waterschapGeoms = percelenWaterschapIntersect
                 .map(p => (p as any).geometry)
@@ -432,6 +431,8 @@ export async function handleEffectAnalysis(model) {
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
+
+    console.log(model.natuurbeheerplanLayerName, "natuurbeheerplanLayerName");
 
     await getIntersectingFeatures(model, model.natuurbeheerplanLayerName).then((result) => {
         // Get unique beheertype values
