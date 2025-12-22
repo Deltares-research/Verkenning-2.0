@@ -46,7 +46,9 @@
         {
             "id": "dike-designer-model-1",
             "$type": "dike-designer-model",
-            "apiKey": "GB0joLKaSshreEigJmUqYb9fdnF64RxC"
+            "apiKey": "GB0joLKaSshreEigJmUqYb9fdnF64RxC",
+            "natuurbeheerplanLayerName": "Natuurbeheerplan 2026 Gelderland",
+            "percelenWaterschapLayerName": "BRK Kadaster eigendom WSRL"
         }
     ]
 }

@@ -51,6 +51,8 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
     designFeatureLayer3dWeergaveName?: string;
     designFeatureLayer2dRuimtebeslagUrl?: string;
     designFeatureLayer2dRuimtebeslagWeergaveName?: string;
+    percelenWaterschapLayerName?: string | null;
+    natuurbeheerplanLayerName?: string | null;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -67,6 +69,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
     designFeatureLayer2dRuimtebeslagUrl: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagUrl"];
     designFeatureLayer2dRuimtebeslagWeergaveName: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagWeergaveName"];
+    natuurbeheerplanLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
+    percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -194,6 +198,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
     intersectingPercelen: object[] = []
+    intersectingPercelenArea: number = 0
     intersectingWegdelen2dRuimtebeslag: number = 0
     intersectingInritten2dRuimtebeslag: number = 0
     intersectingInritten2dRuimtebeslagCount: object[] = []
@@ -557,6 +562,14 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             designFeatureLayer2dRuimtebeslagWeergaveName: {
                 serializeModes: ["initial"],
                 default: "2D ruimtebeslag - test",
+            },
+            percelenWaterschapLayerName: {
+                serializeModes: ["initial"],
+                default: null,
+            },
+            natuurbeheerplanLayerName: {
+                serializeModes: ["initial"],
+                default: null,
             },
         };
     }

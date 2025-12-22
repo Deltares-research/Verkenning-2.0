@@ -34,6 +34,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingPandenBufferArea")
     useWatchAndRerender(model, "intersectingBomen")
     useWatchAndRerender(model, "intersectingPercelen")
+    useWatchAndRerender(model, "intersectingPercelenArea")
     useWatchAndRerender(model, "intersectingWegdelen2dRuimtebeslag")
     useWatchAndRerender(model, "intersectingInritten2dRuimtebeslag")
     useWatchAndRerender(model, "intersectingInritten2dRuimtebeslagCount")
@@ -86,8 +87,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBomen?.length}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>Percelen [aantal]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>Percelen geen eigendom Waterschap [aantal]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelen?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelenArea.toFixed(2)}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>

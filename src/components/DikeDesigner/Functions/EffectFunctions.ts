@@ -256,7 +256,7 @@ export async function calculate3dAreas(model) {
 
             graphic.attributes = {
                 ...graphicCopy.attributes,
-                "area_3d": graphicTotalArea
+                // "area_3d": graphicTotalArea
             };
 
             totalArea += graphicTotalArea;
@@ -344,12 +344,59 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingFeatures(model, "DKK - perceel").then((result) => {
-        model.intersectingPercelen = result;
-        console.log("Intersecting percelen:", result);
-    }).catch((error) => {
-        console.error("Error fetching intersecting features:", error);
-    });
+    // Get all percelen that intersect with ruimtebeslag
+    const percelenIntersectPromise = getIntersectingFeatures(model, "DKK - perceel");
+    // Get all waterschap percelen that intersect with ruimtebeslag
+    const percelenWaterschapIntersectPromise = getIntersectingFeatures(model, model.percelenWaterschapLayerName);
+
+    Promise.all([percelenIntersectPromise, percelenWaterschapIntersectPromise])
+        .then(([percelenIntersect, percelenWaterschapIntersect]) => {
+            // 🥇 BEST & robust: area-based intersection
+            // This is the most reliable and explicit.
+            // Filter out features without valid geometry
+            const waterschapGeoms = percelenWaterschapIntersect
+                .map(p => (p as any).geometry)
+                .filter(g => g && g.spatialReference);
+
+            let waterschapUnion = null;
+            if (waterschapGeoms.length > 0) {
+                waterschapUnion = geometryEngine.union(waterschapGeoms);
+            }
+
+            model.intersectingPercelen = percelenIntersect.filter(perceel => {
+                const geom = (perceel as any).geometry;
+                if (!waterschapUnion) return true; // If no waterschapUnion, keep all
+                const intersection = geometryEngine.intersect(geom, waterschapUnion);
+                // keep perceel if there is NO overlapping area
+                return !intersection || geometryEngine.geodesicArea(intersection as Polygon, "square-meters") === 0;
+            });
+
+            console.log("Intersecting percelen not owned by waterschap:", model.intersectingPercelen);
+            
+            // get area for intersectingPercelen (overlapping part)
+            const geometries = model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry);
+            const unionGeometry = geometries.length > 1
+                ? geometryEngine.union(geometries as any[])
+                : geometries[0];
+
+            let totalPercelenOverlapArea = 0;
+            if (model.intersectingPercelen.length > 0 && unionGeometry) {
+                model.intersectingPercelen.forEach(perceel => {
+                    const geom = (perceel as any).geometry;
+                    const intersection = geometryEngine.intersect(geom, unionGeometry);
+                    if (intersection) {
+                        const area = geometryEngine.geodesicArea(intersection as Polygon, "square-meters");
+                        totalPercelenOverlapArea += area;
+                    }
+                });
+            }
+            model.intersectingPercelenArea = totalPercelenOverlapArea;
+            console.log("Total overlap area for intersectingPercelen:", totalPercelenOverlapArea, "m²");
+            
+        })
+        .catch((error) => {
+            console.error("Error fetching intersecting features:", error);
+        });
 
     await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel").then((result) => {
         model.intersectingWegdelen2dRuimtebeslag = result;
@@ -386,12 +433,12 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting area:", error);
     });
 
-    await getIntersectingFeatures(model, "Natuurbeheerplan 2026 Gelderland").then((result) => {
+    await getIntersectingFeatures(model, model.natuurbeheerplanLayerName).then((result) => {
         // Get unique beheertype values
         const beheertypeValues = result.map((feature: any) => feature.getAttribute("beheertype")).filter((value, index, self) => self.indexOf(value) === index);
 
         // Get the layer to access field domains
-        const natuurbeheerLayer = model.map.allLayers.items.find((layer) => layer.title === "Natuurbeheerplan 2026 Gelderland");
+        const natuurbeheerLayer = model.map.allLayers.items.find((layer) => layer.title === model.natuurbeheerplanLayerName);
 
         // Map coded values to their descriptions if domain exists
         if (natuurbeheerLayer && natuurbeheerLayer.fields) {
@@ -431,4 +478,8 @@ export async function handleEffectAnalysis(model) {
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
+
+
+
+
 }
