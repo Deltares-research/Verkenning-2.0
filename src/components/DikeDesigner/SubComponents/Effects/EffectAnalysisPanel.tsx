@@ -80,7 +80,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenArea.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>Invloedzone BAG panden</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>Invloedzone BAG panden ({model.pandenBufferDistance} m)</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBuffer?.length}</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBufferArea.toFixed(2)}</TableCell>
                             </TableRow>

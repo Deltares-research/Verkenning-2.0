@@ -466,14 +466,14 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingFeatures(model, "BAG 2D", null, 2).then((result) => {
+    await getIntersectingFeatures(model, "BAG 2D", null, model.pandenBufferDistance).then((result) => {
         model.intersectingPandenBuffer = result;
         console.log("Intersecting panden:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingArea2dRuimtebeslag(model, "BAG 2D", null, 2).then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, "BAG 2D", null, model.pandenBufferDistance).then((result) => {
         model.intersectingPandenBufferArea = result;
         console.log("Total BAG intersecting area:", result);
     }).catch((error) => {

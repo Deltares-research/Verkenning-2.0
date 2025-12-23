@@ -53,6 +53,7 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
     designFeatureLayer2dRuimtebeslagWeergaveName?: string;
     percelenWaterschapLayerName?: string | null;
     natuurbeheerplanLayerName?: string | null;
+    pandenBufferDistance?: number;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -71,6 +72,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designFeatureLayer2dRuimtebeslagWeergaveName: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagWeergaveName"];
     natuurbeheerplanLayerName: DikeDesignerModelProperties["natuurbeheerplanLayerName"];
     percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
+    pandenBufferDistance: DikeDesignerModelProperties["pandenBufferDistance"];
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -572,6 +574,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             natuurbeheerplanLayerName: {
                 serializeModes: ["initial"],
                 default: null,
+            },
+            pandenBufferDistance: {
+                serializeModes: ["initial"],
+                default: 2,
             },
         };
     }
