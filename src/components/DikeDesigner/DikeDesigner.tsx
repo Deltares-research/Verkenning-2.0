@@ -288,7 +288,6 @@ const DikeDesigner = (
         model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.view.analyses.removeAll()
-        model.total3dArea = null;
         model.total2dArea = null;
         model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
@@ -330,7 +329,6 @@ const DikeDesigner = (
 
         model.userLinePoints = [];
         model.view.analyses.removeAll()
-        model.total3dArea = null;
         model.total2dArea = null;
         model.lineLength = null;
 

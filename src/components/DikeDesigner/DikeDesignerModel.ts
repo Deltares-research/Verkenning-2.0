@@ -47,6 +47,7 @@ import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
     apiKey?: string;
+    apiUrl?: string;
     designFeatureLayer3dUrl?: string;
     designFeatureLayer3dWeergaveName?: string;
     designFeatureLayer2dRuimtebeslagUrl?: string;
@@ -66,6 +67,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
     apiKey: DikeDesignerModelProperties["apiKey"];
+    apiUrl: DikeDesignerModelProperties["apiUrl"];
     designFeatureLayer3dUrl: DikeDesignerModelProperties["designFeatureLayer3dUrl"];
     designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
     designFeatureLayer2dRuimtebeslagUrl: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagUrl"];
@@ -104,7 +106,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     totalVolumeDifference: number = 0
     excavationVolume: number = 0
     fillVolume: number = 0
-    total3dArea: number = 0
     total2dArea: number = 0
     lineLength: number = 0
 
@@ -548,6 +549,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 default: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
             },
             apiKey: {
+                serializeModes: ["initial"],
+                default: "",
+            },
+            apiUrl: {
                 serializeModes: ["initial"],
                 default: "",
             },

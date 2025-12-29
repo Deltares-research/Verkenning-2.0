@@ -94,7 +94,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
         model.view.analyses.removeAll();
     };
 
-    useWatchAndRerender(model, "total3dArea");
     useWatchAndRerender(model, "total2dArea");
     useWatchAndRerender(model, "lineLength");
     useWatchAndRerender(model, "graphicsLayerLine");
@@ -439,14 +438,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">
                                     {model.fillVolume ?? "-"}
-                                </TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
-                                    3D Oppervlakte [m²]
-                                </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">
-                                    {model.total3dArea ?? "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow>

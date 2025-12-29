@@ -29,7 +29,7 @@ import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtil
 import * as projection from "@arcgis/core/geometry/projection";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
-import { calculate3dAreas, calculate2dAreas } from "./EffectFunctions";
+import { calculate2dAreas } from "./EffectFunctions";
 // Add type interfaces at the top
 interface OffsetGeometries {
     [key: string]: __esri.Polyline;
@@ -324,177 +324,165 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 }
 
 export async function calculateVolume(model): Promise<void> {
+
     model.graphicsLayerControlPoints.removeAll();
 
-    const gridSize = model.gridSize;
-
-    let elevationSampler = await meshUtils.createElevationSampler(
-        model.mergedMesh
-    );
-
-    // **PROJECT MESH EXTENT TO RD NEW FOR PROPER METER-BASED GRID**
-    const extent = model.meshGraphic.geometry.extent;
-
-    // RD New spatial reference (EPSG:28992) where 1 unit = 1 meter
-    const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
-    await projection.load();
-
-    // Create extent polygon and project to RD New
-    const extentPolygon = new Polygon({
-        rings: [[
-            [extent.xmin, extent.ymin],
-            [extent.xmax, extent.ymin],
-            [extent.xmax, extent.ymax],
-            [extent.xmin, extent.ymax],
-            [extent.xmin, extent.ymin]
-        ]],
-        spatialReference: extent.spatialReference
-    });
-
-    const projectedExtent = projection.project(extentPolygon, rdNewSpatialRef) as Polygon;
-    const rdExtent = projectedExtent.extent;
-
-    console.log(`Original extent (Web Mercator): xmin=${extent.xmin.toFixed(2)}, xmax=${extent.xmax.toFixed(2)}, ymin=${extent.ymin.toFixed(2)}, ymax=${extent.ymax.toFixed(2)}`);
-    console.log(`RD extent: xmin=${rdExtent.xmin.toFixed(2)}, xmax=${rdExtent.xmax.toFixed(2)}, ymin=${rdExtent.ymin.toFixed(2)}, ymax=${rdExtent.ymax.toFixed(2)}`);
-
-    const pointCoordsForVolume = [];
-    const groundPoints = [];
-
-    // **GENERATE GRID IN RD NEW COORDINATES WITH PROPER METER SPACING**
-    let pointCount = 0;
-    let validPoints = 0;
-
-    for (let rdX = rdExtent.xmin; rdX <= rdExtent.xmax; rdX += gridSize) {
-        for (let rdY = rdExtent.ymin; rdY <= rdExtent.ymax; rdY += gridSize) {
-            pointCount++;
-
-            // **PROJECT EACH GRID POINT BACK TO WEB MERCATOR FOR ELEVATION SAMPLING**
-            const rdPoint = new Point({
-                x: rdX,
-                y: rdY,
-                spatialReference: rdNewSpatialRef
-            });
-
-            const webMercatorPoint = projection.project(rdPoint, SpatialReference.WebMercator) as Point;
-
-            // Query the elevation at the point
-            const elevation = elevationSampler.elevationAt(webMercatorPoint.x, webMercatorPoint.y);
-            if (elevation) {
-                validPoints++;
-
-                // Add control point graphic using Web Mercator coordinates
-                // model.graphicsLayerControlPoints.add(new Graphic({ 
-                //     geometry: webMercatorPoint, 
-                //     symbol: model.controlPointSymbol 
-                // }));
-
-                // Add the point to the volume calculation
-                pointCoordsForVolume.push([webMercatorPoint.x, webMercatorPoint.y, elevation]);
-
-                // Add the point to the ground elevation query
-                groundPoints.push([webMercatorPoint.x, webMercatorPoint.y]);
-            }
-        }
-    }
-
-    // **ADD VERIFICATION LOGGING TO CHECK ACTUAL DISTANCES**
-    console.log(`Total grid points generated: ${pointCount}`);
-    console.log(`Valid points with elevation: ${validPoints}`);
-
-    if (validPoints >= 2) {
-        // Check distance between first two points
-        const point1WM = new Point({
-            x: pointCoordsForVolume[0][0],
-            y: pointCoordsForVolume[0][1],
-            spatialReference: SpatialReference.WebMercator
-        });
-        const point2WM = new Point({
-            x: pointCoordsForVolume[1][0],
-            y: pointCoordsForVolume[1][1],
-            spatialReference: SpatialReference.WebMercator
-        });
-
-        // Project to RD for accurate distance measurement
-        const point1RD = projection.project(point1WM, rdNewSpatialRef) as Point;
-        const point2RD = projection.project(point2WM, rdNewSpatialRef) as Point;
-
-        const actualDistance = Math.sqrt(
-            Math.pow(point2RD.x - point1RD.x, 2) + Math.pow(point2RD.y - point1RD.y, 2)
-        );
-
-        console.log(`Verification: Actual distance between first two control points: ${actualDistance.toFixed(2)}m (expected: ${gridSize}m)`);
-    }
-
-    if (pointCoordsForVolume.length === 0) {
-        console.warn("No points were processed. Ensure the mesh geometries and grid size are correct.");
-        return;
-    }
-
-    // **KEEP VOLUME CALCULATIONS USING CORRECT MODEL.GRIDSIZE AREA**
-    // Query ground elevations for all points
-    const multipointForGround = new Multipoint({
-        points: groundPoints,
-        spatialReference: SpatialReference.WebMercator
-    });
-
-    const groundResult = await model.elevationLayer.queryElevation(multipointForGround, { returnSampleInfo: true });
-    console.log("Ground elevation query result:", groundResult);
-
-    let totalVolumeDifference = 0;
-    let excavationVolume = 0;
-    let fillVolume = 0;
-
-    groundResult.geometry.points.forEach(([x, y, zGround], index) => {
-        const z3D = pointCoordsForVolume[index][2]; // Z value from the mesh geometry
-        const volumeDifference = (z3D - zGround) * model.gridSize * model.gridSize; // Volume difference for this point
-
-        if (volumeDifference > 0) {
-            fillVolume += volumeDifference; // Fill volume (material to be added)
-        } else {
-            excavationVolume += Math.abs(volumeDifference); // Cut volume (material to be removed)
-        }
-
-        totalVolumeDifference += volumeDifference;
-    });
-
-
     try {
-        // filter groundResult points for elevation above zGround and remove z-values
-        const filteredGroundPoints = groundResult.geometry.points.filter(([x, y, zGround], index) => {
-            const z3D = pointCoordsForVolume[index][2]; // Z value from the mesh geometry
-            return z3D > zGround;
-        }).map(([x, y]) => [x, y]);
+        // Show loading state
+        console.log("Starting volume calculation via API...");
 
-        const multipointAboveGround = new Multipoint({
-            points: filteredGroundPoints,
-            spatialReference: SpatialReference.WebMercator
+        // Convert graphics to GeoJSON for API
+        const geojson = {
+            type: "FeatureCollection",
+            crs: {
+                type: "name",
+                properties: { name: "EPSG:4326" },
+            },
+            features: [],
+        };
+
+        // Project polygons to WGS84 and add to GeoJSON
+        await projection.load();
+
+        model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
+            const geometry = graphic.geometry;
+            if (geometry) {
+                const projectedGeometry = projection.project(
+                    geometry,
+                    new SpatialReference({ wkid: 4326 })
+                );
+
+                if (projectedGeometry && !Array.isArray(projectedGeometry)) {
+                    const polygonGeometry = projectedGeometry as __esri.Polygon;
+
+                    const feature = {
+                        type: "Feature",
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: polygonGeometry.rings,
+                        },
+                        properties: graphic.attributes || {},
+                    };
+                    geojson.features.push(feature);
+                }
+            }
         });
 
-        const alphaShapeAboveGround = alphaShapeOperator.execute(multipointAboveGround, 5);
+        console.log("Sending GeoJSON to API:", geojson);
 
-        const singlePartAlphaShape = multiPartToSinglePartOperator.executeMany([alphaShapeAboveGround.alphaShape]);
+        // Call the backend API
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        const alpha = 1.0;
+        const apiUrlWithParams = `${model.apiUrl}?alpha=${alpha}`;
+        
 
-        if (singlePartAlphaShape) {
-
-            // iterate over singlePartAlphaShape parts and create graphics
-            singlePartAlphaShape.forEach(part => {
-                const aboveGroundGraphic = new Graphic({
-                    geometry: part,
-                });
-                model.graphicsLayerRuimtebeslag.add(aboveGroundGraphic);
+        try {
+            const response = await fetch(apiUrlWithParams, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-API-Key": model.apiKey,
+                },
+                body: JSON.stringify(geojson),
+                signal: controller.signal,
+                mode: 'cors',
             });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }));
+                throw new Error(errorData.detail || "API request failed");
+            }
+
+            const result = await response.json();
+            console.log("API calculation result:", result);
+
+            // Update model with API results
+            model.totalVolumeDifference = result.volume.total_volume.toFixed(2);
+            model.excavationVolume = result.volume.excavation_volume.toFixed(2);
+            model.fillVolume = result.volume.fill_volume.toFixed(2);
+
+            // Set ruimtebeslag 2d
+            if (result.ruimtebeslag_2d && result.ruimtebeslag_2d.features) {
+                model.graphicsLayerRuimtebeslag.removeAll();
+                result.ruimtebeslag_2d.features.forEach((feature) => {
+                    if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
+                        const polygon = new Polygon({
+                            rings: feature.geometry.coordinates,
+                            spatialReference: { wkid: 4326 },
+                        });
+                        const graphic = new Graphic({
+                            geometry: polygon,
+                            attributes: feature.properties || {},
+                        });
+                        model.graphicsLayerRuimtebeslag.add(graphic);
+                    }
+                });
+            }
+
+            // Set ruimtebeslag 3d
+            if (result.ruimtebeslag_3d && result.ruimtebeslag_3d.features) {
+                model.graphicsLayerRuimtebeslag3d.removeAll();
+                result.ruimtebeslag_3d.features.forEach((feature) => {
+                    if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
+                        const polygon = new Polygon({
+                            rings: feature.geometry.coordinates,
+                            spatialReference: { wkid: 4326 },
+                        });
+                        const graphic = new Graphic({
+                            geometry: polygon,
+                            attributes: feature.properties || {},
+                        });
+                        model.graphicsLayerRuimtebeslag3d.add(graphic);
+                    }
+                });
+            }
+
+
+
+            console.log("Volume calculation complete:");
+            console.log("Total volume difference:", result.volume.total_volume, "m³");
+            console.log("Total cut volume:", result.volume.excavation_volume, "m³");
+            console.log("Total fill volume:", result.volume.fill_volume, "m³");
+            console.log("Calculation time:", result.calculation_time, "s");
+
+            // Show success message
+            model.messages.commands.ui.alert.execute({
+                message: `Volume berekend via API!\nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
+                title: "Volume Berekening Geslaagd",
+            });
+
+        } catch (fetchError: unknown) {
+            clearTimeout(timeoutId);
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+                throw new Error("API verzoek duurde te lang (timeout na 60s)");
+            }
+            throw fetchError;
         }
+
     } catch (error) {
-        console.error("Error creating alpha shape for above ground volume:", error);
+        console.error("Volume calculation error:", error);
+        let errorMessage = "Unknown error occurred";
+
+        if (error instanceof TypeError && error.message === "Failed to fetch") {
+            errorMessage = "Kan de API niet bereiken. Controleer uw internetverbinding.";
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        model.messages.commands.ui.alert.execute({
+            message: `Fout bij volume berekening: ${errorMessage}`,
+            title: "API Fout",
+        });
+
+        // Set error state in model
+        model.excavationVolume = "-";
+        model.fillVolume = "-";
+        model.totalVolumeDifference = "-";
     }
-
-    model.excavationVolume = excavationVolume.toFixed(2);
-    model.fillVolume = fillVolume.toFixed(2);
-    model.totalVolumeDifference = totalVolumeDifference.toFixed(2);
-
-    console.log("Total volume difference:", totalVolumeDifference, "m³");
-    console.log("Total cut volume:", excavationVolume, "m³");
-    console.log("Total fill volume:", fillVolume, "m³");
 }
 
 export async function calculateDesignValues(model): Promise<void> {
@@ -506,8 +494,6 @@ export async function calculateDesignValues(model): Promise<void> {
 
     const total2dArea = await calculate2dAreas(model);
     model.total2dArea = total2dArea.toFixed(2);
-    const total3dArea = await calculate3dAreas(model);
-    model.total3dArea = total3dArea.toFixed(2);
 
     if (model.graphicsLayerLine?.graphics?.length > 0) {
         console.log("Calculating line length...");
@@ -522,6 +508,7 @@ export async function calculateDesignValues(model): Promise<void> {
         }
     }
 }
+
 
 function createMeshFromPolygon(model, polygon, textureUrl = null) {
 
@@ -1010,7 +997,7 @@ export function getPointAlongLine(
 
             const pathDistancePlanar = geometryEngine.planarLength(lineSegment, "meters");
             const pathDistanceGeodesic = geometryEngine.geodesicLength(lineSegment, "meters");
-                       const planarToGeodesic = pathDistancePlanar / pathDistanceGeodesic;
+            const planarToGeodesic = pathDistancePlanar / pathDistanceGeodesic;
 
             let distanceDiff = offsetLocation.offsetInSegment * planarToGeodesic;
 
@@ -1029,7 +1016,7 @@ export function getPointAlongLine(
                 type: "simple-marker",
                 color: [226, 119, 40, 0],
                 outline: {
-                    color: [255, 255, 255,  0],
+                    color: [255, 255, 255, 0],
                     width: 1,
                 },
             };
