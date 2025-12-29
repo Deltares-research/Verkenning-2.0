@@ -373,7 +373,7 @@ export async function calculateVolume(model): Promise<void> {
         // Call the backend API
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-        const alpha = 1.0;
+        const alpha = 5;
         const apiUrlWithParams = `${model.apiUrl}?alpha=${alpha}`;
         
 
