@@ -424,20 +424,56 @@ export async function calculateVolume(model): Promise<void> {
             }
 
             // Set ruimtebeslag 3d
-            if (result.ruimtebeslag_3d && result.ruimtebeslag_3d.features) {
-                model.graphicsLayerRuimtebeslag3d.removeAll();
-                result.ruimtebeslag_3d.features.forEach((feature) => {
-                    if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
-                        const polygon = new Polygon({
-                            rings: feature.geometry.coordinates,
-                            spatialReference: { wkid: 4326 },
-                        });
-                        const graphic = new Graphic({
-                            geometry: polygon,
-                            attributes: feature.properties || {},
-                        });
-                        model.graphicsLayerRuimtebeslag3d.add(graphic);
-                    }
+            // if (result.ruimtebeslag_3d && result.ruimtebeslag_3d.features) {
+            //     model.graphicsLayerRuimtebeslag3d.removeAll();
+            //     result.ruimtebeslag_3d.features.forEach((feature) => {
+            //         if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
+            //             const polygon = new Polygon({
+            //                 rings: feature.geometry.coordinates,
+            //                 spatialReference: { wkid: 4326 },
+            //             });
+            //             const graphic = new Graphic({
+            //                 geometry: polygon,
+            //                 attributes: feature.properties || {},
+            //             });
+            //             model.graphicsLayerRuimtebeslag3d.add(graphic);
+            //         }
+            //     });
+            // }
+
+            console.log(result.ruimtebeslag_2d_points, "2D ruimtebeslag points from API");
+
+            // points coming from backend
+            const groundPoints = result.ruimtebeslag_2d_points.map((pt) => {
+                    // Create point in RD New (EPSG:28992)
+                    const pointRD = new Point({
+                        x: pt[0],
+                        y: pt[1],
+                        spatialReference: { wkid: 28992 }
+                    });
+                    // Project to Web Mercator for further processing
+                    const pointWebMerc = projection.project(pointRD, SpatialReference.WebMercator);
+                    return pointWebMerc;
+            });
+            console.log("Ground points for 2D ruimtebeslag (WebMercator):", groundPoints);
+
+            const multipointAboveGround = new Multipoint({
+                points: groundPoints,
+                spatialReference: SpatialReference.WebMercator
+            });
+
+            const alphaShapeAboveGround = alphaShapeOperator.execute(multipointAboveGround, 5);
+
+            const singlePartAlphaShape = multiPartToSinglePartOperator.executeMany([alphaShapeAboveGround.alphaShape]);
+
+            if (singlePartAlphaShape) {
+
+                // iterate over singlePartAlphaShape parts and create graphics
+                singlePartAlphaShape.forEach(part => {
+                    const aboveGroundGraphic = new Graphic({
+                        geometry: part,
+                    });
+                    model.graphicsLayerRuimtebeslag.add(aboveGroundGraphic);
                 });
             }
 
