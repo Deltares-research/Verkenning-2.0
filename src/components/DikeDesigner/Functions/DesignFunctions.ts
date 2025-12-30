@@ -374,12 +374,9 @@ export async function calculateVolume(model): Promise<void> {
         // Call the backend API
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-        const alpha = 5;
-        const apiUrlWithParams = `${model.apiUrl}?alpha=${alpha}`;
         
-
         try {
-            const response = await fetch(apiUrlWithParams, {
+            const response = await fetch(model.apiUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -455,8 +452,8 @@ export async function calculateVolume(model): Promise<void> {
             console.log("Calculation time:", result.calculation_time, "s");
 
             // Show success message
-            model.messages.commands.ui.alert.execute({
-                message: `Volume berekend via API!\nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Volume berekend via API\nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
                 title: "Volume Berekening Geslaagd",
             });
 
