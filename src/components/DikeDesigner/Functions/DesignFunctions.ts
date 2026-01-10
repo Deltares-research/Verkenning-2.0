@@ -404,22 +404,22 @@ export async function calculateVolume(model): Promise<void> {
             model.fillVolume = result.volume.fill_volume.toFixed(2);
 
             // Set ruimtebeslag 2d
-            if (result.ruimtebeslag_2d && result.ruimtebeslag_2d.features) {
-                model.graphicsLayerRuimtebeslag.removeAll();
-                result.ruimtebeslag_2d.features.forEach((feature) => {
-                    if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
-                        const polygon = new Polygon({
-                            rings: feature.geometry.coordinates,
-                            spatialReference: { wkid: 4326 },
-                        });
-                        const graphic = new Graphic({
-                            geometry: polygon,
-                            attributes: feature.properties || {},
-                        });
-                        model.graphicsLayerRuimtebeslag.add(graphic);
-                    }
-                });
-            }
+            // if (result.ruimtebeslag_2d && result.ruimtebeslag_2d.features) {
+            //     model.graphicsLayerRuimtebeslag.removeAll();
+            //     result.ruimtebeslag_2d.features.forEach((feature) => {
+            //         if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
+            //             const polygon = new Polygon({
+            //                 rings: feature.geometry.coordinates,
+            //                 spatialReference: { wkid: 4326 },
+            //             });
+            //             const graphic = new Graphic({
+            //                 geometry: polygon,
+            //                 attributes: feature.properties || {},
+            //             });
+            //             model.graphicsLayerRuimtebeslag.add(graphic);
+            //         }
+            //     });
+            // }
 
             const spatialRefRd = new SpatialReference({ wkid: 28992 });
 
