@@ -85,6 +85,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayerMesh: GraphicsLayer;
     graphicsLayer3dPolygon: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
+    graphicsLayerRuimtebeslag3d: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
     graphicsLayerControlPoints: GraphicsLayer;
@@ -107,6 +108,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     excavationVolume: number = 0
     fillVolume: number = 0
     total2dArea: number = 0
+    total3dArea: number = 0
     lineLength: number = 0
 
     chartData: any[] = []
@@ -698,6 +700,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 },
                 listMode: "show",
             });
+            
+            this.graphicsLayerRuimtebeslag3d = new GraphicsLayer({
+                title: "Ruimtebeslag 3D",
+                elevationInfo: {
+                    mode: "absolute-height",
+                    offset: 0
+                },
+                listMode: "show",
+            });
 
             this.cursorLocationLayer = new GraphicsLayer({
                 title: "Cursor Location Layer",
@@ -785,6 +796,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.designLayer2D);
             this.map.add(this.cursorLocationLayer);
             this.map.add(this.graphicsLayerRuimtebeslag);
+            this.map.add(this.graphicsLayerRuimtebeslag3d);
             this.map.add(this.graphicsLayerProfile)
 
 

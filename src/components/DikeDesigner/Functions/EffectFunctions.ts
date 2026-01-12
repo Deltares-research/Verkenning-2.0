@@ -296,6 +296,59 @@ export async function calculate2dAreas(model) {
     return totalArea;
 }
 
+export async function calculate3dAreas(model) {
+    let totalArea = 0;
+    
+    for (const graphic of model.graphicsLayerRuimtebeslag3d.graphics.items) {
+        try {
+            const polygon3D = graphic.geometry as Polygon;
+            
+            // Split multi-ring polygons into single-ring polygons
+            const singlePartPolygons = polygon3D.rings.length > 1
+                ? multiPartToSinglePartOperator.executeMany([polygon3D])
+                : [polygon3D];
+
+            console.log(`Processing ${singlePartPolygons.length} polygon part(s) for graphic`);
+
+            let graphicTotalArea = 0;
+
+            // Process each single-ring polygon separately
+            for (const singlePolygon of singlePartPolygons) {
+                try {
+                    const areaMeasurement = new AreaMeasurementAnalysis({
+                        geometry: singlePolygon
+                    });
+
+                    model.view.analyses.add(areaMeasurement);
+
+                    const analysisView = await model.view.whenAnalysisView(areaMeasurement);
+                    const result = analysisView.result;
+
+                    if (result && result.area) {
+                        console.log("3D Area for polygon part:", result.area.value, "square meters");
+                        graphicTotalArea += result.area.value;
+                    }
+
+                    // Remove the analysis after measurement
+                    model.view.analyses.remove(areaMeasurement);
+
+                } catch (areaError) {
+                    console.error("Error measuring area for polygon part:", areaError);
+                }
+            }
+
+            totalArea += graphicTotalArea;
+            console.log("Total 3D area for graphic:", graphicTotalArea, "square meters");
+
+        } catch (error) {
+            console.error("Error processing graphic:", graphic, error);
+        }
+    }
+
+    console.log("Total 3D Area for all graphics:", totalArea, "square meters");
+    return totalArea;
+}
+
 export function getLineLength(profileLine: any): number {
     try {
         const path = profileLine.paths[0];

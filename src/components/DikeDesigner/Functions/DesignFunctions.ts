@@ -29,7 +29,7 @@ import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtil
 import * as projection from "@arcgis/core/geometry/projection";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
-import { calculate2dAreas } from "./EffectFunctions";
+import { calculate2dAreas, calculate3dAreas } from "./EffectFunctions";
 import { sin } from "@amcharts/amcharts5/.internal/core/util/Math";
 // Add type interfaces at the top
 interface OffsetGeometries {
@@ -430,6 +430,13 @@ export async function calculateVolume(model): Promise<void> {
 
             const multiPointAboveGroundWebMerc = projection.project(multipointAboveGround, SpatialReference.WebMercator) as Multipoint;
 
+            // Store z-values mapped to Web Mercator coordinates (since alpha shape is in Web Mercator)
+            const zValueMap: { [key: string]: number } = {};
+            multiPointAboveGroundWebMerc.points.forEach((point: number[]) => {
+                const key = `${point[0].toFixed(1)},${point[1].toFixed(1)}`;
+                zValueMap[key] = point[2] ?? 0;
+            });
+
             const alphaShapeAboveGround = alphaShapeOperator.execute(multiPointAboveGroundWebMerc, 5);
 
             const singlePartAlphaShape = multiPartToSinglePartOperator.executeMany([alphaShapeAboveGround.alphaShape]);
@@ -440,8 +447,37 @@ export async function calculateVolume(model): Promise<void> {
                 singlePartAlphaShape.forEach(part => {
                     const aboveGroundGraphic = new Graphic({
                         geometry: part,
+                        attributes: {
+                            zValues: zValueMap,
+                            originalPoints: result.ruimtebeslag_2d_points,
+                            type: 'ruimtebeslag_above_ground'
+                        },
                     });
                     model.graphicsLayerRuimtebeslag.add(aboveGroundGraphic);
+                    
+                    // Create 3D version by directly mapping rings with z-lookup (fastest approach)
+                    if (part.type === 'polygon' && 'rings' in part) {
+                        const polygon2D = part as Polygon;
+                        const rings3D = polygon2D.rings.map(ring => 
+                            ring.map(coord => {
+                                const key = `${coord[0].toFixed(1)},${coord[1].toFixed(1)}`;
+                                return [coord[0], coord[1], zValueMap[key] ?? 0];
+                            })
+                        );
+                        
+                        const aboveGroundGraphic3d = new Graphic({
+                            geometry: new Polygon({
+                                rings: rings3D,
+                                spatialReference: polygon2D.spatialReference,
+                                hasZ: true
+                            }),
+                            attributes: { type: 'ruimtebeslag_above_ground_3d' }
+                        });
+
+                        model.graphicsLayerRuimtebeslag3d.add(aboveGroundGraphic3d);
+                    }
+                    
+                    console.log("Added above ground ruimtebeslag graphic with z-values in attributes:", aboveGroundGraphic)
                 });
             }
 
@@ -496,6 +532,9 @@ export async function calculateDesignValues(model): Promise<void> {
 
     const total2dArea = await calculate2dAreas(model);
     model.total2dArea = total2dArea.toFixed(2);
+
+    const total3dArea = await calculate3dAreas(model);
+    model.total3dArea = total3dArea.toFixed(2);
 
     if (model.graphicsLayerLine?.graphics?.length > 0) {
         console.log("Calculating line length...");

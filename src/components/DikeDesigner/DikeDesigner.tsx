@@ -289,6 +289,7 @@ const DikeDesigner = (
         model.graphicsLayerRuimtebeslag.removeAll();
         model.view.analyses.removeAll()
         model.total2dArea = null;
+        model.total3dArea = null;
         model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
 
@@ -330,6 +331,7 @@ const DikeDesigner = (
         model.userLinePoints = [];
         model.view.analyses.removeAll()
         model.total2dArea = null;
+        model.total3dArea = null;
         model.lineLength = null;
 
         // intersection resets
