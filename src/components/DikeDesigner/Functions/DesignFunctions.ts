@@ -1079,6 +1079,12 @@ export function getPointAlongLine(
 
 export async function locateDwpProfile(model) {
 
+    // notify user
+    model.messages.commands.ui.displayNotification.execute({
+        message: `Klik op de locatie waar het dwarsprofiel moet worden geplaatst.`,
+        title: "Dwarsprofiel Locatie",
+    });
+
     // clean up previous graphics
     model.graphicsLayerPoint.removeAll();
     model.graphicsLayerCrossSection.removeAll();

@@ -5,6 +5,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SelectAllIcon from "@mui/icons-material/SelectAll";
 import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import Box from "@vertigis/web/ui/Box";
 import Tab from "@vertigis/web/ui/Tab"
@@ -66,6 +67,7 @@ const DikeDesigner = (
     const [value, setValue] = React.useState(0);
     const [isLayerListVisible, setIsLayerListVisible] = useState(false);
     const [designName, setDesignName] = useState<string>(() => model.designName || "");
+    const [isDesignNameConfirmed, setIsDesignNameConfirmed] = useState<boolean>(() => Boolean(model.designName));
     const [showNameWarning, setShowNameWarning] = useState(false);
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
 
@@ -89,6 +91,8 @@ const DikeDesigner = (
 
     const handleDesignNameChange = (e) => {
         setDesignName(e.target.value);
+        // Mark as unconfirmed when user is editing
+        setIsDesignNameConfirmed(false);
         // Hide warning when user starts typing
         if (e.target.value.trim()) {
             setShowNameWarning(false);
@@ -99,6 +103,16 @@ const DikeDesigner = (
         // Update model when input loses focus
         if (designName.trim()) {
             model.designName = designName.trim();
+            setIsDesignNameConfirmed(true);
+        }
+    };
+
+    const handleDesignNameKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && designName.trim()) {
+            model.designName = designName.trim();
+            setIsDesignNameConfirmed(true);
+            // Optionally blur the input
+            (e.target as HTMLInputElement).blur();
         }
     };
 
@@ -460,12 +474,17 @@ const DikeDesigner = (
                     <FormLabel sx={{ 
                         fontWeight: 'bold', 
                         fontSize: '14px',
-                        color: '#000000ff',
+                        color: isDesignNameConfirmed ? '#2e7d32' : '#000000ff',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 1
+                        gap: 1,
+                        transition: 'color 0.3s ease'
                     }}>
-                        <EditIcon sx={{ fontSize: 18 }} />
+                        {isDesignNameConfirmed ? (
+                            <CheckCircleIcon sx={{ fontSize: 18, color: '#2e7d32' }} />
+                        ) : (
+                            <EditIcon sx={{ fontSize: 18 }} />
+                        )}
                         Ontwerp naam
                     </FormLabel>
                     
@@ -473,6 +492,7 @@ const DikeDesigner = (
                         value={designName}
                         onChange={handleDesignNameChange}
                         onBlur={handleDesignNameBlur}
+                        onKeyPress={handleDesignNameKeyPress}
                         placeholder="Voer een ontwerpnaam in..."
                         size="medium"
                         fullWidth
@@ -482,8 +502,23 @@ const DikeDesigner = (
                             fontWeight: 500,
                             '& .MuiInputBase-input': {
                                 padding: '12px 14px',
+                                backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
+                                transition: 'background-color 0.3s ease'
                             },
-                            backgroundColor: 'white',
+                            backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
+                            borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
+                            transition: 'all 0.3s ease',
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
+                                '& fieldset': {
+                                    borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
+                                    borderWidth: isDesignNameConfirmed ? '2px' : '1px',
+                                    transition: 'all 0.3s ease'
+                                },
+                                '&:hover fieldset': {
+                                    borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
+                                },
+                            }
                         }}
                     />
 
@@ -586,6 +621,7 @@ const DikeDesigner = (
                         handleCellChange={handleCellChange}
                         handleClearExcel={handleClearExcel}
                         handleExcelUpload={handleExcelUpload}
+                        handleCreateDesign={handleCreateDesign}
                     />
                 );
             })()}

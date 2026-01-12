@@ -3,6 +3,7 @@ import ControlPointIcon from '@mui/icons-material/ControlPoint';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import TuneIcon from '@mui/icons-material/Tune';
+import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
 
 
 import Box from "@vertigis/web/ui/Box";
@@ -17,11 +18,13 @@ import { locateDwpProfile, clearDwpProfile, setDwpLocation } from "../../Functio
 interface ButtonToolbarProps {
   model: any;
   handleToggleLengthSlider: () => void;
+  handleCreateDesign: () => void;
 }
 
 const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   model,
   handleToggleLengthSlider,
+  handleCreateDesign,
 }) => {
   const [dwpLocationAnchorEl, setDwpLocationAnchorEl] = useState<null | HTMLElement>(null);
   const dwpLocationOpen = Boolean(dwpLocationAnchorEl);
@@ -35,6 +38,8 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
 
   // Force re-render state
   const [, forceUpdate] = useState({});
+  
+  const hasReferenceLine = Boolean(model.graphicsLayerLine?.graphics.length);
 
   const handleDwpLocationMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setDwpLocationAnchorEl(event.currentTarget);
@@ -176,7 +181,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
             }
           } : {}}
         >
-          2 Teken profielpunten
+          2a Teken profielpunten
         </Button>
 
         <Button
@@ -187,7 +192,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           onClick={() => clearDwpProfile(model)}
           disabled={model.chartData?.length === 0}
         >
-          3 Verwijder profielpunten
+          2b Verwijder profielpunten
         </Button>
 
         <Button
@@ -205,7 +210,18 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
             }
           } : {}}
         >
-          4 Benoem locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
+          3 Benoem locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
+        </Button>
+
+        <Button
+          variant="contained"
+          size="medium"
+          startIcon={<PlayCircleFilledWhiteIcon />}
+          color="primary"
+          onClick={handleCreateDesign}
+          disabled={!hasReferenceLine || !model.chartData?.length}
+        >
+          4 Opbouwen in 3D
         </Button>
       </Box>
 

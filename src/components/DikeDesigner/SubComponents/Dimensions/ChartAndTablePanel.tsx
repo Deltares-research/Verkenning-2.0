@@ -38,6 +38,7 @@ interface ChartAndTablePanelProps {
   handleCellChange: (rowIndex: number, colKey: string, value: string) => void;
   handleClearExcel: () => void;
   handleExcelUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCreateDesign: () => void;
 }
 
 const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
@@ -51,6 +52,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
   handleCellChange,
   handleClearExcel,
   handleExcelUpload,
+  handleCreateDesign,
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [showLengthSlider, setShowLengthSlider] = useState(false);
@@ -140,6 +142,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
         <ButtonToolbar 
           model={model} 
           handleToggleLengthSlider={handleToggleLengthSlider}
+          handleCreateDesign={handleCreateDesign}
         />
 
         {/* Tabs */}

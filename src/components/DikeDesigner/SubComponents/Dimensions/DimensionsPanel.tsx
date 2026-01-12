@@ -255,7 +255,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         </FormControl>
 
                         {/* Dijkvak-id Dropdown */}
-                        {model.selectedDijkvakLayerFields.length > 0 && (
+                        {/* {model.selectedDijkvakLayerFields.length > 0 && (
                             <FormControl sx={{ marginTop: 2, fontSize: "14px" }} size="small">
                                 <InputLabel
                                     id="dijkvak-field-label"
@@ -286,7 +286,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     ))}
                                 </Select>
                             </FormControl>
-                        )}
+                        )} */}
                     </>
                 )}
                 <Button
@@ -331,18 +331,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 </Button>
 
                  <Divider />
-
-                <Button
-                    disabled={!hasReferenceLine || !model.chartData?.length}
-                    variant="contained"
-                    color="primary"
-                    startIcon={<PlayCircleFilledWhiteIcon />}
-                    onClick={handleCreateDesign}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Uitrollen in 3D
-                </Button>
 
                 <Button
                     disabled={!hasReferenceLine || !model.graphicsLayerTemp?.graphics.length}
