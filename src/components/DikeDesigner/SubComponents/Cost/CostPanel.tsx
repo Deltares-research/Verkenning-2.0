@@ -65,7 +65,35 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
 
 
             </Stack>
+
+
+                            {/* Summary Table */}
+                            <TableContainer component={Paper} sx={{}}>
+                                <Table >
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>1. Direct kosten</TableCell>
+                                            <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>$$</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableCell sx={{ fontSize: "11px" }}>Grondlichaam</TableCell>
+                                            <TableCell sx={{ fontSize: "11px" }} align="right">{model.ground_body_cost}</TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell sx={{ fontSize: "11px" }}>Constructie </TableCell>
+                                            <TableCell sx={{ fontSize: "11px" }} align="right">{model.sheetpile_wall_cost}</TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+
+
+
         </Stack>
+
+        
     );
 };
 
