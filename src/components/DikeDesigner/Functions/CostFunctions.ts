@@ -25,39 +25,79 @@ export const handleCostCalculation = async (
 
 
         // Convert graphics to GeoJSON
-        const geojson: any = {
+        // Convert graphics to GeoJSON for API
+        const geojson = {
             type: "FeatureCollection",
-            crs: { type: "name", properties: { name: "EPSG:4326" } },
+            crs: {
+                type: "name",
+                properties: { name: "EPSG:4326" },
+            },
             features: [],
         };
 
+        // Project polygons to WGS84 and add to GeoJSON
         const projection = await import("@arcgis/core/geometry/projection");
         const SpatialReference = (await import("@arcgis/core/geometry/SpatialReference")).default;
         await projection.load();
+
+        model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
+            const geometry = graphic.geometry;
+            if (geometry) {
+                const projectedGeometry = projection.project(
+                    geometry,
+                    new SpatialReference({ wkid: 4326 })
+                );
+
+                if (projectedGeometry && !Array.isArray(projectedGeometry)) {
+                    const polygonGeometry = projectedGeometry as __esri.Polygon;
+
+                    const feature = {
+                        type: "Feature",
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: polygonGeometry.rings,
+                        },
+                        properties: graphic.attributes || {},
+                    };
+                    geojson.features.push(feature);
+                }
+            }
+        });
+
 
 
         // API request with 30s timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const requestBody = {
-            geojson,  
-            road_surface: model.intersectingInritten2dRuimtebeslag || 0,
-            ruimtebeslag_area: model.fillVolume || 0,
-            number_houses: model.intersectingPandenBuffer || 0,
-        };
+//         const requestBody = {
+//             geojson,
+//             road_surface: model.intersectingInritten2dRuimtebeslag || 0,
+//             ruimtebeslag_area: model.fillVolume || 0,
+//             number_houses: model.intersectingPandenBuffer || 0,
+//         };
+
+        const queryParams = new URLSearchParams({
+            road_surface: "100",      // hardcoded value
+            ruimtebeslag_area: "5000",// hardcoded value
+            number_houses: "3",       // hardcoded value
+            });
 
         try {
-            const response = await fetch("http://localhost:8000/api/cost_calculation", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "x-api-key": model.apiKey, // if needed
-                        },
-                body: JSON.stringify(requestBody),
+            
+            const response = await fetch(
+                `http://localhost:8000/api/cost_calculation?${queryParams.toString()}`,
+                 {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "x-api-key": model.apiKey, // API key in header
+                },
+                body: JSON.stringify(geojson), // only geojson in body
                 signal: controller.signal,
-            });
+                }
+            );
 
             clearTimeout(timeoutId);
 
