@@ -150,6 +150,24 @@ export default class ConstructionModel extends ModelBase {
                     
                     console.log("Line selected:", this.selectedLine);
                     
+                    // Clear any existing graphics in construction layer
+                    if (this.graphicsLayerConstructionLine?.graphics?.length > 0) {
+                        this.graphicsLayerConstructionLine.removeAll();
+                    }
+                    
+                    // Add a highlighted version of the selected line
+                    const highlightGraphic = new Graphic({
+                        geometry: this.selectedLine,
+                        symbol: {
+                            type: "simple-line",
+                            color: [255, 255, 0, 0.9], // Bright yellow
+                            width: 6,
+                            style: "solid"
+                        } as any
+                    });
+                    
+                    this.graphicsLayerConstructionLine?.add(highlightGraphic);
+                    
                     // Remove click handler after selection
                     clickHandler.remove();
                 }
@@ -170,10 +188,11 @@ export default class ConstructionModel extends ModelBase {
 
         console.log("Creating construction from selected line...");
 
-        // Clear existing construction line
+        // Clear existing construction line and structures
         if (this.graphicsLayerConstructionLine?.graphics?.length > 0) {
             this.graphicsLayerConstructionLine.removeAll();
         }
+        this.structures = [];
 
         // Start with the selected line geometry
         let lineGeometry = this.selectedLine;
