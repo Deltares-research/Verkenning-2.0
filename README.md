@@ -21,3 +21,6 @@ See the [section about deployment](https://developers.vertigis.com/docs/web/sdk-
 ## Learn More
 
 Find [further documentation on the SDK](https://developers.vertigis.com/docs/web/sdk-overview/) on the [VertiGIS Studio Developer Center](https://developers.vertigis.com/docs/web/overview/)
+
+### Live app 
+WSRL: https://portal.wsrl.nl/vertigisstudio/web/?app=bef22ad7b8a7472a9c363b7fb803cbe2
