@@ -31,6 +31,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
     useWatchAndRerender(model.constructionModel, "useOffset");
     useWatchAndRerender(model.constructionModel, "offsetDistance");
     useWatchAndRerender(model.constructionModel, "offsetSide");
+    useWatchAndRerender(model, "loading");
 
     const handleSelectLine = () => {
         // Enable click mode to select any line from the map

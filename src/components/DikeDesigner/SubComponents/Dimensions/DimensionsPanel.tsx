@@ -57,7 +57,6 @@ interface DimensionsPanelProps {
     handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
     handleSaveDesign: () => Promise<void>;
-    loading: boolean;
     setShowNameWarning: (show: boolean) => void;
     selectedDownloads: string[];
     setSelectedDownloads: (downloads: string[]) => void;
@@ -83,7 +82,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleExportRuimtebeslag,
     handleClearDesign,
     handleSaveDesign,
-    loading,
     setShowNameWarning,
     selectedDownloads,
     setSelectedDownloads,
@@ -98,6 +96,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     useWatchAndRerender(model, "total3dArea");
     useWatchAndRerender(model, "lineLength");
     useWatchAndRerender(model, "graphicsLayerLine");
+    useWatchAndRerender(model, "loading");
 
     const validateDesignName = (): boolean => {
         // Check if design name is filled in
@@ -375,20 +374,8 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     pointerEvents: hasReferenceLine ? 'auto' : 'none'
                 }}
             >
-                {loading && (
-                    <LinearProgress
-                        sx={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            zIndex: 1,
-                            borderRadius: "8px 8px 0 0"
-                        }}
-                    />
-                )}
                 <FormLabel>Ontwerp overzicht</FormLabel>
-                <TableContainer component={Paper} sx={{ marginTop: 0, opacity: loading ? 0.5 : 1 }}>
+                <TableContainer component={Paper} sx={{ marginTop: 0, opacity: model.loading ? 0.5 : 1 }}>
                     <Table>
                         <TableHead>
                             <TableRow>

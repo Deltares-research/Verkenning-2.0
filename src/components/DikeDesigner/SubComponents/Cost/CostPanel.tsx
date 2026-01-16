@@ -26,44 +26,21 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
 
 }) => {
 
-    const [apiLoading, setApiLoading] = React.useState<boolean>(false);
-    const [apiError, setApiError] = React.useState<string | null>(null);
-
-
-
-    useWatchAndRerender(model, "intersectingPanden")
-    useWatchAndRerender(model, "intersectingPandenArea")
-    useWatchAndRerender(model, "intersectingPandenBuffer")
-    useWatchAndRerender(model, "intersectingPandenBufferArea")
-    useWatchAndRerender(model, "intersectingBomen")
-    useWatchAndRerender(model, "intersectingPercelen")
-    useWatchAndRerender(model, "intersectingPercelenArea")
-    useWatchAndRerender(model, "intersectingWegdelen2dRuimtebeslag")
-    useWatchAndRerender(model, "intersectingInritten2dRuimtebeslag")
-    useWatchAndRerender(model, "intersectingInritten2dRuimtebeslagCount")
-    useWatchAndRerender(model, "intersectingNatura2000")
-    useWatchAndRerender(model, "intersectingGNN")
-    useWatchAndRerender(model, "intersectingBeheertypen")
-    useWatchAndRerender(model, "intersectingPandenBuffer")
-    useWatchAndRerender(model, "intersectingPandenBufferArea")
-    useWatchAndRerender(model, "intersectingErven")
-    useWatchAndRerender(model, "intersectingErvenArea")
-
 
 
     return (
         <Stack spacing={1}>
             <Stack spacing={2} sx={stackStyle}>
-                <FormLabel>Costcalculation</FormLabel>
+                <FormLabel>Kosten berekening</FormLabel>
                 <Button
                     variant="contained"
                     color="primary"
                     startIcon={<AssessmentIcon />}
-                    onClick={() => handleCostCalculation(model, setApiLoading, setApiError)}
+                    onClick={() => handleCostCalculation(model)}
                     fullWidth
-                    disabled={!model.graphicsLayerTemp?.graphics.length || apiLoading}
+                    disabled={!model.graphicsLayerTemp?.graphics.length || model.loading}
                 >
-                    Kosten berekening draaien
+                    Bereken kosten
                 </Button>
 
 

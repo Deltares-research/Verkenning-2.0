@@ -14,6 +14,7 @@ import Stack from "@vertigis/web/ui/Stack";
 import FormLabel from "@vertigis/web/ui/FormLabel";
 import Input from "@vertigis/web/ui/Input";
 import Alert from "@vertigis/web/ui/Alert"
+import LinearProgress from "@vertigis/web/ui/LinearProgress";
 
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
@@ -65,7 +66,6 @@ const DikeDesigner = (
     const [mapLeftBorder, setMapLeftBorder] = useState(0);
     const [mapRightBorder, setMapRightBorder] = useState(window.innerWidth);
     const [activeTab, setActiveTab] = useState(0);
-    const [loading, setLoading] = useState(false); // State to track loading status
     const [value, setValue] = React.useState(0);
     const [isLayerListVisible, setIsLayerListVisible] = useState(false);
     const [designName, setDesignName] = useState<string>(() => model.designName || "");
@@ -309,7 +309,7 @@ const DikeDesigner = (
         model.lineLength = null;
         cleanFeatureLayer(model.designLayer2D);
 
-        setLoading(true); // Show loader
+        model.loading = true; // Show loader
         try {
             await createDesigns(model);
             console.log("Designs created");
@@ -319,10 +319,11 @@ const DikeDesigner = (
             
             await calculateDesignValues(model);
             console.log("Design values calculated");
+            model.loading = false; // Hide loader
         } catch (error) {
             console.error("Error during design creation:", error);
         } finally {
-            setLoading(false); // Hide loader
+            model.loading = false; // Hide loader
         }
     };
 
@@ -428,6 +429,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "selectedPointIndex");
     useWatchAndRerender(model, "selectingDwpLocation");
     useWatchAndRerender(model, "crossSectionLength");
+    useWatchAndRerender(model, "loading");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");
@@ -465,6 +467,18 @@ const DikeDesigner = (
 
     return (
         <LayoutElement {...props} style={{ width: "100%", overflowY: "auto" }}>
+            {model.loading && (
+                <LinearProgress
+                    sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        zIndex: 1,
+                        borderRadius: "8px 8px 0 0"
+                    }}
+                />
+            )}
             <Box
                 sx={{ width: '100%' }}
             >
@@ -575,7 +589,6 @@ const DikeDesigner = (
                         handleClearDesign={handleClearDesign}
                         handleCreateCrossSection={handleCreateCrossSection}
                         handleSaveDesign={handleSaveDesign}
-                        loading={loading}
                         setShowNameWarning={setShowNameWarning}
                         selectedDownloads={selectedDownloads}
                         setSelectedDownloads={setSelectedDownloads}
@@ -590,10 +603,6 @@ const DikeDesigner = (
                 <CustomTabPanel value={value} index={3}>
                     {/* TODO: Add Kosten panel content */}
                     <CostCalculationPanel model={model} />
-
-                    <Box sx={{ p: 2 }}>
-                        Kosten - Coming soon
-                    </Box>
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={4}>
                     {/* TODO: Add Afwegen panel content */}

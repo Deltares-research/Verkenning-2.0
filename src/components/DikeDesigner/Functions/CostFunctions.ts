@@ -14,16 +14,11 @@ import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
 
 export const handleCostCalculation = async (
-    model, 
-    setApiLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setApiError: React.Dispatch<React.SetStateAction<string | null>>
+    model
 ) => {
-    setApiLoading(true);
-    setApiError(null);
+    model.loading = true;
 
     try {
-
-
         // Convert graphics to GeoJSON
         // Convert graphics to GeoJSON for API
         const geojson = {
@@ -86,7 +81,7 @@ export const handleCostCalculation = async (
         try {
             
             const response = await fetch(
-                `http://localhost:8000/api/cost_calculation?${queryParams.toString()}`,
+                `${model.apiUrl}cost_calculation?${queryParams.toString()}`,
                  {
                     method: "POST",
                     headers: {
@@ -109,6 +104,11 @@ export const handleCostCalculation = async (
             const result = await response.json();
             console.log("API cost calculation result:", result);
 
+            model.messages.commands.ui.displayNotification.execute({
+                message: "Kosten berekening succesvol voltooid.",
+                title: "Kosten berekening voltooid",
+            });
+
   
         } catch (fetchError: unknown) {
             clearTimeout(timeoutId);
@@ -127,10 +127,8 @@ export const handleCostCalculation = async (
             errorMessage = error.message;
         }
 
-        setApiError(errorMessage);
-
     } finally {
-        setApiLoading(false);
+        model.loading = false;
     }
 };
 

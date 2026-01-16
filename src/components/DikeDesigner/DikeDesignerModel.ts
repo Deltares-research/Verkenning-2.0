@@ -13,7 +13,7 @@ import {
     serializable,
 } from "@vertigis/web/models";
 
-import ConstructionModel from "./ConstructionModel";
+import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
 
 import * as XLSX from "xlsx";
 

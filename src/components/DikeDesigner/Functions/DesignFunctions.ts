@@ -376,7 +376,7 @@ export async function calculateVolume(model): Promise<void> {
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
         
         try {
-            const response = await fetch(model.apiUrl, {
+            const response = await fetch(`${model.apiUrl}calculate_designs`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -22,8 +22,7 @@ interface EffectAnalysisPanelProps {
 }
 
 const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
-    model,
-
+    model
 }) => {
 
 
@@ -45,6 +44,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingPandenBufferArea")
     useWatchAndRerender(model, "intersectingErven")
     useWatchAndRerender(model, "intersectingErvenArea")
+    useWatchAndRerender(model, "loading");
 
 
 

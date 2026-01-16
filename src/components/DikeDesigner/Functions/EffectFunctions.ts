@@ -384,6 +384,7 @@ export function getLineLength(profileLine: any): number {
 }
 
 export async function handleEffectAnalysis(model) {
+    model.loading = true;
     await getIntersectingFeatures(model, "BAG 2D").then((result) => {
         model.intersectingPanden = result;
         console.log("Intersecting panden:", result);
@@ -554,6 +555,7 @@ export async function handleEffectAnalysis(model) {
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
+    model.loading = false;
 
 
 
