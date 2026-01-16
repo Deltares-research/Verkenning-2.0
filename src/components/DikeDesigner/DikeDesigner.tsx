@@ -47,6 +47,7 @@ import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
 import EffectAnalysisPanel from "./SubComponents/Effects/EffectAnalysisPanel";
+import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
 
 
 // import { SimpleWorker } from "./Workers/SimpleWorker"; // adjust path as needed
@@ -590,6 +591,8 @@ const DikeDesigner = (
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={3}>
                     {/* TODO: Add Kosten panel content */}
+                    <CostCalculationPanel model={model} />
+
                     <Box sx={{ p: 2 }}>
                         Kosten - Coming soon
                     </Box>
