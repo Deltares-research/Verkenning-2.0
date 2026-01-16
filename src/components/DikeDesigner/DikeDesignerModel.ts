@@ -11,8 +11,9 @@ import {
     ComponentModelProperties,
     PropertyDefs,
     serializable,
-    // importModel,
 } from "@vertigis/web/models";
+
+import ConstructionModel from "./ConstructionModel";
 
 import * as XLSX from "xlsx";
 
@@ -60,6 +61,8 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
 
     designName: string = "";
+    constructionModel: ConstructionModel = new ConstructionModel();
+
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
 
@@ -597,12 +600,18 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     protected async _onInitialize(): Promise<void> {
         await super._onInitialize();
         console.log("DikeDesignerModel initialized");
+        console.log("ConstructionModel", this.constructionModel);
 
         this.messages.events.map.initialized.subscribe(async (map) => {
             console.log("Map initialized:", map);
             this.mapElement = document.querySelector(".gcx-map")
             this.map = map.maps.map;
             this.view = map.maps["view"];
+            
+            // Pass map to ConstructionModel
+            this.constructionModel.map = this.map;
+            this.constructionModel.view = this.view;
+            this.constructionModel.logMap();
 
             this.designLayer2D = new FeatureLayer({
                 title: "Ontwerpdata - 2D",
@@ -791,9 +800,21 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.elevationLayer = new ElevationLayer({
                 url: this.elevationLayerUrl,
             });
+            
+            // Initialize construction graphics layer
+            const graphicsLayerConstructionLine = new GraphicsLayer({
+                title: "Constructielijn - tijdelijk",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+            
             this.map.add(this.graphicsLayerPoint);
             this.map.add(this.graphicsLayerControlPoints);
             this.map.add(this.graphicsLayerLine);
+            this.map.add(graphicsLayerConstructionLine);
             this.map.add(this.graphicsLayerCrossSection);
             this.map.add(this.graphicsLayerTemp);
             this.map.add(this.graphicsLayer3dPolygon);
@@ -803,6 +824,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.map.add(this.graphicsLayerRuimtebeslag);
             this.map.add(this.graphicsLayerRuimtebeslag3d);
             this.map.add(this.graphicsLayerProfile)
+            
+            // Pass construction layer to ConstructionModel
+            this.constructionModel.graphicsLayerConstructionLine = graphicsLayerConstructionLine;
 
 
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);
@@ -827,6 +851,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                             }]
                         }
                     });
+                    
+                    // Pass sketchViewModel to ConstructionModel
+                    this.constructionModel.sketchViewModel = this.sketchViewModel;
                 });
         });
     }

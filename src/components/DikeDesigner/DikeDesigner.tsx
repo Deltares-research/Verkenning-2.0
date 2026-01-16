@@ -48,6 +48,7 @@ import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChart
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
 import EffectAnalysisPanel from "./SubComponents/Effects/EffectAnalysisPanel";
 import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
+import ConstructionPanel from "./SubComponents/Construction/ConstructionPanel";
 
 
 // import { SimpleWorker } from "./Workers/SimpleWorker"; // adjust path as needed
@@ -581,10 +582,7 @@ const DikeDesigner = (
                     />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
-                    {/* TODO: Add Dimensioneer constructie panel content */}
-                    <Box sx={{ p: 2 }}>
-                        Dimensioneer constructie - Coming soon
-                    </Box>
+                    <ConstructionPanel model={model} />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={2}>
                     <EffectAnalysisPanel model={model} />
