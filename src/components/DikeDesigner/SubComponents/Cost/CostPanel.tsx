@@ -26,7 +26,8 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
 
 }) => {
 
-
+    useWatchAndRerender(model, "ground_body_cost")
+    useWatchAndRerender(model, "sheetpile_wall_cost")
 
     return (
         <Stack spacing={1}>

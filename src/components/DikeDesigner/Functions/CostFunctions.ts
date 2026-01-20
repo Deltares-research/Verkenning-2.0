@@ -104,6 +104,10 @@ export const handleCostCalculation = async (
             const result = await response.json();
             console.log("API cost calculation result:", result);
 
+            // update model for table
+            model.ground_body_cost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
+            model.sheetpile_wall_cost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
+
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
                 title: "Kosten berekening voltooid",
