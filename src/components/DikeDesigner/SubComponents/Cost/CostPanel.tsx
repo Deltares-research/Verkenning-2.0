@@ -9,6 +9,9 @@ import TableHead from "@vertigis/web/ui/TableHead";
 import TableRow from "@vertigis/web/ui/TableRow";
 import Paper from "@vertigis/web/ui/Paper";
 import FormLabel from "@vertigis/web/ui/FormLabel";
+import FormControl from "@vertigis/web/ui/FormControl";
+import Select from "@vertigis/web/ui/Select";
+import MenuItem from "@vertigis/web/ui/MenuItem";
 import { stackStyle } from "../../../styles";
 
 import { useWatchAndRerender } from "@vertigis/web/ui";
@@ -46,6 +49,24 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
 
 
             </Stack>
+
+
+            <FormControl fullWidth>
+                <FormLabel>Complexiteit maatregel</FormLabel>
+                <Select
+                                    value={model.costModel.structureType}
+                                    onChange={(e) => model.costModel.structureType = e.target.value as string}
+                                    label="Complexiteit maatregel"
+                                >
+                                    {model.costModel.structureTypes.map((type) => (
+                                        <MenuItem key={type} value={type}>
+                                            {type}
+                                        </MenuItem>
+                                    ))}
+                </Select>
+            </FormControl>
+
+
 
 
             {/* Summary Table */}

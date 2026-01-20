@@ -14,6 +14,7 @@ import {
 } from "@vertigis/web/models";
 
 import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
+import CostModel from "./SubComponents/Cost/costModel";
 
 import * as XLSX from "xlsx";
 
@@ -62,7 +63,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     designName: string = "";
     constructionModel: ConstructionModel = new ConstructionModel();
-
+    costModel: CostModel = new CostModel();
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
 
