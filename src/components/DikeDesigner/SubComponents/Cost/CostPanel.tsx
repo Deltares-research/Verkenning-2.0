@@ -28,9 +28,11 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
     model,
 
 }) => {
-
+    useWatchAndRerender(model, "total_direct_cost")
+    useWatchAndRerender(model, "preparation_cost")
     useWatchAndRerender(model, "ground_body_cost")
     useWatchAndRerender(model, "sheetpile_wall_cost")
+    useWatchAndRerender(model, "engineering_cost")
 
     return (
         <Stack spacing={1}>
@@ -54,11 +56,11 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
             <FormControl fullWidth>
                 <FormLabel>Complexiteit maatregel</FormLabel>
                 <Select
-                                    value={model.costModel.structureType}
-                                    onChange={(e) => model.costModel.structureType = e.target.value as string}
+                                    value={model.costModel.complexity}
+                                    onChange={(e) => model.costModel.complexity = e.target.value as string}
                                     label="Complexiteit maatregel"
                                 >
-                                    {model.costModel.structureTypes.map((type) => (
+                                    {model.costModel.complexityTypes.map((type) => (
                                         <MenuItem key={type} value={type}>
                                             {type}
                                         </MenuItem>

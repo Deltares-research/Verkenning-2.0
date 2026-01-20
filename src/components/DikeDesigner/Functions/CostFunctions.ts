@@ -65,18 +65,18 @@ export const handleCostCalculation = async (
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-//         const requestBody = {
-//             geojson,
-//             road_surface: model.intersectingInritten2dRuimtebeslag || 0,
-//             ruimtebeslag_area: model.fillVolume || 0,
-//             number_houses: model.intersectingPandenBuffer || 0,
-//         };
+        const roadSurface = Number(model.intersectingWegdelen2dRuimtebeslag) || 0;
+        const ruimtebeslag = Number(model.fillVolume) || 0;
+        const numberHouses = Number(model.intersectingPandenBuffer) || 0;
+        const complexity = model.costModel.complexity || "makkelijke maatregel";
+        console.log("Sending cost calculation:", { roadSurface, ruimtebeslag, numberHouses });
+        console.log("Complexity:", complexity);
 
         const queryParams = new URLSearchParams({
-            road_surface: "100",      // hardcoded value
-            ruimtebeslag_area: "5000",// hardcoded value
-            number_houses: "3",       // hardcoded value
-            });
+            complexity: complexity,
+            road_surface: roadSurface.toString(),
+            number_houses: numberHouses.toString(),
+        });
 
         try {
             
@@ -107,6 +107,9 @@ export const handleCostCalculation = async (
             // update model for table
             model.ground_body_cost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
             model.sheetpile_wall_cost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
+            model.preparation_cost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
+            model.engineering_cost = result.breakdown["Engineering kosten"]["engineering_cost_EPK"] + result.breakdown["Engineering kosten"]["engineering_cost_schets"]|| 0;
+            model.total_direct_cost = model.ground_body_cost + model.sheetpile_wall_cost + model.preparation_cost;
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
