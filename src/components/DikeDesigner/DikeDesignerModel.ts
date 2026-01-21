@@ -242,6 +242,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     engineering_cost: number = 0
     real_estate_cost: number = 0
+    houses_removal_cost: number = 0
+    roads_removal_cost: number = 0
 
 
     // New method to handle GeoJSON upload

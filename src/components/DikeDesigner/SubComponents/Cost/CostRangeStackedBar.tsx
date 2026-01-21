@@ -8,6 +8,7 @@ interface CostRangeStackedBarProps {
     groundBody: number;
     construction: number;
     engineering: number;
+    realEstate: number;
 }
 
 const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
@@ -15,6 +16,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
     groundBody,
     construction,
     engineering,
+    realEstate,
 }) => {
     const chartRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +55,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
                 groundBody: Math.round(groundBody * 0.9),
                 construction: Math.round(construction * 0.9),
                 engineering: Math.round(engineering * 0.9),
+                realEstate: Math.round(realEstate * 0.9),
             },
             {
                 category: "Verwacht",
@@ -60,6 +63,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
                 groundBody: Math.round(groundBody),
                 construction: Math.round(construction),
                 engineering: Math.round(engineering),
+                realEstate: Math.round(realEstate),
             },
             {
                 category: "Bovengrens",
@@ -67,6 +71,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
                 groundBody: Math.round(groundBody * 1.1),
                 construction: Math.round(construction * 1.1),
                 engineering: Math.round(engineering * 1.1),
+                realEstate: Math.round(realEstate * 1.1),
             },
         ];
 
@@ -78,6 +83,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             groundBody: am5.color(0x00aaff), // blue
             construction: am5.color(0x00cc44), // green
             engineering: am5.color(0xff0000), // red
+            real_estate: am5.color(0x800080), // purple
         };
 
         // Function to create series
@@ -108,7 +114,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
         makeSeries("groundBody", "Grondlichaam", colors.groundBody);
         makeSeries("construction", "Constructie", colors.construction);
         makeSeries("engineering", "Engineering", colors.engineering);
-
+        makeSeries("real_estate", "Vastgoed", colors.real_estate);
         // Add legend
         chart.children.push(
             am5.Legend.new(root, {
@@ -120,7 +126,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
         return () => {
             root.dispose();
         };
-    }, [preparation, groundBody, construction, engineering]);
+    }, [preparation, groundBody, construction, engineering, realEstate]);
 
     return <div ref={chartRef} style={{ width: "100%", height: "300px" }} />;
 };

@@ -36,12 +36,18 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
     useWatchAndRerender(model, "ground_body_cost")
     useWatchAndRerender(model, "sheetpile_wall_cost")
     useWatchAndRerender(model, "engineering_cost")
+    useWatchAndRerender(model, "real_estate_cost")
+    useWatchAndRerender(model, "houses_removal_cost")
+    useWatchAndRerender(model, "roads_removal_cost")
+
 
     const pieData = [
     { category: "Voorbereiding", value: Math.round(model.preparation_cost) },
     { category: "Grondlichaam", value: Math.round(model.ground_body_cost) },
     { category: "Constructie", value: Math.round(model.sheetpile_wall_cost) },
-    { category: "Engineering", value: Math.round(model.engineering_cost) }
+    { category: "Engineering", value: Math.round(model.engineering_cost) },
+    { category: "Panden", value: Math.round(model.houses_removal_cost) },
+    { category: "Wegen", value: Math.round(model.roads_removal_cost) },
     ].filter(d => d.value > 0);
 
     return (
@@ -125,6 +131,28 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                 </Table>
             </TableContainer>
 
+            {/* Vastgoed */}
+            <TableContainer component={Paper} sx={{}}>
+                <Table >
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>3. Vastgoed kosten</TableCell>
+                            <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>{Math.round(model.real_estate_cost)}€</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px" }}>Panden</TableCell>
+                            <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.houses_removal_cost)}€</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell sx={{ fontSize: "11px" }}>Wegen</TableCell>
+                            <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.roads_removal_cost)}€</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
             {/* Pie Chart */}
             <Paper sx={{ height: 280, padding: 1 }}>
                 <CostPieChart data={pieData} />
@@ -136,6 +164,7 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                 groundBody={Math.round(model.ground_body_cost || 0)}
                 construction={Math.round(model.sheetpile_wall_cost || 0)}
                 engineering={Math.round(model.engineering_cost || 0)}
+                realEstate={Math.round(model.real_estate_cost || 0)}
             />
 
         </Stack>

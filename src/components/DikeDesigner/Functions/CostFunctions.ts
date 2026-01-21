@@ -67,7 +67,7 @@ export const handleCostCalculation = async (
 
         const roadSurface = Number(model.intersectingWegdelen2dRuimtebeslag) || 0;
         const ruimtebeslag = Number(model.fillVolume) || 0;
-        const numberHouses = Number(model.intersectingPandenBuffer) || 0;
+        const numberHouses = Number(model.intersectingPandenBuffer?.length) || 0;
         const complexity = model.costModel.complexity || "makkelijke maatregel";
         console.log("Sending cost calculation:", { roadSurface, ruimtebeslag, numberHouses });
         console.log("Complexity:", complexity);
@@ -109,6 +109,9 @@ export const handleCostCalculation = async (
             model.sheetpile_wall_cost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
             model.preparation_cost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
             model.engineering_cost = result.breakdown["Engineeringkosten"]["engineering_cost_EPK"] + result.breakdown["Engineeringkosten"]["engineering_cost_schets"]|| 0;
+            model.houses_removal_cost = result.breakdown["Vastgoedkosten"]["Panden"]  || 0;
+            model.roads_removal_cost = result.breakdown["Vastgoedkosten"]["Wegen"] || 0;
+            model.real_estate_cost = model.houses_removal_cost + model.roads_removal_cost;
             model.total_direct_cost = model.ground_body_cost + model.sheetpile_wall_cost + model.preparation_cost;
 
             model.messages.commands.ui.displayNotification.execute({
