@@ -20,7 +20,13 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
             am5percent.PieChart.new(root, {
                 layout: root.verticalLayout
             })
-        );
+        ); 
+
+        try {
+            root._logo.dispose();
+        } catch {
+            // Handle error if logo is not present
+        }
 
         const series = chart.series.push(
             am5percent.PieSeries.new(root, {

@@ -31,6 +31,12 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             })
         );
 
+        try {
+            root._logo.dispose();
+        } catch {
+            // Handle error if logo is not present
+        }
+
         // Create axes
         const xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30 });
         const xAxis = chart.xAxes.push(

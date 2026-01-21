@@ -14,7 +14,7 @@ import {
 } from "@vertigis/web/models";
 
 import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
-import CostModel from "./SubComponents/Cost/costModel";
+import CostModel from "./SubComponents/Cost/CostModel";
 
 import * as XLSX from "xlsx";
 

@@ -20,7 +20,7 @@ import React from "react";
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { handleCostCalculation } from "../../Functions/CostFunctions";
 import CostPieChart from "./CostPieChart";
-import CostRangeStackedBar from "./CostRangeStackedBar"; 
+import CostRangeStackedBar from "./CostRangeStackedBar";
 
 
 interface CostCalculationPanelProps {
@@ -42,12 +42,12 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
 
 
     const pieData = [
-    { category: "Voorbereiding", value: Math.round(model.preparation_cost) },
-    { category: "Grondlichaam", value: Math.round(model.ground_body_cost) },
-    { category: "Constructie", value: Math.round(model.sheetpile_wall_cost) },
-    { category: "Engineering", value: Math.round(model.engineering_cost) },
-    { category: "Panden", value: Math.round(model.houses_removal_cost) },
-    { category: "Wegen", value: Math.round(model.roads_removal_cost) },
+        { category: "Voorbereiding", value: Math.round(model.preparation_cost) },
+        { category: "Grondlichaam", value: Math.round(model.ground_body_cost) },
+        { category: "Constructie", value: Math.round(model.sheetpile_wall_cost) },
+        { category: "Engineering", value: Math.round(model.engineering_cost) },
+        { category: "Panden", value: Math.round(model.houses_removal_cost) },
+        { category: "Wegen", value: Math.round(model.roads_removal_cost) },
     ].filter(d => d.value > 0);
 
     return (
@@ -72,15 +72,15 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
             <FormControl fullWidth>
                 <FormLabel>Complexiteit maatregel</FormLabel>
                 <Select
-                                    value={model.costModel.complexity}
-                                    onChange={(e) => model.costModel.complexity = e.target.value as string}
-                                    label="Complexiteit maatregel"
-                                >
-                                    {model.costModel.complexityTypes.map((type) => (
-                                        <MenuItem key={type} value={type}>
-                                            {type}
-                                        </MenuItem>
-                                    ))}
+                    value={model.costModel.complexity}
+                    onChange={(e) => model.costModel.complexity = e.target.value as string}
+                    label="Complexiteit maatregel"
+                >
+                    {model.costModel.complexityTypes.map((type) => (
+                        <MenuItem key={type} value={type}>
+                            {type}
+                        </MenuItem>
+                    ))}
                 </Select>
             </FormControl>
 
@@ -97,7 +97,7 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                         <TableRow>
+                        <TableRow>
                             <TableCell sx={{ fontSize: "11px" }}>Voorbereiding</TableCell>
                             <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.preparation_cost)}€</TableCell>
                         </TableRow>
@@ -123,7 +123,7 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                         <TableRow>
+                        <TableRow>
                             <TableCell sx={{ fontSize: "11px" }}>Engineering kosten</TableCell>
                             <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.engineering_cost)}€</TableCell>
                         </TableRow>
