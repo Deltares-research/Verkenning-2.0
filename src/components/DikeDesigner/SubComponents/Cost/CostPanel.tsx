@@ -38,10 +38,10 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
     useWatchAndRerender(model, "engineering_cost")
 
     const pieData = [
-    { category: "Voorbereiding", value: model.preparation_cost },
-    { category: "Grondlichaam", value: model.ground_body_cost },
-    { category: "Constructie", value: model.sheetpile_wall_cost },
-    { category: "Engineering", value: model.engineering_cost }
+    { category: "Voorbereiding", value: Math.round(model.preparation_cost) },
+    { category: "Grondlichaam", value: Math.round(model.ground_body_cost) },
+    { category: "Constructie", value: Math.round(model.sheetpile_wall_cost) },
+    { category: "Engineering", value: Math.round(model.engineering_cost) }
     ].filter(d => d.value > 0);
 
     return (
@@ -87,21 +87,21 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                     <TableHead>
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>1. Direct kosten</TableCell>
-                            <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>{model.total_direct_cost}€</TableCell>
+                            <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>{Math.round(model.total_direct_cost)}€</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                          <TableRow>
                             <TableCell sx={{ fontSize: "11px" }}>Voorbereiding</TableCell>
-                            <TableCell sx={{ fontSize: "11px" }} align="right">{model.preparation_cost}€</TableCell>
+                            <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.preparation_cost)}€</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px" }}>Grondlichaam</TableCell>
-                            <TableCell sx={{ fontSize: "11px" }} align="right">{model.ground_body_cost}€</TableCell>
+                            <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.ground_body_cost)}€</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px" }}>Constructie </TableCell>
-                            <TableCell sx={{ fontSize: "11px" }} align="right">{model.sheetpile_wall_cost}€</TableCell>
+                            <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.sheetpile_wall_cost)}€</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
@@ -113,13 +113,13 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                     <TableHead>
                         <TableRow>
                             <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>2. Engineering kosten</TableCell>
-                            <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>{model.engineering_cost}€</TableCell>
+                            <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>{Math.round(model.engineering_cost)}€</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                          <TableRow>
                             <TableCell sx={{ fontSize: "11px" }}>Engineering kosten</TableCell>
-                            <TableCell sx={{ fontSize: "11px" }} align="right">{model.engineering_cost}€</TableCell>
+                            <TableCell sx={{ fontSize: "11px" }} align="right">{Math.round(model.engineering_cost)}€</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
@@ -132,13 +132,11 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
 
 
             <CostRangeStackedBar
-                preparation={model.preparation_cost || 0}
-                groundBody={model.ground_body_cost || 0}
-                construction={model.sheetpile_wall_cost || 0}
-                engineering={model.engineering_cost || 0}
+                preparation={Math.round(model.preparation_cost || 0)}
+                groundBody={Math.round(model.ground_body_cost || 0)}
+                construction={Math.round(model.sheetpile_wall_cost || 0)}
+                engineering={Math.round(model.engineering_cost || 0)}
             />
-
-
 
         </Stack>
 
