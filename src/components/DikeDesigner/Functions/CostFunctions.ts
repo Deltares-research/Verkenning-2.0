@@ -108,7 +108,7 @@ export const handleCostCalculation = async (
             model.ground_body_cost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
             model.sheetpile_wall_cost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
             model.preparation_cost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
-            model.engineering_cost = result.breakdown["Engineering kosten"]["engineering_cost_EPK"] + result.breakdown["Engineering kosten"]["engineering_cost_schets"]|| 0;
+            model.engineering_cost = result.breakdown["Engineeringkosten"]["engineering_cost_EPK"] + result.breakdown["Engineeringkosten"]["engineering_cost_schets"]|| 0;
             model.total_direct_cost = model.ground_body_cost + model.sheetpile_wall_cost + model.preparation_cost;
 
             model.messages.commands.ui.displayNotification.execute({

@@ -19,6 +19,9 @@ import React from "react";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { handleCostCalculation } from "../../Functions/CostFunctions";
+import CostPieChart from "./CostPieChart";
+import CostRangeStackedBar from "./CostRangeStackedBar"; 
+
 
 interface CostCalculationPanelProps {
     model: DikeDesignerModel;
@@ -33,6 +36,13 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
     useWatchAndRerender(model, "ground_body_cost")
     useWatchAndRerender(model, "sheetpile_wall_cost")
     useWatchAndRerender(model, "engineering_cost")
+
+    const pieData = [
+    { category: "Voorbereiding", value: model.preparation_cost },
+    { category: "Grondlichaam", value: model.ground_body_cost },
+    { category: "Constructie", value: model.sheetpile_wall_cost },
+    { category: "Engineering", value: model.engineering_cost }
+    ].filter(d => d.value > 0);
 
     return (
         <Stack spacing={1}>
@@ -114,6 +124,19 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Pie Chart */}
+            <Paper sx={{ height: 280, padding: 1 }}>
+                <CostPieChart data={pieData} />
+            </Paper>
+
+
+            <CostRangeStackedBar
+                preparation={model.preparation_cost || 0}
+                groundBody={model.ground_body_cost || 0}
+                construction={model.sheetpile_wall_cost || 0}
+                engineering={model.engineering_cost || 0}
+            />
 
 
 
