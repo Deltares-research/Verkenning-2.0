@@ -234,18 +234,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     overviewVisible: boolean = false
 
-    // Cost decomposition
-    total_direct_cost: number = 0
-    preparation_cost: number = 0
-    ground_body_cost: number = 0
-    sheetpile_wall_cost: number = 0
-
-    engineering_cost: number = 0
-    real_estate_cost: number = 0
-    houses_removal_cost: number = 0
-    roads_removal_cost: number = 0
-
-
     // New method to handle GeoJSON upload
     handleGeoJSONUpload(file: File): void {
         const reader = new FileReader();

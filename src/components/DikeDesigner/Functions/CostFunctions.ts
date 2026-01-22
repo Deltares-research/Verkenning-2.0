@@ -105,14 +105,14 @@ export const handleCostCalculation = async (
             console.log("API cost calculation result:", result);
 
             // update model for table
-            model.ground_body_cost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
-            model.sheetpile_wall_cost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
-            model.preparation_cost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
-            model.engineering_cost = result.breakdown["Engineeringkosten"]["engineering_cost_EPK"] + result.breakdown["Engineeringkosten"]["engineering_cost_schets"]|| 0;
-            model.houses_removal_cost = result.breakdown["Vastgoedkosten"]["Panden"]  || 0;
-            model.roads_removal_cost = result.breakdown["Vastgoedkosten"]["Wegen"] || 0;
-            model.real_estate_cost = model.houses_removal_cost + model.roads_removal_cost;
-            model.total_direct_cost = model.ground_body_cost + model.sheetpile_wall_cost + model.preparation_cost;
+            model.costModel.groundBodyCost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
+            model.costModel.sheetpileWallCost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
+            model.costModel.preparationCost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
+            model.costModel.engineeringCost = result.breakdown["Engineeringkosten"]["engineering_cost_EPK"] + result.breakdown["Engineeringkosten"]["engineering_cost_schets"]|| 0;
+            model.costModel.housesRemovalCost = result.breakdown["Vastgoedkosten"]["Panden"]  || 0;
+            model.costModel.roadsRemovalCost = result.breakdown["Vastgoedkosten"]["Wegen"] || 0;
+            model.costModel.realEstateCost = model.costModel.housesRemovalCost + model.costModel.roadsRemovalCost;
+            model.costModel.totalDirectCost = model.costModel.groundBodyCost + model.costModel.sheetpileWallCost + model.costModel.preparationCosts;
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
