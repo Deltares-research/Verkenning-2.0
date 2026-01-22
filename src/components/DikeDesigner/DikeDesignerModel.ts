@@ -14,6 +14,7 @@ import {
 } from "@vertigis/web/models";
 
 import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
+import CostModel from "./SubComponents/Cost/CostModel";
 
 import * as XLSX from "xlsx";
 
@@ -62,7 +63,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     designName: string = "";
     constructionModel: ConstructionModel = new ConstructionModel();
-
+    costModel: CostModel = new CostModel();
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
 
@@ -232,12 +233,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
 
     overviewVisible: boolean = false
-
-    // Cost decomposition
-    total_direct_cost: number = 0
-    ground_body_cost: number = 0
-    sheetpile_wall_cost: number = 0
-
 
     // New method to handle GeoJSON upload
     handleGeoJSONUpload(file: File): void {

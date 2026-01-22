@@ -65,18 +65,18 @@ export const handleCostCalculation = async (
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-//         const requestBody = {
-//             geojson,
-//             road_surface: model.intersectingInritten2dRuimtebeslag || 0,
-//             ruimtebeslag_area: model.fillVolume || 0,
-//             number_houses: model.intersectingPandenBuffer || 0,
-//         };
+        const roadSurface = Number(model.intersectingWegdelen2dRuimtebeslag) || 0;
+        const ruimtebeslag = Number(model.fillVolume) || 0;
+        const numberHouses = Number(model.intersectingPandenBuffer?.length) || 0;
+        const complexity = model.costModel.complexity || "makkelijke maatregel";
+        console.log("Sending cost calculation:", { roadSurface, ruimtebeslag, numberHouses });
+        console.log("Complexity:", complexity);
 
         const queryParams = new URLSearchParams({
-            road_surface: "100",      // hardcoded value
-            ruimtebeslag_area: "5000",// hardcoded value
-            number_houses: "3",       // hardcoded value
-            });
+            complexity: complexity,
+            road_surface: roadSurface.toString(),
+            number_houses: numberHouses.toString(),
+        });
 
         try {
             
@@ -103,6 +103,16 @@ export const handleCostCalculation = async (
 
             const result = await response.json();
             console.log("API cost calculation result:", result);
+
+            // update model for table
+            model.costModel.groundBodyCost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
+            model.costModel.sheetpileWallCost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
+            model.costModel.preparationCost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
+            model.costModel.engineeringCost = result.breakdown["Engineeringkosten"]["engineering_cost_EPK"] + result.breakdown["Engineeringkosten"]["engineering_cost_schets"]|| 0;
+            model.costModel.housesRemovalCost = result.breakdown["Vastgoedkosten"]["Panden"]  || 0;
+            model.costModel.roadsRemovalCost = result.breakdown["Vastgoedkosten"]["Wegen"] || 0;
+            model.costModel.realEstateCost = model.costModel.housesRemovalCost + model.costModel.roadsRemovalCost;
+            model.costModel.totalDirectCost = model.costModel.groundBodyCost + model.costModel.sheetpileWallCost + model.costModel.preparationCosts;
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
