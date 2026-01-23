@@ -1,5 +1,7 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
+import EditIcon from "@mui/icons-material/Edit";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -33,6 +35,20 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
     useWatchAndRerender(model.constructionModel, "offsetSide");
     useWatchAndRerender(model, "loading");
 
+    const handleDrawLine = () => {
+        // Start drawing a line directly in the construction layer
+        model.constructionModel.drawLine();
+    };
+
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            model.constructionModel.uploadGeoJSON(file);
+        }
+        // Reset input so the same file can be uploaded again if needed
+        event.target.value = '';
+    };
+
     const handleSelectLine = () => {
         // Enable click mode to select any line from the map
         model.constructionModel.selectLineFromMap();
@@ -53,17 +69,49 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
     return (
         <Stack spacing={1}>
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Stap 1: Selecteer lijn op de kaart</FormLabel>
-                
-                <Button
-                    color="primary"
-                    onClick={handleSelectLine}
-                    startIcon={<TouchAppIcon />}
-                    variant="contained"
-                    fullWidth
-                >
-                    Selecteer lijn op de kaart
-                </Button>
+                <FormLabel>Stap 1: Constructielijn bepalen (kies een van de drie)</FormLabel>
+                <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
+                    <Button
+                        disabled={!model.sketchViewModel}
+                        color="primary"
+                        onClick={handleDrawLine}
+                        startIcon={<EditIcon />}
+                        variant="contained"
+                        size="medium"
+                        sx={{ flex: 1 }}
+                    >
+                        Teken lijn
+                    </Button>
+                    <Button
+                        color="primary"
+                        onClick={() => document.getElementById('construction-geojson-upload')?.click()}
+                        startIcon={<UploadFileIcon />}
+                        variant="contained"
+                        disabled={!model.map}
+                        size="medium"
+                        sx={{ flex: 1 }}
+                    >
+                        Upload
+                    </Button>
+                    <Button
+                        color="primary"
+                        onClick={handleSelectLine}
+                        startIcon={<TouchAppIcon />}
+                        variant="contained"
+                        disabled={!model.map}
+                        size="medium"
+                        sx={{ flex: 1 }}
+                    >
+                        Kies uit kaart
+                    </Button>
+                </Stack>
+                <input
+                    id="construction-geojson-upload"
+                    type="file"
+                    accept=".geojson,.json"
+                    style={{ display: 'none' }}
+                    onChange={handleFileUpload}
+                />
             </Stack>
 
             <Divider sx={{ my: 2 }} />
