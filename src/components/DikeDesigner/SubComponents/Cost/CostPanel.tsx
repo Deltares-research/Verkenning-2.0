@@ -83,14 +83,14 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
 
 
   // Prepare PieChart data
-    const pieData = [
-        { category: "Voorbereiding", value: model.costModel.directCostGroundWork.preparationCost },
-        { category: "Grondlichaam", value: model.costModel.directCostGroundWork.groundworkCost },
-        { category: "Constructie", value: model.costModel.bouwKostenGrondWerk.totalCosts },
-        { category: "Engineering", value: model.costModel.engineeringKosten.totalEngineeringCosts },
-        { category: "Overige bijkomende kosten", value: model.costModel.overigeBijkomendeKosten.totalGeneralCosts },
-        { category: "Vastgoedkosten", value: model.costModel.vastgoedKosten.totalRealEstateCosts },
-    ].filter(d => d.value > 0);
+  const pieData = [
+    { category: "Voorbereiding", value: model.costModel.directCostGroundWork.preparationCost },
+    { category: "Grondlichaam", value: model.costModel.directCostGroundWork.groundworkCost },
+    { category: "Constructie", value: model.costModel.bouwKostenGrondWerk.totalCosts },
+    { category: "Engineering", value: model.costModel.engineeringKosten.totalEngineeringCosts },
+    { category: "Overige bijkomende kosten", value: model.costModel.overigeBijkomendeKosten.totalGeneralCosts },
+    { category: "Vastgoedkosten", value: model.costModel.vastgoedKosten.totalRealEstateCosts },
+  ].filter(d => d.value > 0);
 
   return (
     <Stack spacing={1}>
@@ -154,20 +154,20 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
             </CollapsibleSection>
 
             {/* Bouwkosten grondwerk */}
-            <CollapsibleSection 
+            <CollapsibleSection
               title="BouwKosten Grondwerk"
               total={model.costModel.bouwKostenGrondWerk.totalCosts}
-              >
+            >
               <SubRow label="PM kosten" value={model.costModel.bouwKostenGrondWerk.pmCost} />
               <SubRow label="Algemene kosten" value={model.costModel.bouwKostenGrondWerk.generalCost} />
               <SubRow label="Risico & winst" value={model.costModel.bouwKostenGrondWerk.riskProfit} />
             </CollapsibleSection>
 
             {/* Engineeringkosten */}
-            <CollapsibleSection 
+            <CollapsibleSection
               title="Engineeringkosten"
               total={model.costModel.engineeringKosten.totalEngineeringCosts}
-              >
+            >
               <SubRow label="EPK kosten" value={model.costModel.engineeringKosten.epkCost} />
               <SubRow label="Schets voor definitief ontwerp" value={model.costModel.engineeringKosten.designCost} />
               <SubRow label="Onderzoeken" value={model.costModel.engineeringKosten.researchCost} />
@@ -176,10 +176,10 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
             </CollapsibleSection>
 
             {/* Overige bijkomende kosten */}
-            <CollapsibleSection 
+            <CollapsibleSection
               title="Overige bijkomende kosten"
               total={model.costModel.overigeBijkomendeKosten.totalGeneralCosts}
-              >
+            >
               <SubRow label="Vergunningen" value={model.costModel.overigeBijkomendeKosten.insurances} />
               <SubRow label="Kabels & leidingen" value={model.costModel.overigeBijkomendeKosten.cablesPipes} />
               <SubRow label="Planschade" value={model.costModel.overigeBijkomendeKosten.damages} />
@@ -201,18 +201,17 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
       </TableContainer>
 
       {/* Pie Chart and Stacked Bar Chart */}
-      <Paper sx={{ height: 280, padding: 1 }}>
-          <CostPieChart data={pieData.map(d => ({ ...d, value: Math.round(d.value) }))} />
+      <Paper sx={{ padding: 1 }}>
+        <CostPieChart data={pieData.map(d => ({ ...d, value: Math.round(d.value) }))} />
       </Paper>
-      
-      <CostRangeStackedBar
+      <Paper sx={{padding: 1 }}>
+        <CostRangeStackedBar
           bouwKosten={model.costModel.bouwKostenGrondWerk.totalCosts}
           engineering={model.costModel.engineeringKosten.totalEngineeringCosts}
           overigeBijkomende={model.costModel.overigeBijkomendeKosten.totalGeneralCosts}
           vastgoed={model.costModel.vastgoedKosten.totalRealEstateCosts}
-      />
-
-
+        />
+      </Paper>
     </Stack>
   );
 };
