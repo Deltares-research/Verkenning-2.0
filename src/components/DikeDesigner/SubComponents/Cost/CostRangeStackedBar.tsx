@@ -4,25 +4,24 @@ import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
 interface CostRangeStackedBarProps {
-    preparation: number;
-    groundBody: number;
-    construction: number;
+    bouwKosten: number;
     engineering: number;
-    realEstate: number;
+    overigeBijkomende: number;
+    vastgoed: number;
 }
 
 const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
-    preparation,
-    groundBody,
-    construction,
+    bouwKosten,
     engineering,
-    realEstate,
+    overigeBijkomende,
+    vastgoed,
 }) => {
     const chartRef = useRef<HTMLDivElement>(null);
 
     useLayoutEffect(() => {
-        const root = am5.Root.new(chartRef.current!);
+        if (!chartRef.current) return;
 
+        const root = am5.Root.new(chartRef.current);
         root.setThemes([am5themes_Animated.new(root)]);
 
         const chart = root.container.children.push(
@@ -31,19 +30,12 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             })
         );
 
-        try {
-            root._logo.dispose();
-        } catch {
-            // Handle error if logo is not present
-        }
+        try { root._logo.dispose(); } catch {}
 
-        // Create axes
-        const xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30 });
         const xAxis = chart.xAxes.push(
             am5xy.CategoryAxis.new(root, {
-                maxDeviation: 0.3,
                 categoryField: "category",
-                renderer: xRenderer,
+                renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 30 }),
             })
         );
 
@@ -53,46 +45,41 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             })
         );
 
-        // Prepare data
+        // Data with lower / expected / upper range (±10%)
         const data = [
             {
                 category: "Ondergrens",
-                preparation: Math.round(preparation * 0.9),
-                groundBody: Math.round(groundBody * 0.9),
-                construction: Math.round(construction * 0.9),
+                bouwKosten: Math.round(bouwKosten * 0.9),
                 engineering: Math.round(engineering * 0.9),
-                realEstate: Math.round(realEstate * 0.9),
+                overigeBijkomende: Math.round(overigeBijkomende * 0.9),
+                vastgoed: Math.round(vastgoed * 0.9),
             },
             {
                 category: "Verwacht",
-                preparation: Math.round(preparation),
-                groundBody: Math.round(groundBody),
-                construction: Math.round(construction),
+                bouwKosten: Math.round(bouwKosten),
                 engineering: Math.round(engineering),
-                realEstate: Math.round(realEstate),
+                overigeBijkomende: Math.round(overigeBijkomende),
+                vastgoed: Math.round(vastgoed),
             },
             {
                 category: "Bovengrens",
-                preparation: Math.round(preparation * 1.1),
-                groundBody: Math.round(groundBody * 1.1),
-                construction: Math.round(construction * 1.1),
+                bouwKosten: Math.round(bouwKosten * 1.1),
                 engineering: Math.round(engineering * 1.1),
-                realEstate: Math.round(realEstate * 1.1),
+                overigeBijkomende: Math.round(overigeBijkomende * 1.1),
+                vastgoed: Math.round(vastgoed * 1.1),
             },
         ];
 
         xAxis.data.setAll(data);
 
-        // Colors for consistency with pie chart
+        // Colors
         const colors = {
-            preparation: am5.color(0xffa500), // orange
-            groundBody: am5.color(0x00aaff), // blue
-            construction: am5.color(0x00cc44), // green
-            engineering: am5.color(0xff0000), // red
-            real_estate: am5.color(0x800080), // purple
+            bouwKosten: am5.color(0x00cc44),         // green
+            engineering: am5.color(0xff0000),        // red
+            overigeBijkomende: am5.color(0xffa500),  // orange
+            vastgoed: am5.color(0x800080),           // purple
         };
 
-        // Function to create series
         function makeSeries(field: string, name: string, color: am5.Color) {
             const series = chart.series.push(
                 am5xy.ColumnSeries.new(root, {
@@ -116,12 +103,11 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             return series;
         }
 
-        makeSeries("preparation", "Voorbereiding", colors.preparation);
-        makeSeries("groundBody", "Grondlichaam", colors.groundBody);
-        makeSeries("construction", "Constructie", colors.construction);
-        makeSeries("engineering", "Engineering", colors.engineering);
-        makeSeries("real_estate", "Vastgoed", colors.real_estate);
-        // Add legend
+        makeSeries("bouwKosten", "Bouwkosten grondwerk", colors.bouwKosten);
+        makeSeries("engineering", "Engineeringkosten", colors.engineering);
+        makeSeries("overigeBijkomende", "Overige bijkomende kosten", colors.overigeBijkomende);
+        makeSeries("vastgoed", "Vastgoedkosten", colors.vastgoed);
+
         chart.children.push(
             am5.Legend.new(root, {
                 centerX: am5.percent(50),
@@ -129,10 +115,8 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             })
         );
 
-        return () => {
-            root.dispose();
-        };
-    }, [preparation, groundBody, construction, engineering, realEstate]);
+        return () => root.dispose();
+    }, [bouwKosten, engineering, overigeBijkomende, vastgoed]);
 
     return <div ref={chartRef} style={{ width: "100%", height: "300px" }} />;
 };
