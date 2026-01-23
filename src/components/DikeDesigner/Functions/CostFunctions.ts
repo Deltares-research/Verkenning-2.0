@@ -10,6 +10,7 @@ import * as intersectionOperator from "@arcgis/core/geometry/operators/intersect
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
+import { ConstructionCostGroundWork, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -105,14 +106,14 @@ export const handleCostCalculation = async (
             console.log("API cost calculation result:", result);
 
             // update model for table
-            model.costModel.groundBodyCost = result.breakdown["Directe bouwkosten"]["Grondwerk"] || 0;
-            model.costModel.sheetpileWallCost = result.breakdown["Directe bouwkosten"]["Constructie"] || 0;
-            model.costModel.preparationCost = result.breakdown["Directe bouwkosten"]["Voorbereiding"] || 0;
-            model.costModel.engineeringCost = result.breakdown["Engineeringkosten"]["engineering_cost_EPK"] + result.breakdown["Engineeringkosten"]["engineering_cost_schets"]|| 0;
-            model.costModel.housesRemovalCost = result.breakdown["Vastgoedkosten"]["Panden"]  || 0;
-            model.costModel.roadsRemovalCost = result.breakdown["Vastgoedkosten"]["Wegen"] || 0;
-            model.costModel.realEstateCost = model.costModel.housesRemovalCost + model.costModel.roadsRemovalCost;
-            model.costModel.totalDirectCost = model.costModel.groundBodyCost + model.costModel.sheetpileWallCost + model.costModel.preparationCosts;
+            console.log("Updated directCostGroundWork:", model.costModel.directCostGroundWork);
+
+            model.costModel.directCostGroundWork.fromApi(result['breakdown']["Directe kosten grondwerk"]);
+            model.costModel.bouwKostenGrondWerk.fromApi(result['breakdown']["Bouwkosten - grondwerk"]);
+            model.costModel.engineeringKosten.fromApi(result['breakdown']["Engineeringkosten"]);
+            model.costModel.overigeBijkomendeKosten.fromApi(result['breakdown']["Overige bijkomende kosten"]);
+            model.costModel.vastgoedKosten.fromApi(result['breakdown']["Vastgoedkosten"]);
+            model.costModel.risicoreservering = result['breakdown']["Risicoreservering"];
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
