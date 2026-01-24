@@ -403,24 +403,6 @@ export async function calculateVolume(model): Promise<void> {
             model.excavationVolume = result.volume.excavation_volume.toFixed(2);
             model.fillVolume = result.volume.fill_volume.toFixed(2);
 
-            // Set ruimtebeslag 2d
-            // if (result.ruimtebeslag_2d && result.ruimtebeslag_2d.features) {
-            //     model.graphicsLayerRuimtebeslag.removeAll();
-            //     result.ruimtebeslag_2d.features.forEach((feature) => {
-            //         if (feature.geometry && feature.geometry.type === "Polygon" && feature.geometry.coordinates) {
-            //             const polygon = new Polygon({
-            //                 rings: feature.geometry.coordinates,
-            //                 spatialReference: { wkid: 4326 },
-            //             });
-            //             const graphic = new Graphic({
-            //                 geometry: polygon,
-            //                 attributes: feature.properties || {},
-            //             });
-            //             model.graphicsLayerRuimtebeslag.add(graphic);
-            //         }
-            //     });
-            // }
-
             const spatialRefRd = new SpatialReference({ wkid: 28992 });
 
             const multipointAboveGround = new Multipoint({
@@ -791,6 +773,10 @@ export function cleanFeatureLayer(layer) {
 
 
 export async function createCrossSection(model) {
+    model.messages.commands.ui.displayNotification.execute({
+        message: `Teken de dwarsdoorsnede door op de kaart te klikken.`,
+        title: "Dwarsdoorsnede Tekenen",
+    });
 
     model.startDrawingLine(model.graphicsLayerCrossSection).then(() => { // set interval dynamically?
         getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
@@ -799,6 +785,12 @@ export async function createCrossSection(model) {
             const promises = offsetLocations.map(loc =>
                 getPointAlongLine(model.graphicsLayerCrossSection.graphics.items[0].geometry.paths[0], loc, sRef)
             );
+
+            model.loading = true;
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Dwarsdoorsnede wordt geladen...`,
+                title: "Dwarsdoorsnede Laden",
+            });
 
             Promise.all(promises).then(async pointGraphics => {
                 console.log(pointGraphics, "Point graphics for cross section");
@@ -836,8 +828,6 @@ export async function createCrossSection(model) {
                     }
                     );
 
-
-
                     const meshElevationResult = elevationSampler.queryElevation(multipoint)
                     console.log("Mesh elevation result:", meshElevationResult);
                     if ("points" in meshElevationResult && Array.isArray(meshElevationResult.points)) {
@@ -848,21 +838,28 @@ export async function createCrossSection(model) {
                                 hoogte: point[2]
                             }));
                         console.log("Mesh series data:", model.meshSeriesData);
+                    
                     } else {
                         model.meshSeriesData = [];
                         console.warn("meshElevationResult does not have a 'points' property or is not an array.", meshElevationResult);
                     }
 
+
                     console.log("Mesh elevation result:", meshElevationResult);
+                    model.loading = false;
 
-
+                } 
+                else{
+                    model.loading = false;
+                    console.log("No mesh available for elevation sampling.");
                 }
-
             });
 
             // model.crossSectionLocations = offsetLocations;
             // model.graphicsLayerTemp.removeAll();
         });
+    }).catch((error) => {
+        console.error("Error during cross section drawing:", error);
     });
 }
 

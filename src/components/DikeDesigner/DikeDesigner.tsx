@@ -303,6 +303,7 @@ const DikeDesigner = (
         model.graphicsLayerTemp.removeAll();
         model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
+        model.graphicsLayerRuimtebeslag3d.removeAll();
         model.view.analyses.removeAll()
         model.total2dArea = null;
         model.total3dArea = null;
@@ -340,6 +341,7 @@ const DikeDesigner = (
         model.graphicsLayer3dPolygon.removeAll();
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
+        model.graphicsLayerRuimtebeslag3d.removeAll();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;
