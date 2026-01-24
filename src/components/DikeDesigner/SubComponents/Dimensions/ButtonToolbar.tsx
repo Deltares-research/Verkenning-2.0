@@ -101,6 +101,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         title: "Teken taludlijn",
         message: "Klik op de grafiek om taludlijn te tekenen",
         type: "info",
+        disableTimetouts: true
       });
     } else if (option === 'dwp_length') {
       handleToggleLengthSlider();
@@ -134,6 +135,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         title: "Teken profielpunten",
         message: "Klik op de grafiek om profielpunten te plaatsen",
         type: "info",
+        disableTimetouts: true
       });
     }
   };

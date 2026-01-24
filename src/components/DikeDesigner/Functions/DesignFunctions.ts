@@ -471,8 +471,9 @@ export async function calculateVolume(model): Promise<void> {
 
             // Show success message
             model.messages.commands.ui.displayNotification.execute({
-                message: `Volume berekend via API\nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
+                message: `Ontwerp berekening voltooid. \nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
                 title: "Volume Berekening Geslaagd",
+                disableTimeouts: true
             });
 
         } catch (fetchError: unknown) {
@@ -776,6 +777,7 @@ export async function createCrossSection(model) {
     model.messages.commands.ui.displayNotification.execute({
         message: `Teken de dwarsdoorsnede door op de kaart te klikken.`,
         title: "Dwarsdoorsnede Tekenen",
+        disableTimeouts: true
     });
 
     model.startDrawingLine(model.graphicsLayerCrossSection).then(() => { // set interval dynamically?
@@ -790,6 +792,8 @@ export async function createCrossSection(model) {
             model.messages.commands.ui.displayNotification.execute({
                 message: `Dwarsdoorsnede wordt geladen...`,
                 title: "Dwarsdoorsnede Laden",
+                disableTimeouts: true,
+                id: "crossSectionLoading"
             });
 
             Promise.all(promises).then(async pointGraphics => {
@@ -847,10 +851,12 @@ export async function createCrossSection(model) {
 
                     console.log("Mesh elevation result:", meshElevationResult);
                     model.loading = false;
+                    model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
 
                 } 
                 else{
                     model.loading = false;
+                    model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
                     console.log("No mesh available for elevation sampling.");
                 }
             });
@@ -1080,6 +1086,7 @@ export async function locateDwpProfile(model) {
     model.messages.commands.ui.displayNotification.execute({
         message: `Klik op de locatie waar het dwarsprofiel moet worden geplaatst.`,
         title: "Dwarsprofiel Locatie",
+        disableTimeouts: true
     });
 
     // clean up previous graphics

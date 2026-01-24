@@ -312,6 +312,13 @@ const DikeDesigner = (
 
         model.loading = true; // Show loader
         try {
+
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Ontwerp wordt gemaakt...`,
+                title: "Ontwerp Maken",
+                disableTimeouts: true,
+                id: "designCreation"
+            });
             await createDesigns(model);
             console.log("Designs created");
             
@@ -325,6 +332,7 @@ const DikeDesigner = (
             console.error("Error during design creation:", error);
         } finally {
             model.loading = false; // Hide loader
+            model.messages.commands.ui.hideNotification.execute({ id: "designCreation" });
         }
     };
 

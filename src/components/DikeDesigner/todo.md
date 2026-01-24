@@ -1,2 +1,1 @@
-- implement proper loading indicator while values are loading (frontend and backend)
-- make input for all layers as variables in config
+- create new renderer for 3d poly and remove mesh?
