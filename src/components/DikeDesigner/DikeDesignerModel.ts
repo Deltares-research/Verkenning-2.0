@@ -20,6 +20,7 @@ import * as XLSX from "xlsx";
 
 import { Features } from "@vertigis/web/messaging";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
@@ -611,6 +612,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.designLayer2D = new FeatureLayer({
                 title: "Ontwerpdata - 2D",
                 listMode: "show",
+                visible: false,
                 geometryType: "polygon",
                 objectIdField: "ObjectID",
                 source: [],
@@ -708,6 +710,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                     offset: 0
                 },
                 listMode: "show",
+                visible: false,
             });
             
             this.graphicsLayerRuimtebeslag3d = new GraphicsLayer({
@@ -717,6 +720,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                     offset: 0
                 },
                 listMode: "show",
+                visible: false,
             });
 
             this.cursorLocationLayer = new GraphicsLayer({
@@ -763,7 +767,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             });
 
             this.graphicsLayerTemp = new GraphicsLayer({
-                title: "Ontwerpdata - tijdelijk",
+                title: "Ontwerpdata - lijnen",
                 elevationInfo: {
                     mode: "absolute-height",
                     offset: 0
@@ -773,7 +777,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             });
 
             this.graphicsLayer3dPolygon = new GraphicsLayer({
-                title: "3D ontwerp - tijdelijk",
+                title: "Ontwerpdata 3D",
                 elevationInfo: {    
                     mode: "absolute-height",
                     offset: 0
@@ -783,7 +787,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             });
             
             this.graphicsLayerMesh = new GraphicsLayer({
-                title: "Mesh layer - tijdelijk",
+                title: "Dijklichaam 3D",
                 elevationInfo: {
                     mode: "absolute-height",
                     offset: 0
@@ -806,19 +810,49 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "hide",
             });
             
-            this.map.add(this.graphicsLayerPoint);
-            this.map.add(this.graphicsLayerControlPoints);
-            this.map.add(this.graphicsLayerLine);
-            this.map.add(graphicsLayerConstructionLine);
-            this.map.add(this.graphicsLayerCrossSection);
-            this.map.add(this.graphicsLayerTemp);
-            this.map.add(this.graphicsLayer3dPolygon);
-            this.map.add(this.graphicsLayerMesh);
-            this.map.add(this.designLayer2D);
-            this.map.add(this.cursorLocationLayer);
-            this.map.add(this.graphicsLayerRuimtebeslag);
-            this.map.add(this.graphicsLayerRuimtebeslag3d);
-            this.map.add(this.graphicsLayerProfile)
+            // Create group layers for better organization
+            const temporaryLayersGroup = new GroupLayer({
+                title: "Tijdelijke lagen",
+                visible: true,
+                listMode: "hide",
+                visibilityMode: "independent",
+                layers: [
+                    this.graphicsLayerProfile,
+                    this.graphicsLayerCrossSection,
+                    graphicsLayerConstructionLine,
+                    this.graphicsLayerLine,
+                    this.graphicsLayerControlPoints,
+                    this.graphicsLayerPoint,
+                    this.cursorLocationLayer
+                ]
+            });
+
+            const designLayersGroup = new GroupLayer({
+                title: "Ontwerp lagen",
+                visible: true,
+                visibilityMode: "independent",
+                layers: [
+                    this.graphicsLayerMesh,
+                    this.graphicsLayer3dPolygon,
+                    this.graphicsLayerTemp,
+                    this.designLayer2D
+                ]
+            });
+
+            const ruimtebeslagGroup = new GroupLayer({
+                title: "Ruimtebeslag",
+                visible: true,
+                visibilityMode: "independent",
+                layers: [
+                    this.graphicsLayerRuimtebeslag3d,
+                    this.graphicsLayerRuimtebeslag
+                ]
+            });
+
+            // Add group layers to map
+            this.map.add(ruimtebeslagGroup);
+            this.map.add(designLayersGroup);
+            this.map.add(temporaryLayersGroup);
             
             // Pass construction layer to ConstructionModel
             this.constructionModel.graphicsLayerConstructionLine = graphicsLayerConstructionLine;

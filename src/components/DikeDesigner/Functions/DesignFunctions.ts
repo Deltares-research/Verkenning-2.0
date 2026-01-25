@@ -16,6 +16,10 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 // import earcut from 'earcut';
 
 import Graphic from "@arcgis/core/Graphic";
+import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
+import ExtrudeSymbol3DLayer from "@arcgis/core/symbols/ExtrudeSymbol3DLayer";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
 
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Polygon from "@arcgis/core/geometry/Polygon";
@@ -314,10 +318,18 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     // union polygons first?
     const mergedGraphic = new Graphic({
         geometry: merged,
-        symbol: {
-            type: "mesh-3d",
-            symbolLayers: [{ type: "fill" }],
-        } as any,
+        symbol: new MeshSymbol3D({
+            symbolLayers: [
+                {
+                    type: "fill",
+                    material: {
+                        color: [85, 140, 75, 1],  // Green grass color for dike
+                        colorMixMode: "replace"
+                    },
+                    castShadows: true
+                }
+            ]
+        })
     });
     model.graphicsLayerMesh.add(mergedGraphic);
     model.mergedMesh = merged;
@@ -447,12 +459,25 @@ export async function calculateVolume(model): Promise<void> {
                             })
                         );
                         
+                        // Create a 3D symbol for the dike with realistic appearance
+                        const dikeSymbol = new PolygonSymbol3D({
+                            symbolLayers: [
+                                new FillSymbol3DLayer({
+                                    material: {
+                                        color: [85, 140, 75, 1],  // Green grass color, no transparency
+                                    },
+                                    castShadows: true
+                                })
+                            ]
+                        });
+
                         const aboveGroundGraphic3d = new Graphic({
                             geometry: new Polygon({
                                 rings: rings3D,
                                 spatialReference: polygon2D.spatialReference,
                                 hasZ: true
                             }),
+                            symbol: dikeSymbol,
                             attributes: { type: 'ruimtebeslag_above_ground_3d' }
                         });
 
