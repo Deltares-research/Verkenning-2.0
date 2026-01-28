@@ -67,6 +67,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     costModel: CostModel = new CostModel();
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
+    costPanelVisible: boolean = false;
 
     loading: boolean = false;
 

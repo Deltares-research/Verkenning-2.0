@@ -49,6 +49,7 @@ import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChart
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
 import EffectAnalysisPanel from "./SubComponents/Effects/EffectAnalysisPanel";
 import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
+import CostChartAndTablePanel from "./SubComponents/Cost/CostChartAndTablePanel";
 import ConstructionPanel from "./SubComponents/Construction/ConstructionPanel";
 
 
@@ -75,6 +76,9 @@ const DikeDesigner = (
 
     function setcrossSectionPanelVisible(value: boolean) {
         model.crossSectionPanelVisible = value;
+        if (value) {
+            model.costPanelVisible = false;
+        }
         if (!value) {
             model.userLinePoints = [];
         }
@@ -83,6 +87,15 @@ const DikeDesigner = (
     function setdesignPanelVisible(value: boolean) {
         model.designPanelVisible = value;
         model.crossSectionPanelVisible = false;
+        model.costPanelVisible = false;
+    }
+
+    function setCostPanelVisible(value: boolean) {
+        model.costPanelVisible = value;
+        if (value) {
+            model.designPanelVisible = false;
+            model.crossSectionPanelVisible = false;
+        }
     }
 
 
@@ -432,6 +445,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "crossSectionChartData.length");
     useWatchAndRerender(model, "crossSectionPanelVisible");
     useWatchAndRerender(model, "designPanelVisible");
+    useWatchAndRerender(model, "costPanelVisible");
     useWatchAndRerender(model, "mapElement");
     useWatchAndRerender(model, "isPlacingDwpProfile");
     useWatchAndRerender(model, "rivierzijde");
@@ -652,6 +666,15 @@ const DikeDesigner = (
                     mapLeftBorder={mapLeftBorder}
                     mapRightBorder={mapRightBorder}
                     crossSectionChartContainerRef={crossSectionChartContainerRef}
+                    model={model}
+                />
+            )}
+            {/* Paper for Cost Chart and Table */}
+            {model.costPanelVisible && (
+                <CostChartAndTablePanel
+                    setPanelVisible={setCostPanelVisible}
+                    mapLeftBorder={mapLeftBorder}
+                    mapRightBorder={mapRightBorder}
                     model={model}
                 />
             )}
