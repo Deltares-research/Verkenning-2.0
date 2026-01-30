@@ -10,7 +10,7 @@ import * as intersectionOperator from "@arcgis/core/geometry/operators/intersect
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
-import { ConstructionCostGroundWork, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
+import { ConstructionCost, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -124,35 +124,10 @@ export const handleCostCalculation = async (
             road_surface: Number(model.intersectingWegdelen2dRuimtebeslag) || 0,
             number_houses: Number(model.intersectingPandenBuffer?.length) || 0,
         };
-        console.log("Dike features:", geojsonDike.features.length);
-        console.log("Structure features:", geojsonStructure.features.length);
-        console.log("Payload:", payload);
-        console.log("Payload to test:", JSON.stringify(payload, null, 2));
-
-        // const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-        // const url = URL.createObjectURL(blob);
-        // const link = document.createElement("a");
-        // link.href = url;
-        // link.download = "payload.json";
-        // link.click();
-        // URL.revokeObjectURL(url);
 
 
         try {
             
-            // const response = await fetch(
-            //     `${model.apiUrl}cost_calculation?${queryParams.toString()}`,
-            //      {
-            //         method: "POST",
-            //         headers: {
-            //             "Content-Type": "application/json",
-            //             "Accept": "application/json",
-            //             "x-api-key": model.apiKey, // API key in header
-            //     },
-            //     body: JSON.stringify(geojson), // only geojson in body
-            //     signal: controller.signal,
-            //     }
-            // );
             const response = await fetch(`${model.apiUrl}cost_calculation`, {
                 method: "POST",
                 headers: {
@@ -161,6 +136,7 @@ export const handleCostCalculation = async (
                     "x-api-key": model.apiKey,
                 },
                 body: JSON.stringify(payload),
+                signal: controller.signal,
             });
 
             clearTimeout(timeoutId);
