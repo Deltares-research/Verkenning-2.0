@@ -104,18 +104,6 @@ export const handleCostCalculation = async (
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        // const roadSurface = Number(model.intersectingWegdelen2dRuimtebeslag) || 0;
-        // const ruimtebeslag = Number(model.fillVolume) || 0;
-        // const numberHouses = Number(model.intersectingPandenBuffer?.length) || 0;
-        // const complexity = model.costModel.complexity || "makkelijke maatregel";
-        // console.log("Sending cost calculation:", { roadSurface, ruimtebeslag, numberHouses });
-        // console.log("Complexity:", complexity);
-
-        // const queryParams = new URLSearchParams({
-        //     complexity: complexity,
-        //     road_surface: roadSurface.toString(),
-        //     number_houses: numberHouses.toString(),
-        // });
 
         const payload = {
             geojson_dike: geojsonDike.features.length ? geojsonDike : null,
@@ -124,6 +112,9 @@ export const handleCostCalculation = async (
             road_surface: Number(model.intersectingWegdelen2dRuimtebeslag) || 0,
             number_houses: Number(model.intersectingPandenBuffer?.length) || 0,
         };
+        console.log("API cost payload:", payload);
+
+
 
 
         try {
@@ -154,10 +145,10 @@ export const handleCostCalculation = async (
 
             model.costModel.directCostGroundWork.fromApi(result['breakdown']["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(result['breakdown']["Directe kosten constructies"]);
-            model.costModel.bouwKostenGrondWerk.fromApi(result['breakdown']["Bouwkosten - grondwerk"]);
-            model.costModel.engineeringKosten.fromApi(result['breakdown']["Engineeringkosten"]);
-            model.costModel.overigeBijkomendeKosten.fromApi(result['breakdown']["Overige bijkomende kosten"]);
-            model.costModel.vastgoedKosten.fromApi(result['breakdown']["Vastgoedkosten"]);
+            model.costModel.indirectConstructionCosts.fromApi(result['breakdown']["Indirecte bouwkosten"]);
+            model.costModel.engineeringCosts.fromApi(result['breakdown']["Engineeringkosten"]);
+            model.costModel.otherCosts.fromApi(result['breakdown']["Overige bijkomende kosten"]);
+            model.costModel.realEstateCosts.fromApi(result['breakdown']["Vastgoedkosten"]);
             model.costModel.risicoreservering = result['breakdown']["Risicoreservering"];
 
             model.messages.commands.ui.displayNotification.execute({

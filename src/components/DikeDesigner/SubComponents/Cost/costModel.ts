@@ -17,7 +17,7 @@ export class DirectCostGroundWork {
     hergebruikTeelaardeCost: number = 0
     aanvullenTeelaardeCost: number = 0
     profielerenNieuweGraslaagCost: number = 0
-    groundworkCost: number = 0
+    totaleBDBKGrondwerk: number = 0
 
     // map API response to class properties
     fromApi(api: Record<string, number>) {
@@ -32,7 +32,7 @@ export class DirectCostGroundWork {
         this.hergebruikTeelaardeCost = api.hergebruik_teelaarde_cost || 0
         this.aanvullenTeelaardeCost = api.aanvullen_teelaarde_cost || 0
         this.profielerenNieuweGraslaagCost = api.profieleren_nieuwe_graslaag_cost || 0
-        this.groundworkCost = api.groundwork_cost || 0
+        this.totaleBDBKGrondwerk = api.totale_BDBK_grondwerk || 0
     }
 
     toDict(): Record<string, number> {
@@ -48,29 +48,30 @@ export class DirectCostGroundWork {
             hergebruikTeelaardeCost: this.hergebruikTeelaardeCost,
             aanvullenTeelaardeCost: this.aanvullenTeelaardeCost,
             profielerenNieuweGraslaagCost: this.profielerenNieuweGraslaagCost,
-            groundworkCost: this.groundworkCost,
+            totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
         }
     }
 }
 
 export class DirectCostStructures {
-    structureBDBK: number = 0;
+    totaleBDBKconstructie: number = 0;
 
     fromApi(api: Record<string, number>) {
-        this.structureBDBK = api.structure_bdbk || 0;
+        this.totaleBDBKconstructie = api.totale_BDBK_constructie || 0;
 
     }
     toDict(): Record<string, number> {
         return {
-            structureBDBK: this.structureBDBK,
+            totaleBDBKconstructie: this.totaleBDBKconstructie,
 
         };
     }
 }
 
-export class ConstructionCostGroundWork {
-  groundwork: number = 0;
-  directCosts: number = 0;
+export class ConstructionCost {
+  totaleBDBKGrondwerk: number = 0;
+  totaleBDBKconstructie: number = 0;
+  totaleDirecteBouwkosten: number = 0;
   pmCost: number = 0;
   generalCost: number = 0;
   riskProfit: number = 0;
@@ -79,20 +80,22 @@ export class ConstructionCostGroundWork {
 
   // Map API snake_case keys to camelCase properties
   fromApi(api: Record<string, number>) {
-    this.groundwork = api.groundwork || 0;
-    this.directCosts = api.direct_costs || 0;
-    this.pmCost = api.pm_cost || 0;
-    this.generalCost = api.general_cost || 0;
-    this.riskProfit = api.risk_profit || 0;
-    this.indirectCosts = api.indirect_costs || 0;
-    this.totalCosts = api.total_costs || 0;
+    this.totaleBDBKGrondwerk = api.totale_BDBK_grondwerk || 0;
+    this.totaleBDBKconstructie = api.totale_BDBK_constructie || 0;
+    this.totaleDirecteBouwkosten = api.totale_directe_bouwkosten || 0;
+    this.pmCost = api.pm_kosten || 0;
+    this.generalCost = api.algemene_kosten || 0;
+    this.riskProfit = api.risico_en_winst || 0;
+    this.indirectCosts = api.indirecte_bouwkosten || 0;
+    this.totalCosts = api.totale_bouwkosten || 0;
   }
 
   // Provide camelCase dictionary for frontend rendering
   toDict(): Record<string, number> {
     return {
-      groundwork: this.groundwork,
-      directCosts: this.directCosts,
+      totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
+      totaleBDBKconstructie: this.totaleBDBKconstructie,
+      totaleDirecteBouwkosten: this.totaleDirecteBouwkosten,
       pmCost: this.pmCost,
       generalCost: this.generalCost,
       riskProfit: this.riskProfit,
@@ -212,10 +215,10 @@ export default class CostModel extends ModelBase {
     // Nested cost objects
     directCostGroundWork: DirectCostGroundWork = new DirectCostGroundWork()
     directCostStructures: DirectCostStructures = new DirectCostStructures();
-    bouwKostenGrondWerk: ConstructionCostGroundWork = new ConstructionCostGroundWork();
-    engineeringKosten: EngineeringCost = new EngineeringCost();
-    overigeBijkomendeKosten: OtherCosts = new OtherCosts();
-    vastgoedKosten: RealEstateCosts = new RealEstateCosts();
+    indirectConstructionCosts: ConstructionCost = new ConstructionCost();
+    engineeringCosts: EngineeringCost = new EngineeringCost();
+    otherCosts: OtherCosts = new OtherCosts();
+    realEstateCosts: RealEstateCosts = new RealEstateCosts();
     risicoreservering: number = 0;
 
     // Converts the model into the API-ready nested dictionary
@@ -223,11 +226,11 @@ export default class CostModel extends ModelBase {
         return {
             "Directe kosten grondwerk": this.directCostGroundWork.toDict(),
             "Directe kosten constructies": this.directCostStructures.toDict(),
-            "Bouwkosten - grondwerk": this.bouwKostenGrondWerk.toDict(),
-            "Engineeringkosten": this.engineeringKosten.toDict(),
-            "Overige bijkomende kosten": this.overigeBijkomendeKosten.toDict(),
+            "Indirecte bouwkosten": this.indirectConstructionCosts.toDict(),
+            "Engineeringkosten": this.engineeringCosts.toDict(),
+            "Overige bijkomende kosten": this.otherCosts.toDict(),
             "Risicoreservering": this.risicoreservering,
-            "Vastgoedkosten": this.vastgoedKosten.toDict(),
+            "Vastgoedkosten": this.realEstateCosts.toDict(),
         }
     }
 }
