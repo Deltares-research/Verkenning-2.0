@@ -19,6 +19,7 @@ interface CostCalculationPanelProps {
 
 const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) => {
   useWatchAndRerender(model.costModel, "directCostGroundWork");
+  useWatchAndRerender(model.costModel, "directCostStructures");
   useWatchAndRerender(model.costModel, "bouwKostenGrondWerk");
   useWatchAndRerender(model.costModel, "engineeringKosten");
   useWatchAndRerender(model.costModel, "overigeBijkomendeKosten");

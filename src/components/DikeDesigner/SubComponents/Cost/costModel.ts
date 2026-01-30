@@ -53,6 +53,21 @@ export class DirectCostGroundWork {
     }
 }
 
+export class DirectCostStructures {
+    structureBDBK: number = 0;
+
+    fromApi(api: Record<string, number>) {
+        this.structureBDBK = api.structure_bdbk || 0;
+
+    }
+    toDict(): Record<string, number> {
+        return {
+            structureBDBK: this.structureBDBK,
+
+        };
+    }
+}
+
 export class ConstructionCostGroundWork {
   groundwork: number = 0;
   directCosts: number = 0;
@@ -189,12 +204,14 @@ export default class CostModel extends ModelBase {
     map: any
     view: any
 
+    
     complexityTypes: string[] = ["makkelijke maatregel", "gemiddelde maatregel", "moeilijke maatregel"]
     complexity: string = "makkelijke maatregel"
     depth: number = 5
 
     // Nested cost objects
     directCostGroundWork: DirectCostGroundWork = new DirectCostGroundWork()
+    directCostStructures: DirectCostStructures = new DirectCostStructures();
     bouwKostenGrondWerk: ConstructionCostGroundWork = new ConstructionCostGroundWork();
     engineeringKosten: EngineeringCost = new EngineeringCost();
     overigeBijkomendeKosten: OtherCosts = new OtherCosts();
@@ -205,6 +222,7 @@ export default class CostModel extends ModelBase {
     toDict(): Record<string, any> {
         return {
             "Directe kosten grondwerk": this.directCostGroundWork.toDict(),
+            "Directe kosten constructies": this.directCostStructures.toDict(),
             "Bouwkosten - grondwerk": this.bouwKostenGrondWerk.toDict(),
             "Engineeringkosten": this.engineeringKosten.toDict(),
             "Overige bijkomende kosten": this.overigeBijkomendeKosten.toDict(),

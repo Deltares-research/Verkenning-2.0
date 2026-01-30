@@ -275,6 +275,15 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaagCost} />
                   </CollapsibleSection>
 
+                  {/* Directe kosten constructies */}
+                  <CollapsibleSection
+                    title="Directe kosten constructies"
+                    total={model.costModel.directCostStructures.structureBDBK}
+                  >
+                      <SubRow label="BDBK" value={model.costModel.directCostStructures.structureBDBK} />
+
+                  </CollapsibleSection>
+
                   {/* Bouwkosten grondwerk */}
                   <CollapsibleSection
                     title="BouwKosten Grondwerk"
