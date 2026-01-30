@@ -10,7 +10,7 @@ import * as intersectionOperator from "@arcgis/core/geometry/operators/intersect
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
-import { ConstructionCostGroundWork, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
+import { ConstructionCost, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -20,9 +20,8 @@ export const handleCostCalculation = async (
     model.loading = true;
 
     try {
-        // Convert graphics to GeoJSON
         // Convert graphics to GeoJSON for API
-        const geojson = {
+        const geojsonDike = {
             type: "FeatureCollection",
             crs: {
                 type: "name",
@@ -30,6 +29,15 @@ export const handleCostCalculation = async (
             },
             features: [],
         };
+
+        const geojsonStructure = {
+            type: "FeatureCollection",
+            crs: {
+                type: "name",
+                properties: { name: "EPSG:4326" },
+            },
+            features: [],
+            };
 
         // Project polygons to WGS84 and add to GeoJSON
         const projection = await import("@arcgis/core/geometry/projection");
@@ -55,10 +63,40 @@ export const handleCostCalculation = async (
                         },
                         properties: graphic.attributes || {},
                     };
-                    geojson.features.push(feature);
+                    geojsonDike.features.push(feature);
                 }
             }
         });
+
+
+        model.constructionModel.structures.forEach((structure) => {
+            const geometry = structure.geometry;
+            if (!geometry) return;
+
+            const projected = projection.project(
+                geometry,
+                new SpatialReference({ wkid: 4326 })
+            );
+
+            if (projected && !Array.isArray(projected)) {
+                const polyline = projected as __esri.Polyline;
+
+                geojsonStructure.features.push({
+                type: "Feature",
+                geometry: {
+                    type: polyline.paths.length > 1 ? "MultiLineString" : "LineString",
+                    coordinates:
+                    polyline.paths.length > 1
+                        ? polyline.paths
+                        : polyline.paths[0],
+                },
+                properties: {
+                    ...structure.attributes, // ✅ type, depth, etc.
+                },
+                });
+            }
+        });
+
 
 
 
@@ -66,34 +104,31 @@ export const handleCostCalculation = async (
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const roadSurface = Number(model.intersectingWegdelen2dRuimtebeslag) || 0;
-        const ruimtebeslag = Number(model.fillVolume) || 0;
-        const numberHouses = Number(model.intersectingPandenBuffer?.length) || 0;
-        const complexity = model.costModel.complexity || "makkelijke maatregel";
-        console.log("Sending cost calculation:", { roadSurface, ruimtebeslag, numberHouses });
-        console.log("Complexity:", complexity);
 
-        const queryParams = new URLSearchParams({
-            complexity: complexity,
-            road_surface: roadSurface.toString(),
-            number_houses: numberHouses.toString(),
-        });
+        const payload = {
+            geojson_dike: geojsonDike.features.length ? geojsonDike : null,
+            geojson_structure: geojsonStructure.features.length ? geojsonStructure : null,
+            complexity: model.costModel.complexity || "makkelijke maatregel",
+            road_surface: Number(model.intersectingWegdelen2dRuimtebeslag) || 0,
+            number_houses: Number(model.intersectingPandenBuffer?.length) || 0,
+        };
+        console.log("API cost payload:", payload);
+
+
+
 
         try {
             
-            const response = await fetch(
-                `${model.apiUrl}cost_calculation?${queryParams.toString()}`,
-                 {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "x-api-key": model.apiKey, // API key in header
+            const response = await fetch(`${model.apiUrl}cost_calculation`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "x-api-key": model.apiKey,
                 },
-                body: JSON.stringify(geojson), // only geojson in body
+                body: JSON.stringify(payload),
                 signal: controller.signal,
-                }
-            );
+            });
 
             clearTimeout(timeoutId);
 
@@ -109,10 +144,11 @@ export const handleCostCalculation = async (
             console.log("Updated directCostGroundWork:", model.costModel.directCostGroundWork);
 
             model.costModel.directCostGroundWork.fromApi(result['breakdown']["Directe kosten grondwerk"]);
-            model.costModel.bouwKostenGrondWerk.fromApi(result['breakdown']["Bouwkosten - grondwerk"]);
-            model.costModel.engineeringKosten.fromApi(result['breakdown']["Engineeringkosten"]);
-            model.costModel.overigeBijkomendeKosten.fromApi(result['breakdown']["Overige bijkomende kosten"]);
-            model.costModel.vastgoedKosten.fromApi(result['breakdown']["Vastgoedkosten"]);
+            model.costModel.directCostStructures.fromApi(result['breakdown']["Directe kosten constructies"]);
+            model.costModel.indirectConstructionCosts.fromApi(result['breakdown']["Indirecte bouwkosten"]);
+            model.costModel.engineeringCosts.fromApi(result['breakdown']["Engineeringkosten"]);
+            model.costModel.otherCosts.fromApi(result['breakdown']["Overige bijkomende kosten"]);
+            model.costModel.realEstateCosts.fromApi(result['breakdown']["Vastgoedkosten"]);
             model.costModel.risicoreservering = result['breakdown']["Risicoreservering"];
 
             model.messages.commands.ui.displayNotification.execute({
