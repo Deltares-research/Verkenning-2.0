@@ -127,6 +127,15 @@ export const handleCostCalculation = async (
         console.log("Dike features:", geojsonDike.features.length);
         console.log("Structure features:", geojsonStructure.features.length);
         console.log("Payload:", payload);
+        console.log("Payload to test:", JSON.stringify(payload, null, 2));
+
+        // const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        // const url = URL.createObjectURL(blob);
+        // const link = document.createElement("a");
+        // link.href = url;
+        // link.download = "payload.json";
+        // link.click();
+        // URL.revokeObjectURL(url);
 
 
         try {
