@@ -439,8 +439,18 @@ export async function calculateVolume(model): Promise<void> {
 
                 // iterate over singlePartAlphaShape parts and create graphics
                 singlePartAlphaShape.forEach(part => {
+                    // Remove z-coordinates to create 2D polygon
+                    const polygon2D = part.type === 'polygon' && 'rings' in part
+                        ? new Polygon({
+                            rings: (part as Polygon).rings.map(ring => 
+                                ring.map(coord => [coord[0], coord[1]])
+                            ),
+                            spatialReference: part.spatialReference
+                        })
+                        : part;
+                    
                     const aboveGroundGraphic = new Graphic({
-                        geometry: part,
+                        geometry: polygon2D,
                         attributes: {
                             zValues: zValueMap,
                             originalPoints: result.ruimtebeslag_2d_points,

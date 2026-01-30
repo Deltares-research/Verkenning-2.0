@@ -6,8 +6,10 @@ import SelectAllIcon from "@mui/icons-material/SelectAll";
 import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HomeIcon from "@mui/icons-material/Home";
 
 import Box from "@vertigis/web/ui/Box";
+import Button from "@vertigis/web/ui/Button";
 import Tab from "@vertigis/web/ui/Tab"
 import Tabs from "@vertigis/web/ui/Tabs"
 import Stack from "@vertigis/web/ui/Stack";
@@ -15,6 +17,7 @@ import FormLabel from "@vertigis/web/ui/FormLabel";
 import Input from "@vertigis/web/ui/Input";
 import Alert from "@vertigis/web/ui/Alert"
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
+import Typography from "@vertigis/web/ui/Typography";
 
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
@@ -51,6 +54,10 @@ import EffectAnalysisPanel from "./SubComponents/Effects/EffectAnalysisPanel";
 import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
 import CostChartAndTablePanel from "./SubComponents/Cost/CostChartAndTablePanel";
 import ConstructionPanel from "./SubComponents/Construction/ConstructionPanel";
+import HomePanel from "./SubComponents/Home/HomePanel";
+import LoadDesignsDialog from "./SubComponents/Dimensions/LoadDesignsDialog";
+import SaveDesignsDialog from "./SubComponents/Dimensions/SaveDesignsDialog";
+import DownloadDialog from "./SubComponents/Dimensions/DownloadDialog";
 
 
 // import { SimpleWorker } from "./Workers/SimpleWorker"; // adjust path as needed
@@ -70,9 +77,11 @@ const DikeDesigner = (
     const [value, setValue] = React.useState(0);
     const [isLayerListVisible, setIsLayerListVisible] = useState(false);
     const [designName, setDesignName] = useState<string>(() => model.designName || "");
-    const [isDesignNameConfirmed, setIsDesignNameConfirmed] = useState<boolean>(() => Boolean(model.designName));
     const [showNameWarning, setShowNameWarning] = useState(false);
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
+    const [loadDesignsDialogOpen, setLoadDesignsDialogOpen] = useState(false);
+    const [saveDesignsDialogOpen, setSaveDesignsDialogOpen] = useState(false);
+    const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
 
     function setcrossSectionPanelVisible(value: boolean) {
         model.crossSectionPanelVisible = value;
@@ -98,38 +107,63 @@ const DikeDesigner = (
         }
     }
 
+    const handleCreateNewDesign = () => {
+        setValue(1); // Navigate to Dimensioneer tab
+    };
 
+    const handleLoadDesign = () => {
+        setLoadDesignsDialogOpen(true);
+    };
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
-    const handleDesignNameChange = (e) => {
-        setDesignName(e.target.value);
-        // Mark as unconfirmed when user is editing
-        setIsDesignNameConfirmed(false);
-        // Hide warning when user starts typing
-        if (e.target.value.trim()) {
-            setShowNameWarning(false);
-        }
+    const handleSaveWithDialog = () => {
+        setSaveDesignsDialogOpen(true);
     };
 
-    const handleDesignNameBlur = () => {
-        // Update model when input loses focus
-        if (designName.trim()) {
-            model.designName = designName.trim();
-            setIsDesignNameConfirmed(true);
-        }
+    const handleSaveDesignWithName = async (name: string) => {
+        model.designName = name;
+        setDesignName(name);
+        await handleSaveDesign();
     };
 
-    const handleDesignNameKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && designName.trim()) {
-            model.designName = designName.trim();
-            setIsDesignNameConfirmed(true);
-            // Optionally blur the input
-            (e.target as HTMLInputElement).blur();
-        }
+    const handleOpenDownloadDialog = () => {
+        setDownloadDialogOpen(true);
     };
+
+    const handleDownload = (downloads: string[], newDesignName: string) => {
+        // Update design name if it changed
+        if (newDesignName !== designName) {
+            model.designName = newDesignName;
+            setDesignName(newDesignName);
+        }
+        
+        downloads.forEach(download => {
+            switch (download) {
+                case 'inputline':
+                    handleExportInputLine();
+                    break;
+                case '3d':
+                    handleExport3dDesign();
+                    break;
+                case '2d':
+                    handleExport2D();
+                    break;
+                case 'ruimtebeslag':
+                    handleExportRuimtebeslag();
+                    break;
+            }
+        });
+    };
+
+    const downloadOptions = [
+        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
+        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
+    ];
 
     const seriesRef = useRef<am5xy.LineSeries | null>(null);
     const elevationSeriesRef = useRef<am5xy.LineSeries | null>(null);
@@ -506,69 +540,48 @@ const DikeDesigner = (
             <Box
                 sx={{ width: '100%' }}
             >
-                {/* Ontwerp naam - prominent bovenaan */}
-                <Stack spacing={1.5} sx={{
-                    padding: '16px',
-                    borderRadius: '8px',
-                }}>
-                    <FormLabel sx={{ 
-                        fontWeight: 'bold', 
-                        fontSize: '14px',
-                        color: isDesignNameConfirmed ? '#2e7d32' : '#000000ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        transition: 'color 0.3s ease'
-                    }}>
-                        {isDesignNameConfirmed ? (
-                            <CheckCircleIcon sx={{ fontSize: 18, color: '#2e7d32' }} />
-                        ) : (
-                            <EditIcon sx={{ fontSize: 18 }} />
-                        )}
-                        Ontwerp naam
-                    </FormLabel>
-                    
-                    <Input
-                        value={designName}
-                        onChange={handleDesignNameChange}
-                        onBlur={handleDesignNameBlur}
-                        onKeyPress={handleDesignNameKeyPress}
-                        placeholder="Voer een ontwerpnaam in..."
-                        size="medium"
-                        fullWidth
-                        error={showNameWarning}
-                        sx={{
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            '& .MuiInputBase-input': {
-                                padding: '12px 14px',
-                                backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
-                                transition: 'background-color 0.3s ease'
-                            },
-                            backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
-                            borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
-                            transition: 'all 0.3s ease',
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
-                                '& fieldset': {
-                                    borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
-                                    borderWidth: isDesignNameConfirmed ? '2px' : '1px',
-                                    transition: 'all 0.3s ease'
-                                },
-                                '&:hover fieldset': {
-                                    borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
-                                },
-                            }
-                        }}
-                    />
-
-                    {/* Alert onder de naam input */}
-                    {showNameWarning && (
-                        <Alert severity="warning" sx={{ marginTop: 1 }}>
-                            Vul een ontwerp naam in voordat u bestanden downloadt of opslaat.
-                        </Alert>
-                    )}
-                </Stack>
+                {/* Ontwerp naam - prominent bovenaan als titel */}
+                <Button
+                    onClick={() => setSaveDesignsDialogOpen(true)}
+                    fullWidth
+                    variant="outlined"
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-start",
+                        gap: 2,
+                        p: 2,
+                        textTransform: "none",
+                        borderRadius: 0,
+                        borderColor: "#0078d4",
+                        borderLeft: "4px solid #0078d4",
+                        "&:hover": {
+                            borderColor: "#0078d4",
+                            backgroundColor: "#f0f6ff",
+                        },
+                    }}
+                >
+                    <Box sx={{ textAlign: "left", flex: 1 }}>
+                        <Typography sx={{ 
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#605e5c',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            mb: 0.5,
+                        }}>
+                            {designName ? 'Ontwerp naam' : 'Ontwerp naam instellen'}
+                        </Typography>
+                        <Typography sx={{ 
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            color: designName ? '#0078d4' : '#a19f9d',
+                            fontStyle: designName ? 'normal' : 'italic',
+                        }}>
+                            {designName || 'Klik hier om naam in te stellen'}
+                        </Typography>
+                    </Box>
+                </Button>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs
                         value={value}
@@ -578,21 +591,33 @@ const DikeDesigner = (
                         aria-label="scrollable auto tabs example"
                     >
                         <Tab 
+                            icon={<HomeIcon />} 
+                            label="Home"
+                            {...a11yProps(0)}
+                        />
+                        <Tab 
                             icon={<ArchitectureIcon />} 
                             label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
-                            {...a11yProps(0)}
+                            {...a11yProps(1)}
                         />
                         <Tab 
                             icon={<BuildIcon />} 
                             label={(<span>Dimensioneer<br />constructie</span>) as any}
-                            {...a11yProps(1)}
+                            {...a11yProps(2)}
                         />
-                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(2)} />
-                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(3)} />
-                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(4)} />
+                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} />
+                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} />
+                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} />
                     </Tabs>
                 </Box>
                 <CustomTabPanel value={value} index={0}>
+                    <HomePanel
+                        onCreateNewDesign={handleCreateNewDesign}
+                        onLoadDesign={handleLoadDesign}
+                        designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                    />
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={1}>
                     <DimensionsPanel
                         model={model}
                         isLayerListVisible={isLayerListVisible}
@@ -606,29 +631,24 @@ const DikeDesigner = (
                         handleClearExcel={handleClearExcel}
                         handleOpenOverview={handleOpenOverview}
                         handleCreateDesign={handleCreateDesign}
-                        handleExport3dDesign={handleExport3dDesign}
-                        handleExportInputLine={handleExportInputLine}
-                        handleExport2D={handleExport2D}
-                        handleExportRuimtebeslag={handleExportRuimtebeslag}
                         handleClearDesign={handleClearDesign}
                         handleCreateCrossSection={handleCreateCrossSection}
-                        handleSaveDesign={handleSaveDesign}
-                        setShowNameWarning={setShowNameWarning}
-                        selectedDownloads={selectedDownloads}
-                        setSelectedDownloads={setSelectedDownloads}
+                        handleSaveWithDialog={handleSaveWithDialog}
+                        handleOpenDownloadDialog={handleOpenDownloadDialog}
+                        designName={designName}
                     />
                 </CustomTabPanel>
-                <CustomTabPanel value={value} index={1}>
+                <CustomTabPanel value={value} index={2}>
                     <ConstructionPanel model={model} />
                 </CustomTabPanel>
-                <CustomTabPanel value={value} index={2}>
+                <CustomTabPanel value={value} index={3}>
                     <EffectAnalysisPanel model={model} />
                 </CustomTabPanel>
-                <CustomTabPanel value={value} index={3}>
+                <CustomTabPanel value={value} index={4}>
                     {/* TODO: Add Kosten panel content */}
                     <CostCalculationPanel model={model} />
                 </CustomTabPanel>
-                <CustomTabPanel value={value} index={4}>
+                <CustomTabPanel value={value} index={5}>
                     {/* TODO: Add Afwegen panel content */}
                     <Box sx={{ p: 2 }}>
                         Afwegen - Coming soon
@@ -678,6 +698,32 @@ const DikeDesigner = (
                     model={model}
                 />
             )}
+
+            {/* Load Designs Dialog */}
+            <LoadDesignsDialog
+                open={loadDesignsDialogOpen}
+                onClose={() => setLoadDesignsDialogOpen(false)}
+                designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+            />
+
+            {/* Save Designs Dialog */}
+            <SaveDesignsDialog
+                open={saveDesignsDialogOpen}
+                onClose={() => setSaveDesignsDialogOpen(false)}
+                onSave={handleSaveDesignWithName}
+                initialDesignName={designName}
+            />
+
+            {/* Download Dialog */}
+            <DownloadDialog
+                open={downloadDialogOpen}
+                onClose={() => setDownloadDialogOpen(false)}
+                onDownload={handleDownload}
+                selectedDownloads={selectedDownloads}
+                setSelectedDownloads={setSelectedDownloads}
+                downloadOptions={downloadOptions}
+                initialDesignName={designName}
+            />
         </LayoutElement>
     );
 };
