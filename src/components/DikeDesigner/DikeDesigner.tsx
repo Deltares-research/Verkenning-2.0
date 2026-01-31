@@ -58,6 +58,7 @@ import HomePanel from "./SubComponents/Home/HomePanel";
 import LoadDesignsDialog from "./SubComponents/Dimensions/LoadDesignsDialog";
 import SaveDesignsDialog from "./SubComponents/Dimensions/SaveDesignsDialog";
 import DownloadDialog from "./SubComponents/Dimensions/DownloadDialog";
+import DesignNameDialog from "./SubComponents/Dimensions/DesignNameDialog";
 
 
 // import { SimpleWorker } from "./Workers/SimpleWorker"; // adjust path as needed
@@ -76,12 +77,34 @@ const DikeDesigner = (
     const [activeTab, setActiveTab] = useState(0);
     const [value, setValue] = React.useState(0);
     const [isLayerListVisible, setIsLayerListVisible] = useState(false);
-    const [designName, setDesignName] = useState<string>(() => model.designName || "");
     const [showNameWarning, setShowNameWarning] = useState(false);
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
     const [loadDesignsDialogOpen, setLoadDesignsDialogOpen] = useState(false);
     const [saveDesignsDialogOpen, setSaveDesignsDialogOpen] = useState(false);
     const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+    const [designNameDialogOpen, setDesignNameDialogOpen] = useState(false);
+    const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
+
+    const splitDesignName = (name: string) => {
+        const trimmed = name?.trim() || "";
+        if (!trimmed) {
+            return { vak: "", alternatief: "" };
+        }
+        const parts = trimmed.split(" - ");
+        if (parts.length >= 2) {
+            return {
+                vak: parts[0].trim(),
+                alternatief: parts.slice(1).join(" - ").trim(),
+            };
+        }
+        return { vak: trimmed, alternatief: "" };
+    };
+
+    const buildDesignName = (vak: string, alternatief: string) =>
+        [vak.trim(), alternatief.trim()].filter(Boolean).join(" - ");
+
+    const designName = model.designName || "";
+    const designNameParts = splitDesignName(designName);
 
     function setcrossSectionPanelVisible(value: boolean) {
         model.crossSectionPanelVisible = value;
@@ -108,7 +131,8 @@ const DikeDesigner = (
     }
 
     const handleCreateNewDesign = () => {
-        setValue(1); // Navigate to Dimensioneer tab
+        setDesignNameDialogMode("create");
+        setDesignNameDialogOpen(true);
     };
 
     const handleLoadDesign = () => {
@@ -125,7 +149,6 @@ const DikeDesigner = (
 
     const handleSaveDesignWithName = async (name: string) => {
         model.designName = name;
-        setDesignName(name);
         await handleSaveDesign();
     };
 
@@ -137,7 +160,6 @@ const DikeDesigner = (
         // Update design name if it changed
         if (newDesignName !== designName) {
             model.designName = newDesignName;
-            setDesignName(newDesignName);
         }
         
         downloads.forEach(download => {
@@ -523,6 +545,15 @@ const DikeDesigner = (
     }
 
 
+    const handleSaveDesignName = (vak: string, alternatief: string) => {
+        const fullName = buildDesignName(vak, alternatief);
+        model.designName = fullName;
+        setDesignNameDialogOpen(false);
+        if (designNameDialogMode === "create") {
+            setValue(1);
+        }
+    };
+
     return (
         <LayoutElement {...props} style={{ width: "100%", overflowY: "auto" }}>
             {model.loading && (
@@ -541,47 +572,67 @@ const DikeDesigner = (
                 sx={{ width: '100%' }}
             >
                 {/* Ontwerp naam - prominent bovenaan als titel */}
-                <Button
-                    onClick={() => setSaveDesignsDialogOpen(true)}
-                    fullWidth
-                    variant="outlined"
+                <Box
+                    onClick={() => {
+                        if (designName) {
+                            setDesignNameDialogMode("edit");
+                            setDesignNameDialogOpen(true);
+                        }
+                    }}
+                    role="button"
+                    tabIndex={designName ? 0 : -1}
+                    onKeyPress={(event) => {
+                        if (designName && event.key === "Enter") {
+                            setDesignNameDialogMode("edit");
+                            setDesignNameDialogOpen(true);
+                        }
+                    }}
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "flex-start",
+                        justifyContent: "space-between",
                         gap: 2,
                         p: 2,
-                        textTransform: "none",
                         borderRadius: 0,
-                        borderColor: "#0078d4",
+                        border: "1px solid #0078d4",
                         borderLeft: "4px solid #0078d4",
-                        "&:hover": {
-                            borderColor: "#0078d4",
+                        transition: "background-color 0.2s ease",
+                        opacity: designName ? 1 : 0.6,
+                        pointerEvents: designName ? "auto" : "none",
+                        "&:hover": designName ? {
                             backgroundColor: "#f0f6ff",
-                        },
+                            cursor: "pointer",
+                        } : {},
+                        "&:hover .edit-icon": designName ? {
+                            opacity: 1,
+                        } : {},
                     }}
                 >
                     <Box sx={{ textAlign: "left", flex: 1 }}>
-                        <Typography sx={{ 
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            color: '#605e5c',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            mb: 0.5,
-                        }}>
-                            {designName ? 'Ontwerp naam' : 'Ontwerp naam instellen'}
+                        <Typography
+                            sx={{
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                color: "#605e5c",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                mb: 0.5,
+                            }}
+                        >
+                            Ontwerp naam
                         </Typography>
-                        <Typography sx={{ 
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            color: designName ? '#0078d4' : '#a19f9d',
-                            fontStyle: designName ? 'normal' : 'italic',
-                        }}>
-                            {designName || 'Klik hier om naam in te stellen'}
+                        <Typography
+                            sx={{
+                                fontSize: "16px",
+                                fontWeight: 600,
+                                color: designName ? "#0078d4" : "#a19f9d",
+                            }}
+                        >
+                            {designName || "—"}
                         </Typography>
                     </Box>
-                </Button>
+                    <EditIcon className="edit-icon" sx={{ opacity: 0, color: "#0078d4" }} />
+                </Box>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs
                         value={value}
@@ -599,15 +650,17 @@ const DikeDesigner = (
                             icon={<ArchitectureIcon />} 
                             label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
                             {...a11yProps(1)}
+                            disabled={!designName}
                         />
                         <Tab 
                             icon={<BuildIcon />} 
                             label={(<span>Dimensioneer<br />constructie</span>) as any}
                             {...a11yProps(2)}
+                            disabled={!designName}
                         />
-                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} />
-                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} />
-                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} />
+                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} disabled={!designName} />
+                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} disabled={!designName} />
+                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} disabled={!designName} />
                     </Tabs>
                 </Box>
                 <CustomTabPanel value={value} index={0}>
@@ -723,6 +776,15 @@ const DikeDesigner = (
                 setSelectedDownloads={setSelectedDownloads}
                 downloadOptions={downloadOptions}
                 initialDesignName={designName}
+            />
+
+            <DesignNameDialog
+                open={designNameDialogOpen}
+                onClose={() => setDesignNameDialogOpen(false)}
+                onSave={handleSaveDesignName}
+                initialVak={designNameDialogMode === "create" ? "" : designNameParts.vak}
+                initialAlternatief={designNameDialogMode === "create" ? "" : designNameParts.alternatief}
+                title={designNameDialogMode === "create" ? "Nieuw ontwerp maken" : "Ontwerp naam wijzigen"}
             />
         </LayoutElement>
     );
