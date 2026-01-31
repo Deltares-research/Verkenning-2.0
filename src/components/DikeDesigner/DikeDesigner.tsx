@@ -46,8 +46,8 @@ import {
 import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
 
 
-import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer } from "./Functions/SaveFunctions";
-import { saveProjectAsJSON } from "./Functions/SaveProjectFunctions";
+import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer, loadGeometriesFromDesign } from "./Functions/SaveFunctions";
+import { saveProjectAsJSON, loadProjectFromJSON, type ProjectJSON } from "./Functions/SaveProjectFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
@@ -138,6 +138,36 @@ const DikeDesigner = (
 
     const handleLoadDesign = () => {
         setLoadDesignsDialogOpen(true);
+    };
+
+    const handleLoadDesignGeometries = async (objectId: number) => {
+        await loadGeometriesFromDesign(model, objectId);
+    };
+
+    const handleLoadProjectLocal = () => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".json";
+        fileInput.onchange = (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const jsonContent = JSON.parse(event.target?.result as string) as ProjectJSON;
+                        loadProjectFromJSON(model, jsonContent);
+                    } catch (error) {
+                        console.error("Error parsing JSON file:", error);
+                        model.messages.commands.ui.alert.execute({
+                            title: "Fout bij laden",
+                            message: "Het gekozen bestand is geen geldig project bestand.",
+                        });
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+        fileInput.click();
     };
 
     const handleSaveProjectLocal = () => {
@@ -672,6 +702,7 @@ const DikeDesigner = (
                     <HomePanel
                         onCreateNewDesign={handleCreateNewDesign}
                         onLoadDesign={handleLoadDesign}
+                        onLoadProjectLocal={handleLoadProjectLocal}
                         onSaveProjectLocal={handleSaveProjectLocal}
                         designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
                         designName={designName}
@@ -764,6 +795,8 @@ const DikeDesigner = (
                 open={loadDesignsDialogOpen}
                 onClose={() => setLoadDesignsDialogOpen(false)}
                 designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                model={model}
+                onLoadDesign={handleLoadDesignGeometries}
             />
 
             {/* Save Designs Dialog */}

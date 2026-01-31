@@ -27,6 +27,8 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import Graphic from "@arcgis/core/Graphic";
 
 import Polyline from "@arcgis/core/geometry/Polyline";
@@ -173,6 +175,17 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             placement: "begin"
         }
     };
+
+    polygonSymbol3D = new PolygonSymbol3D({
+        symbolLayers: [
+            new FillSymbol3DLayer({
+                material: {
+                    color: [85, 140, 75, 0.8],
+                },
+                castShadows: true,
+            }),
+        ],
+    });
 
     cursorSymbol = new PointSymbol3D({
         symbolLayers: [

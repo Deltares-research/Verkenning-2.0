@@ -25,38 +25,54 @@ interface LoadDesignsDialogProps {
     open: boolean;
     onClose: () => void;
     designFeatureLayer3dUrl?: string;
+    model?: any;
+    onLoadDesign?: (objectId: number) => Promise<void>;
 }
 
 const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
     open,
     onClose,
     designFeatureLayer3dUrl,
+    model: dikeDesignerModel,
+    onLoadDesign,
 }) => {
-    const [model] = useState(() => new SavedDesignsModel(designFeatureLayer3dUrl));
+    const [savedDesignsModel] = useState(() => new SavedDesignsModel(designFeatureLayer3dUrl));
     const [, setRefresh] = useState(0);
 
     useEffect(() => {
         if (open) {
-            model.fetchSavedDesigns().then(() => setRefresh(prev => prev + 1));
+            savedDesignsModel.fetchSavedDesigns().then(() => setRefresh(prev => prev + 1));
         }
-    }, [open, model]);
+    }, [open, savedDesignsModel]);
 
     const handleClose = () => {
-        model.clear();
+        savedDesignsModel.clear();
         setRefresh(prev => prev + 1);
         onClose();
     };
 
     const handleDesignClick = (index: number) => {
-        model.selectDesign(index);
+        savedDesignsModel.selectDesign(index);
         setRefresh(prev => prev + 1);
     };
 
-    const handleLoadDesign = () => {
-        const selectedDesign = model.getSelectedDesign();
+    const handleLoadDesign = async () => {
+        const selectedDesign = savedDesignsModel.getSelectedDesign();
         if (selectedDesign) {
-            // TODO: Implement load design functionality
-            console.log("Loading design:", selectedDesign);
+            try {
+                // Get the ObjectID from the selected design
+                const objectId = selectedDesign.OBJECTID || selectedDesign.objectid;
+                if (objectId) {
+                    if (onLoadDesign) {
+                        await onLoadDesign(objectId);
+                    }
+                    handleClose();
+                } else {
+                    console.error("No ObjectID found in selected design");
+                }
+            } catch (error) {
+                console.error("Error loading design:", error);
+            }
         }
     };
 
@@ -84,9 +100,9 @@ const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
                 </IconButton>
             </Box>
             <DialogContent sx={{ pt: 1 }}>
-                {model.isLoading ? (
+                {savedDesignsModel.isLoading ? (
                     <LinearProgress />
-                ) : model.savedDesigns.length === 0 ? (
+                ) : savedDesignsModel.savedDesigns.length === 0 ? (
                     <Alert severity="info" sx={{ fontSize: '14px' }}>Geen opgeslagen ontwerpen gevonden</Alert>
                 ) : (
                     <Box>
@@ -97,7 +113,7 @@ const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
                             <Table sx={{ minWidth: 750 }}>
                                 <TableHead>
                                     <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                        {model.getVisibleColumns().map((key) => (
+                                        {savedDesignsModel.getVisibleColumns().map((key) => (
                                             <TableCell 
                                                 key={key}
                                                 sx={{ 
@@ -115,23 +131,23 @@ const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {model.savedDesigns.map((design, index) => (
+                                    {savedDesignsModel.savedDesigns.map((design, index) => (
                                         <TableRow 
                                             key={index}
                                             onClick={() => handleDesignClick(index)}
-                                            selected={model.selectedDesignIndex === index}
+                                            selected={savedDesignsModel.selectedDesignIndex === index}
                                             sx={{
                                                 cursor: 'pointer',
                                                 '&:hover': {
                                                     backgroundColor: '#f5f5f5',
                                                 },
-                                                backgroundColor: model.selectedDesignIndex === index ? '#e8f5e9' : 'transparent',
+                                                backgroundColor: savedDesignsModel.selectedDesignIndex === index ? '#e8f5e9' : 'transparent',
                                                 transition: 'background-color 0.25s ease',
-                                                borderLeft: model.selectedDesignIndex === index ? '4px solid #4caf50' : '4px solid transparent',
+                                                borderLeft: savedDesignsModel.selectedDesignIndex === index ? '4px solid #4caf50' : '4px solid transparent',
                                             }}
                                         >
                                             {Object.entries(design)
-                                                .filter(([key]) => model.isColumnVisible(key))
+                                                .filter(([key]) => savedDesignsModel.isColumnVisible(key))
                                                 .map(([key, value], cellIndex) => (
                                                     <TableCell 
                                                         key={cellIndex}
@@ -164,7 +180,7 @@ const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
                     onClick={handleLoadDesign} 
                     color="primary" 
                     variant="contained"
-                    disabled={model.selectedDesignIndex === null}
+                    disabled={savedDesignsModel.selectedDesignIndex === null}
                     sx={{ 
                         fontSize: '14px', 
                         fontWeight: 600,

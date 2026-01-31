@@ -1,6 +1,62 @@
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Graphic from "@arcgis/core/Graphic";
 
+export async function loadGeometriesFromDesign(model, designObjectId: number): Promise<void> {
+    if (!model.designFeatureLayer3dUrl) {
+        console.error("Feature layer URL not configured");
+        throw new Error("Feature layer URL not configured");
+    }
+    
+    try {
+        // Clear existing geometries
+        model.graphicsLayer3dPolygon.removeAll();
+        
+        // Query the feature layer for the specific design
+        const featureLayerDesign = new FeatureLayer({
+            url: model.designFeatureLayer3dUrl,
+            hasZ: true,
+        });
+
+        const query = featureLayerDesign.createQuery();
+        query.objectIds = [designObjectId];
+        query.outFields = ["*"];
+        query.returnGeometry = true;
+
+        const result = await featureLayerDesign.queryFeatures(query);
+
+        if (result.features && result.features.length > 0) {
+            // Add each feature's geometry to the graphics layer
+            result.features.forEach((feature) => {
+                const graphic = new Graphic({
+                    geometry: feature.geometry,
+                    attributes: feature.attributes,
+                    symbol: feature.symbol
+                });
+                model.graphicsLayer3dPolygon.add(graphic);
+            });
+
+            console.log(`Loaded ${result.features.length} geometries from design`);
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Het ontwerp met ${result.features.length} onderdelen is succesvol geladen.`,
+                title: "Ontwerp geladen",
+                type: "success"
+            });
+        } else {
+            console.warn("No features found for the selected design");
+            model.messages.commands.ui.alert.execute({
+                message: "Geen ontwerpelementen gevonden voor het geselecteerde ontwerp.",
+                title: "Ontwerp laden mislukt",
+            });
+        }
+    } catch (error) {
+        console.error("Error loading geometries from design:", error);
+        model.messages.commands.ui.alert.execute({
+            message: (error as Error)?.message || "Er is een fout opgetreden tijdens het laden van het ontwerp.",
+            title: "Ontwerp laden mislukt",
+        });
+    }
+}
+
 export async function save3dDesignToFeatureLayer(model): Promise<number> {
     if (!model.graphicsLayer3dPolygon?.graphics?.length) {
         console.warn("No 3D polygon graphics to save");
