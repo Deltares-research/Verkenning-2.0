@@ -92,10 +92,10 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
   const pieData = [
     { category: "Voorbereiding", value: model.costModel.directCostGroundWork.preparationCost },
     { category: "Grondlichaam", value: model.costModel.directCostGroundWork.groundworkCost },
-    { category: "Constructie", value: model.costModel.bouwKostenGrondWerk.totalCosts },
-    { category: "Engineering", value: model.costModel.engineeringKosten.totalEngineeringCosts },
-    { category: "Overige bijkomende kosten", value: model.costModel.overigeBijkomendeKosten.totalGeneralCosts },
-    { category: "Vastgoedkosten", value: model.costModel.vastgoedKosten.totalRealEstateCosts },
+    { category: "Constructie", value: model.costModel.indirectConstructionCosts.totalCosts },
+    { category: "Engineering", value: model.costModel.engineeringCosts.totalEngineeringCosts },
+    { category: "Overige bijkomende kosten", value: model.costModel.otherCosts.totalGeneralCosts },
+    { category: "Vastgoedkosten", value: model.costModel.realEstateCosts.totalRealEstateCosts },
   ].filter(d => d.value > 0);
 
   return (
@@ -259,8 +259,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 <TableBody>
                   {/* Directe kosten grondwerk */}
                   <CollapsibleSection
-                    title="Benoemde Directe BouwKosten"
-                    total={model.costModel.directCostGroundWork.groundworkCost}
+                    title="Benoemde Directe BouwKosten - Grondwerk"
+                    total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}
                   >
                     <SubRow label="Voorbereiding" value={model.costModel.directCostGroundWork.preparationCost} />
                     <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekledingCost} />
@@ -275,47 +275,56 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaagCost} />
                   </CollapsibleSection>
 
+                  {/* Directe kosten constructies */}
+                  <CollapsibleSection
+                    title="Benoemde Directe BouwKosten - constructies"
+                    total={model.costModel.directCostStructures.totaleBDBKconstructie}
+                  >
+                      <SubRow label="BDBK" value={model.costModel.directCostStructures.totaleBDBKconstructie} />
+
+                  </CollapsibleSection>
+
                   {/* Bouwkosten grondwerk */}
                   <CollapsibleSection
-                    title="BouwKosten Grondwerk"
-                    total={model.costModel.bouwKostenGrondWerk.totalCosts}
+                    title="Indirecte BouwKosten"
+                    total={model.costModel.indirectConstructionCosts.indirectCosts}
                   >
-                    <SubRow label="PM kosten" value={model.costModel.bouwKostenGrondWerk.pmCost} />
-                    <SubRow label="Algemene kosten" value={model.costModel.bouwKostenGrondWerk.generalCost} />
-                    <SubRow label="Risico & winst" value={model.costModel.bouwKostenGrondWerk.riskProfit} />
+                    <SubRow label="PM kosten" value={model.costModel.indirectConstructionCosts.pmCost} />
+                    <SubRow label="Algemene kosten" value={model.costModel.indirectConstructionCosts.generalCost} />
+                    <SubRow label="Risico & winst" value={model.costModel.indirectConstructionCosts.riskProfit} />
                   </CollapsibleSection>
 
                   {/* Engineeringkosten */}
                   <CollapsibleSection
                     title="Engineeringkosten"
-                    total={model.costModel.engineeringKosten.totalEngineeringCosts}
+                    total={model.costModel.engineeringCosts.totalEngineeringCosts}
                   >
-                    <SubRow label="EPK kosten" value={model.costModel.engineeringKosten.epkCost} />
-                    <SubRow label="Schets voor definitief ontwerp" value={model.costModel.engineeringKosten.designCost} />
-                    <SubRow label="Onderzoeken" value={model.costModel.engineeringKosten.researchCost} />
-                    <SubRow label="Algemene kosten" value={model.costModel.engineeringKosten.generalCost} />
-                    <SubRow label="Risico & winst" value={model.costModel.engineeringKosten.riskProfit} />
+                    <SubRow label="EPK kosten" value={model.costModel.engineeringCosts.epkCost} />
+                    <SubRow label="Schets voor definitief ontwerp" value={model.costModel.engineeringCosts.designCost} />
+                    <SubRow label="Onderzoeken" value={model.costModel.engineeringCosts.researchCost} />
+                    <SubRow label="Algemene kosten" value={model.costModel.engineeringCosts.generalCost} />
+                    <SubRow label="Risico & winst" value={model.costModel.engineeringCosts.riskProfit} />
                   </CollapsibleSection>
 
                   {/* Overige bijkomende kosten */}
                   <CollapsibleSection
                     title="Overige bijkomende kosten"
-                    total={model.costModel.overigeBijkomendeKosten.totalGeneralCosts}
+                    total={model.costModel.otherCosts.totalGeneralCosts}
                   >
-                    <SubRow label="Vergunningen" value={model.costModel.overigeBijkomendeKosten.insurances} />
-                    <SubRow label="Kabels & leidingen" value={model.costModel.overigeBijkomendeKosten.cablesPipes} />
-                    <SubRow label="Planschade" value={model.costModel.overigeBijkomendeKosten.damages} />
-                    <SubRow label="Algemene kosten" value={model.costModel.overigeBijkomendeKosten.generalCost} />
-                    <SubRow label="Risico & winst" value={model.costModel.overigeBijkomendeKosten.riskProfit} />
+                    <SubRow label="Vergunningen" value={model.costModel.otherCosts.insurances} />
+                    <SubRow label="Kabels & leidingen" value={model.costModel.otherCosts.cablesPipes} />
+                    <SubRow label="Planschade" value={model.costModel.otherCosts.damages} />
+                    <SubRow label="Algemene kosten" value={model.costModel.otherCosts.generalCost} />
+                    <SubRow label="Risico & winst" value={model.costModel.otherCosts.riskProfit} />
                   </CollapsibleSection>
 
                   {/* Vastgoedkosten */}
                   <CollapsibleSection
                     title="Vastgoedkosten"
-                    total={model.costModel.vastgoedKosten.totalRealEstateCosts}
+                    total={model.costModel.realEstateCosts.totalRealEstateCosts}
                   >
-                    <SubRow label="Wegen" value={model.costModel.vastgoedKosten.roadCost} />
-                    <SubRow label="Panden" value={model.costModel.vastgoedKosten.houseCost} />
+                    <SubRow label="Wegen" value={model.costModel.realEstateCosts.roadCost} />
+                    <SubRow label="Panden" value={model.costModel.realEstateCosts.houseCost} />
                   </CollapsibleSection>
                 </TableBody>
               </Table>
@@ -408,10 +417,10 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   overflow: "auto"
                 }}>
                   <CostRangeStackedBar
-                    bouwKosten={model.costModel.bouwKostenGrondWerk.totalCosts}
-                    engineering={model.costModel.engineeringKosten.totalEngineeringCosts}
-                    overigeBijkomende={model.costModel.overigeBijkomendeKosten.totalGeneralCosts}
-                    vastgoed={model.costModel.vastgoedKosten.totalRealEstateCosts}
+                    bouwKosten={model.costModel.indirectConstructionCosts.totalCosts}
+                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
+                    overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
+                    vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
                   />
                 </Paper>
               </Box>
