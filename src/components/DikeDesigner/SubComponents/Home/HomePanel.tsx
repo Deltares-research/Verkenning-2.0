@@ -1,6 +1,7 @@
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import HistoryIcon from "@mui/icons-material/History";
+import SaveIcon from "@mui/icons-material/Save";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -11,13 +12,17 @@ import Box from "@vertigis/web/ui/Box";
 interface HomePanelProps {
     onCreateNewDesign: () => void;
     onLoadDesign: () => void;
+    onSaveProjectLocal: () => void;
     designFeatureLayer3dUrl?: string;
+    designName?: string;
 }
 
 const HomePanel: React.FC<HomePanelProps> = ({
     onCreateNewDesign,
     onLoadDesign,
+    onSaveProjectLocal,
     designFeatureLayer3dUrl,
+    designName,
 }) => {
     return (
         <Box
@@ -149,6 +154,55 @@ const HomePanel: React.FC<HomePanelProps> = ({
                             }}
                         >
                             Ontwerp laden
+                        </Typography>
+                    </Button>
+
+                    {/* Save Project Local Card */}
+                    <Button
+                        onClick={onSaveProjectLocal}
+                        disabled={!designName}
+                        fullWidth
+                        variant="outlined"
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-start",
+                            gap: 2,
+                            p: 2,
+                            textTransform: "none",
+                            borderColor: "#0078d4",
+                            color: "#323130",
+                            "&:hover": {
+                                borderColor: "#0078d4",
+                                backgroundColor: "#f0f6ff",
+                            },
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                backgroundColor: "#0078d4",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <SaveIcon
+                                sx={{
+                                    fontSize: 24,
+                                    color: "white",
+                                }}
+                            />
+                        </Box>
+                        <Typography
+                            sx={{
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: "#323130",
+                            }}
+                        >
+                            Ontwerp opslaan (lokaal)
                         </Typography>
                     </Button>
                 </Stack>

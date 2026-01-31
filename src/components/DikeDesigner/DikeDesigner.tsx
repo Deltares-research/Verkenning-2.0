@@ -47,6 +47,7 @@ import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartF
 
 
 import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer } from "./Functions/SaveFunctions";
+import { saveProjectAsJSON } from "./Functions/SaveProjectFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
@@ -137,6 +138,10 @@ const DikeDesigner = (
 
     const handleLoadDesign = () => {
         setLoadDesignsDialogOpen(true);
+    };
+
+    const handleSaveProjectLocal = () => {
+        saveProjectAsJSON(model);
     };
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -667,7 +672,9 @@ const DikeDesigner = (
                     <HomePanel
                         onCreateNewDesign={handleCreateNewDesign}
                         onLoadDesign={handleLoadDesign}
+                        onSaveProjectLocal={handleSaveProjectLocal}
                         designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                        designName={designName}
                     />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>

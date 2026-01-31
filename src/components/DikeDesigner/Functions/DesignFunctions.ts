@@ -790,21 +790,29 @@ export function setInputLineFromFeatureLayer(model) {
 }
 
 export function cleanFeatureLayer(layer) {
-    layer.queryObjectIds().then((objectIds) => {
-        if (objectIds.length === 0) {
-            console.log("No features to delete.");
-            return;
-        }
-        const deletes = objectIds.map(id => ({
-            objectId: id
-        }));
+    // Handle both FeatureLayer and GraphicsLayer
+    if (layer.removeAll) {
+        // GraphicsLayer has removeAll method
+        layer.removeAll();
+        console.log("Graphics cleared from layer.");
+    } else if (layer.queryObjectIds) {
+        // FeatureLayer uses applyEdits
+        layer.queryObjectIds().then((objectIds) => {
+            if (objectIds.length === 0) {
+                console.log("No features to delete.");
+                return;
+            }
+            const deletes = objectIds.map(id => ({
+                objectId: id
+            }));
 
-        layer.applyEdits({
-            deleteFeatures: deletes
-        }).catch((error) => {
-            console.error("Error deleting features:", error);
+            layer.applyEdits({
+                deleteFeatures: deletes
+            }).catch((error) => {
+                console.error("Error deleting features:", error);
+            });
         });
-    });
+    }
 }
 
 

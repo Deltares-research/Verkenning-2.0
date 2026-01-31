@@ -21,6 +21,11 @@ export interface ProjectJSON {
         crossSectionPoints: any[];
     };
     chartData: any[];
+    volumes: {
+        excavationVolume: number | null;
+        fillVolume: number | null;
+        totalVolumeDifference: number | null;
+    };
     costs: {
         [key: string]: any;
     };
@@ -30,14 +35,67 @@ export interface ProjectJSON {
 }
 
 /**
- * Export graphics layer to GeoJSON features
+ * Round coordinate to specified decimal places to reduce file size
+ */
+const roundCoordinate = (coord: number, decimals: number = 2): number => {
+    const factor = Math.pow(10, decimals);
+    return Math.round(coord * factor) / factor;
+};
+
+/**
+ * Simplify coordinate arrays by reducing precision
+ */
+const simplifyCoordinates = (coords: any, decimals: number = 2): any => {
+    if (!coords) return coords;
+    
+    if (Array.isArray(coords)) {
+        if (typeof coords[0] === 'number') {
+            // Single coordinate pair [x, y] or [x, y, z]
+            return coords.map(c => roundCoordinate(c, decimals));
+        } else {
+            // Nested arrays (paths, rings, etc.)
+            return coords.map(c => simplifyCoordinates(c, decimals));
+        }
+    }
+    return coords;
+};
+
+/**
+ * Export graphics layer to compact GeoJSON features
  */
 const graphicsToFeatures = (graphics: any[]): any[] => {
     if (!graphics || graphics.length === 0) return [];
-    return graphics.map((graphic) => ({
-        geometry: graphic.geometry ? graphic.geometry.toJSON() : null,
-        attributes: graphic.attributes || {},
-    }));
+    return graphics.map((graphic) => {
+        const geomJSON = graphic.geometry ? graphic.geometry.toJSON() : null;
+        
+        // Simplify geometry coordinates to reduce file size
+        if (geomJSON) {
+            if (geomJSON.x !== undefined) {
+                // Point geometry
+                geomJSON.x = roundCoordinate(geomJSON.x);
+                geomJSON.y = roundCoordinate(geomJSON.y);
+                if (geomJSON.z !== undefined) {
+                    geomJSON.z = roundCoordinate(geomJSON.z, 3); // Keep more precision for elevation
+                }
+            } else if (geomJSON.paths) {
+                // Polyline geometry
+                geomJSON.paths = simplifyCoordinates(geomJSON.paths);
+            } else if (geomJSON.rings) {
+                // Polygon geometry
+                geomJSON.rings = simplifyCoordinates(geomJSON.rings);
+            }
+            
+            // Remove unnecessary spatial reference details (save space)
+            if (geomJSON.spatialReference && geomJSON.spatialReference.wkid) {
+                geomJSON.spatialReference = { wkid: geomJSON.spatialReference.wkid };
+            }
+        }
+        
+        return {
+            geometry: geomJSON,
+            attributes: graphic.attributes || {},
+        };
+    });
 };
 
 /**
@@ -56,7 +114,7 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
         },
         geometries: {
             design3d: graphicsToFeatures(model.graphicsLayerTemp?.graphics?.toArray() || []),
-            design2d: graphicsToFeatures(model.designLayer2D?.graphics?.toArray() || []),
+            design2d: graphicsToFeatures((model.designLayer2D as any)?.graphics?.toArray() || []),
             ruimtebeslag2d: graphicsToFeatures(model.graphicsLayerRuimtebeslag?.graphics?.toArray() || []),
             ruimtebeslag3d: graphicsToFeatures(model.graphicsLayerRuimtebeslag3d?.graphics?.toArray() || []),
             inputLine: graphicsToFeatures(model.graphicsLayerLine?.graphics?.toArray() || []),
@@ -64,11 +122,13 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             crossSectionPoints: graphicsToFeatures(model.graphicsLayerPoint?.graphics?.toArray() || []),
         },
         chartData: model.chartData ? [...model.chartData] : [],
+        volumes: {
+            excavationVolume: model.excavationVolume || null,
+            fillVolume: model.fillVolume || null,
+            totalVolumeDifference: model.totalVolumeDifference || null,
+        },
         costs: {
-            excavationVolume: model.excavationVolume,
-            fillVolume: model.fillVolume,
-            totalVolumeDifference: model.totalVolumeDifference,
-            // Add other cost-related data as needed
+            // Add cost-related data as needed
         },
         effects: {
             intersectingPanden: model.intersectingPanden?.length || 0,
@@ -101,16 +161,17 @@ const splitDesignName = (name: string) => {
 };
 
 /**
- * Save project as JSON file
+ * Save project as JSON file (minified for smaller size)
  */
 export const saveProjectAsJSON = (model: DikeDesignerModel) => {
     const projectJSON = buildProjectJSON(model);
     const filename = `${projectJSON.metadata.vak}-${projectJSON.metadata.alternatief}-${new Date().getTime()}.json`;
 
     const element = document.createElement("a");
+    // Use minified JSON (no whitespace) to reduce file size
     element.setAttribute(
         "href",
-        "data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(projectJSON, null, 2))
+        "data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(projectJSON))
     );
     element.setAttribute("download", filename);
     element.style.display = "none";
@@ -121,7 +182,6 @@ export const saveProjectAsJSON = (model: DikeDesignerModel) => {
     model.messages.commands.ui.displayNotification.execute({
         title: "Ontwerp opgeslagen",
         message: `Project opgeslagen als ${filename}`,
-        type: "success",
         disableTimeouts: false,
     });
 };

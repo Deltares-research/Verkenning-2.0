@@ -98,34 +98,41 @@ export function exportRuimteslagLayerAsGeoJSON(model): void {
 }
 
 export function exportDesignLayer2DAsGeoJSON(model): void {
-    model.designLayer2D.queryFeatures().then((result) => {
-        const geojson = {
-            type: "FeatureCollection",
-            crs: {
-                type: "name",
-                properties: { name: "EPSG:4326" },
+    // Get graphics from GraphicsLayer
+    const graphics = model.designLayer2D.graphics.toArray();
+    
+    const geojson = {
+        type: "FeatureCollection",
+        crs: {
+            type: "name",
+            properties: { name: "EPSG:4326" },
+        },
+        features: graphics.map((graphic) => ({
+            type: "Feature",
+            geometry: {
+                type: "Polygon",
+                coordinates: graphic.geometry.rings,
             },
-            features: result.features.map((feature) => ({
-                type: "Feature",
-                geometry: {
-                    type: "Polygon",
-                    coordinates: feature.geometry.rings,
-                },
-                properties: feature.attributes,
-            })),
-        };
+            properties: graphic.attributes,
+        })),
+    };
 
-        const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-        const a = document.createElement("a");
-        a.href = url;
-        const prefix = model.designName ? `${model.designName}` : "";
-        a.download = `${prefix}_ontwerp_2d.geojson`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    const prefix = model.designName ? `${model.designName}` : "";
+    a.download = `${prefix}_ontwerp_2d.geojson`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    model.messages.commands.ui.displayNotification.execute({
+        title: "2D ontwerp geëxporteerd",
+        message: `2D ontwerp opgeslagen als ${prefix}_ontwerp_2d.geojson`,
+        type: "success",
     });
 }
 
