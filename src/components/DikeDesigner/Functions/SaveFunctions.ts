@@ -1,50 +1,87 @@
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Graphic from "@arcgis/core/Graphic";
+import Polygon from "@arcgis/core/geometry/Polygon";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
+import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
+import { createMeshFromPolygon } from "./DesignFunctions";
 
-export async function loadGeometriesFromDesign(model, designObjectId: number): Promise<void> {
-    if (!model.designFeatureLayer3dUrl) {
-        console.error("Feature layer URL not configured");
-        throw new Error("Feature layer URL not configured");
-    }
-    
+export async function loadGeometriesFromDesign(model): Promise<void> {
     try {
-        // Clear existing geometries
-        model.graphicsLayer3dPolygon.removeAll();
-        
-        // Query the feature layer for the specific design
-        const featureLayerDesign = new FeatureLayer({
-            url: model.designFeatureLayer3dUrl,
-            hasZ: true,
-        });
+        // Clear previous meshes
+        model.meshes = [];
+        model.graphicsLayerMesh.removeAll();
+        model.designLayer2D.removeAll();
 
-        const query = featureLayerDesign.createQuery();
-        query.objectIds = [designObjectId];
-        query.outFields = ["*"];
-        query.returnGeometry = true;
+        // Get all graphics from the 3D polygon layer
+        const graphics = model.graphicsLayer3dPolygon.graphics.items;
 
-        const result = await featureLayerDesign.queryFeatures(query);
-
-        if (result.features && result.features.length > 0) {
-            // Add each feature's geometry to the graphics layer
-            result.features.forEach((feature) => {
-                const graphic = new Graphic({
-                    geometry: feature.geometry,
-                    attributes: feature.attributes,
-                    symbol: feature.symbol
-                });
-                model.graphicsLayer3dPolygon.add(graphic);
+        if (graphics && graphics.length > 0) {
+            graphics.forEach((graphic) => {
+                // Create mesh from the polygon
+                if (graphic.geometry && graphic.geometry.type === "polygon") {
+                    createMeshFromPolygon(model, graphic.geometry as __esri.Polygon, null);
+                    console.log(graphic.geometry, "geometry added to mesh");
+                }
             });
 
-            console.log(`Loaded ${result.features.length} geometries from design`);
+            // Also add 2D representation to designLayer2D
+            graphics.forEach((graphic) => {
+                if (graphic.geometry && graphic.geometry.type === "polygon") {
+                    const polygon2d = new Polygon({
+                        rings: (graphic.geometry as __esri.Polygon).rings.map(ring =>
+                            ring.map(coord => [coord[0], coord[1]])
+                        ),
+                        spatialReference: graphic.geometry.spatialReference
+                    });
+
+                    const graphics2D = new Graphic({
+                        geometry: polygon2d,
+                        attributes: graphic.attributes
+                    });
+
+                    // Apply styling if available
+                    if (model.designLayer2DGetSymbol && graphic.attributes?.name) {
+                        const symbol = model.designLayer2DGetSymbol(graphic.attributes.name);
+                        graphics2D.symbol = symbol as any;
+                    }
+
+                    model.designLayer2D.add(graphics2D);
+                }
+            });
+
+            // Merge all meshes and add to graphics layer
+            if (model.meshes.length > 0) {
+                const merged = meshUtils.merge(model.meshes);
+                const mergedGraphic = new Graphic({
+                    geometry: merged,
+                    symbol: new MeshSymbol3D({
+                        symbolLayers: [
+                            {
+                                type: "fill",
+                                material: {
+                                    color: [85, 140, 75, 1],  // Green grass color for dike
+                                    colorMixMode: "replace"
+                                },
+                                castShadows: true
+                            }
+                        ]
+                    })
+                });
+                model.graphicsLayerMesh.add(mergedGraphic);
+                model.mergedMesh = merged;
+                model.meshGraphic = mergedGraphic;
+            }
+
+            console.log(`Loaded ${graphics.length} geometries from design and created mesh`);
             model.messages.commands.ui.displayNotification.execute({
-                message: `Het ontwerp met ${result.features.length} onderdelen is succesvol geladen.`,
+                message: `Het ontwerp met ${graphics.length} onderdelen is succesvol geladen.`,
                 title: "Ontwerp geladen",
                 type: "success"
             });
         } else {
-            console.warn("No features found for the selected design");
+            console.warn("No geometries found");
             model.messages.commands.ui.alert.execute({
-                message: "Geen ontwerpelementen gevonden voor het geselecteerde ontwerp.",
+                message: "Geen ontwerpelementen gevonden.",
                 title: "Ontwerp laden mislukt",
             });
         }

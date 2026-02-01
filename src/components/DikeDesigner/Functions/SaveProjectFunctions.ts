@@ -31,16 +31,33 @@ export interface ProjectJSON {
     chartData: any[];
     allChartData: Record<string, any[]>;
     chartDataElevation: any[];
-    volumes: {
+    designValues: {
+        trajectLength: number | null;
+        volumeDifference: number | null;
         excavationVolume: number | null;
         fillVolume: number | null;
-        totalVolumeDifference: number | null;
+        area2d: number | null;
+        area3d: number | null;
     };
     costs: {
         [key: string]: any;
     };
     effects: {
-        [key: string]: any;
+        intersectingPanden: object[];
+        intersectingBomen: object[];
+        intersectingPercelen: object[];
+        intersectingPercelenArea: number | null;
+        intersectingWegdelen2dRuimtebeslag: number | null;
+        intersectingInritten2dRuimtebeslag: number | null;
+        intersectingInritten2dRuimtebeslagCount: object[];
+        intersectingNatura2000: number | null;
+        intersectingGNN: number | null;
+        intersectingBeheertypen: object[];
+        intersectingPandenArea: number | null;
+        intersectingPandenBuffer: object[];
+        intersectingPandenBufferArea: number | null;
+        intersectingErven: object[];
+        intersectingErvenArea: number | null;
     };
 }
 
@@ -123,35 +140,46 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             version: "1.0",
         },
         geometries: {
-            design3d: graphicsToFeatures(model.graphicsLayerTemp?.graphics?.toArray() || []),
-            design2d: graphicsToFeatures((model.designLayer2D as any)?.graphics?.toArray() || []),
-            ruimtebeslag2d: graphicsToFeatures(model.graphicsLayerRuimtebeslag?.graphics?.toArray() || []),
-            ruimtebeslag3d: graphicsToFeatures(model.graphicsLayerRuimtebeslag3d?.graphics?.toArray() || []),
-            inputLine: graphicsToFeatures(model.graphicsLayerLine?.graphics?.toArray() || []),
-            constructionLine: graphicsToFeatures(model.graphicsLayerControlPoints?.graphics?.toArray() || []),
-            crossSectionPoints: graphicsToFeatures(model.graphicsLayerPoint?.graphics?.toArray() || []),
-            crossSectionLine: graphicsToFeatures(model.graphicsLayerCrossSection?.graphics?.toArray() || []),
-            profilePoints: graphicsToFeatures(model.graphicsLayerProfile?.graphics?.toArray() || []),
+            design3d: graphicsToFeatures(Array.from(model.graphicsLayer3dPolygon?.graphics || [])),
+            design2d: graphicsToFeatures(Array.from((model.designLayer2D as any)?.graphics || [])),
+            ruimtebeslag2d: graphicsToFeatures(Array.from(model.graphicsLayerRuimtebeslag?.graphics || [])),
+            ruimtebeslag3d: graphicsToFeatures(Array.from(model.graphicsLayerRuimtebeslag3d?.graphics || [])),
+            inputLine: graphicsToFeatures(Array.from(model.graphicsLayerLine?.graphics || [])),
+            constructionLine: graphicsToFeatures(Array.from(model.graphicsLayerControlPoints?.graphics || [])),
+            crossSectionPoints: graphicsToFeatures(Array.from(model.graphicsLayerPoint?.graphics || [])),
+            crossSectionLine: graphicsToFeatures(Array.from(model.graphicsLayerCrossSection?.graphics || [])),
+            profilePoints: graphicsToFeatures(Array.from(model.graphicsLayerProfile?.graphics || [])),
         },
         chartData: model.chartData ? [...model.chartData] : [],
         allChartData: model.allChartData ? { ...model.allChartData } : {},
         chartDataElevation: model.chartDataElevation ? [...model.chartDataElevation] : [],
-        volumes: {
+        designValues: {
+            trajectLength: model.lineLength || null,
+            volumeDifference: model.totalVolumeDifference || null,
             excavationVolume: model.excavationVolume || null,
             fillVolume: model.fillVolume || null,
-            totalVolumeDifference: model.totalVolumeDifference || null,
+            area2d: model.total2dArea || null,
+            area3d: model.total3dArea || null,
         },
         costs: {
             // Add cost-related data as needed
         },
         effects: {
-            intersectingPanden: model.intersectingPanden?.length || 0,
-            intersectingBomen: model.intersectingBomen?.length || 0,
-            intersectingPercelen: model.intersectingPercelen?.length || 0,
-            intersectingPercelenArea: model.intersectingPercelenArea || 0,
-            intersectingNatura2000: model.intersectingNatura2000 || 0,
-            intersectingGNN: model.intersectingGNN || 0,
-            // Add other effect-related data as needed
+            intersectingPanden: model.intersectingPanden || [],
+            intersectingBomen: model.intersectingBomen || [],
+            intersectingPercelen: model.intersectingPercelen || [],
+            intersectingPercelenArea: model.intersectingPercelenArea || null,
+            intersectingWegdelen2dRuimtebeslag: model.intersectingWegdelen2dRuimtebeslag || null,
+            intersectingInritten2dRuimtebeslag: model.intersectingInritten2dRuimtebeslag || null,
+            intersectingInritten2dRuimtebeslagCount: model.intersectingInritten2dRuimtebeslagCount || [],
+            intersectingNatura2000: model.intersectingNatura2000 || null,
+            intersectingGNN: model.intersectingGNN || null,
+            intersectingBeheertypen: model.intersectingBeheertypen || [],
+            intersectingPandenArea: model.intersectingPandenArea || null,
+            intersectingPandenBuffer: model.intersectingPandenBuffer || [],
+            intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
+            intersectingErven: model.intersectingErven || [],
+            intersectingErvenArea: model.intersectingErvenArea || null,
         },
     };
 };
@@ -179,7 +207,7 @@ const splitDesignName = (name: string) => {
  */
 export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJSON): void => {
     try {
-        const { geometries, chartData, allChartData, chartDataElevation, volumes, metadata } = jsonData;
+        const { geometries, chartData, allChartData, chartDataElevation, designValues, effects, metadata } = jsonData;
 
         // Clear existing graphics
         model.graphicsLayerTemp?.removeAll();
@@ -194,10 +222,18 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
 
         // Load geometries
         if (geometries.design3d?.length > 0) {
-            loadGeometriesToLayer(model.graphicsLayerTemp, geometries.design3d, model);
+            loadGeometriesToLayer(model.graphicsLayer3dPolygon, geometries.design3d, model);
         }
         if (geometries.design2d?.length > 0) {
+            console.log(geometries.design2d, `Loading ${geometries.design2d.length} 2D design geometries`);
             loadGeometriesToLayer(model.designLayer2D, geometries.design2d, model);
+        }
+        
+        // Create meshes from the loaded 3D polygons
+        if (geometries.design3d?.length > 0) {
+            import("./SaveFunctions").then(({ loadGeometriesFromDesign }) => {
+                loadGeometriesFromDesign(model).catch(err => console.error("Error loading geometries:", err));
+            });
         }
         if (geometries.ruimtebeslag2d?.length > 0) {
             loadGeometriesToLayer(model.graphicsLayerRuimtebeslag, geometries.ruimtebeslag2d, model);
@@ -240,11 +276,33 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
             model.chartDataElevation = chartDataElevation;
         }
 
-        // Load volumes
-        if (volumes) {
-            model.excavationVolume = volumes.excavationVolume;
-            model.fillVolume = volumes.fillVolume;
-            model.totalVolumeDifference = volumes.totalVolumeDifference;
+        // Load design values
+        if (designValues) {
+            model.lineLength = designValues.trajectLength || 0;
+            model.totalVolumeDifference = designValues.volumeDifference || 0;
+            model.excavationVolume = designValues.excavationVolume || 0;
+            model.fillVolume = designValues.fillVolume || 0;
+            model.total2dArea = designValues.area2d || 0;
+            model.total3dArea = designValues.area3d || 0;
+        }
+
+        // Load effects
+        if (effects) {
+            model.intersectingPanden = effects.intersectingPanden || [];
+            model.intersectingBomen = effects.intersectingBomen || [];
+            model.intersectingPercelen = effects.intersectingPercelen || [];
+            model.intersectingPercelenArea = effects.intersectingPercelenArea || 0;
+            model.intersectingWegdelen2dRuimtebeslag = effects.intersectingWegdelen2dRuimtebeslag || 0;
+            model.intersectingInritten2dRuimtebeslag = effects.intersectingInritten2dRuimtebeslag || 0;
+            model.intersectingInritten2dRuimtebeslagCount = effects.intersectingInritten2dRuimtebeslagCount || [];
+            model.intersectingNatura2000 = effects.intersectingNatura2000 || 0;
+            model.intersectingGNN = effects.intersectingGNN || 0;
+            model.intersectingBeheertypen = effects.intersectingBeheertypen || [];
+            model.intersectingPandenArea = effects.intersectingPandenArea || 0;
+            model.intersectingPandenBuffer = effects.intersectingPandenBuffer || [];
+            model.intersectingPandenBufferArea = effects.intersectingPandenBufferArea || 0;
+            model.intersectingErven = effects.intersectingErven || [];
+            model.intersectingErvenArea = effects.intersectingErvenArea || 0;
         }
 
         // Set design name from metadata

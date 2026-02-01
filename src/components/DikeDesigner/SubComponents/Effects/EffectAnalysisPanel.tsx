@@ -58,7 +58,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                     startIcon={<AssessmentIcon />}
                     onClick={() => handleEffectAnalysis(model)}
                     fullWidth
-                    disabled={!model.graphicsLayerTemp?.graphics.length}
+                    disabled={!model.graphicsLayerRuimtebeslag?.graphics.length}
                 >
                     Voer effectenanalyse uit
                 </Button>

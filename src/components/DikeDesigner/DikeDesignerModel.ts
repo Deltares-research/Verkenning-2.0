@@ -98,7 +98,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     graphicsLayerControlPoints: GraphicsLayer;
 
-    designLayer2D: FeatureLayer | null = null;
+    designLayer2D: FeatureLayer | GraphicsLayer | null = null;
+    designLayer2DGetSymbol: ((name: string) => any) | null = null;
     uniqueParts: string[] = [];
 
     map: any;
@@ -623,38 +624,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.constructionModel.view = this.view;
             this.constructionModel.logMap();
 
-            this.designLayer2D = new FeatureLayer({
+            this.designLayer2D = new GraphicsLayer({
                 title: "Ontwerpdata - 2D",
                 listMode: "show",
                 visible: false,
-                geometryType: "polygon",
-                objectIdField: "ObjectID",
-                source: [],
-                fields: [
-                    {
-                        name: "ObjectID",
-                        alias: "ObjectID",
-                        type: "oid"
-                    },
-                    {
-                        name: "name",
-                        alias: "Name",
-                        type: "string"
-                    }
-                    // Add more fields if needed
-                ]
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                }
             });
-
-            // Your unique values (deduplicated)
-            const uniqueNames = [
-                "buitenkruin-binnenkruin",
-                "buitenkruin-bovenkant_buitenberm",
-                "binnenkruin-bovenkant_binnenberm",
-                "bovenkant_buitenberm-onderkant_buitenberm",
-                "onderkant_buitenberm-buitenteen",
-                "bovenkant_binnenberm-onderkant_binnenberm",
-                "onderkant_binnenberm-binnenteen"
-            ];
 
             // Helper to pick color based on rules
             function getSymbolForName(name: string) {
@@ -682,22 +660,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 };
             }
 
-            const uniqueValueInfos = uniqueNames.map(name => ({
-                value: name,
-                symbol: getSymbolForName(name)
-            }));
-
-
-
-            this.designLayer2D.renderer = new UniqueValueRenderer({
-                field: "name",
-                uniqueValueInfos: uniqueValueInfos as any[],
-                defaultSymbol: {
-                    type: "simple-fill",
-                    color: [204, 255, 204, 0.7], // light green
-                    outline: { color: [0, 128, 0, 1], width: 1 }
-                } as any
-            });
+            // Store the styling function in the model for later use when adding features
+            this.designLayer2DGetSymbol = getSymbolForName;
 
             this.graphicsLayerPoint = new GraphicsLayer({
                 title: "Point Layer",

@@ -141,7 +141,7 @@ const DikeDesigner = (
     };
 
     const handleLoadDesignGeometries = async (objectId: number) => {
-        await loadGeometriesFromDesign(model, objectId);
+        await loadGeometriesFromDesign(model);
     };
 
     const handleLoadProjectLocal = () => {

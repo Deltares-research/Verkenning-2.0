@@ -569,12 +569,13 @@ export async function calculateDesignValues(model): Promise<void> {
 }
 
 
-function createMeshFromPolygon(model, polygon, textureUrl = null) {
+export function createMeshFromPolygon(model, polygon, textureUrl = null) {
 
     const mesh = Mesh.createFromPolygon(polygon, {
 
     });
     mesh.spatialReference = polygon.spatialReference
+
 
     // const symbol = {
     //     type: "mesh-3d",
@@ -626,11 +627,12 @@ export function createPolygonBetween(model: any, nameA: string, nameB: string, o
 
     model.graphicsLayer3dPolygon.add(graphic3d);
 
-    model.designLayer2D.applyEdits({
-        addFeatures: [graphics2D]
-    }).catch((error) => {
-        console.error("Error adding 2D polygon to design layer:", error);
-    });
+    // Add 2D polygon to graphics layer with styling
+    if (model.designLayer2DGetSymbol) {
+        const symbol = model.designLayer2DGetSymbol(partName);
+        graphics2D.symbol = symbol as any;
+    }
+    model.designLayer2D.add(graphics2D);
 
     // part for meshes, taking care of proper triangulation
     const pathAforMesh = geomA.paths[0];
@@ -701,11 +703,12 @@ export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistance
 
     model.graphicsLayer3dPolygon.add(graphic3d);
 
-    model.designLayer2D.applyEdits({
-        addFeatures: [graphics2D]
-    }).catch((error) => {
-        console.error("Error adding 2D polygon to design layer:", error);
-    });
+    // Add 2D polygon to graphics layer with styling
+    if (model.designLayer2DGetSymbol) {
+        const symbol = model.designLayer2DGetSymbol(polygonName);
+        graphics2D.symbol = symbol as any;
+    }
+    model.designLayer2D.add(graphics2D);
 
     // part for meshes, taking care of proper triangulation
     const pathAforMesh = geomA.paths[0];
