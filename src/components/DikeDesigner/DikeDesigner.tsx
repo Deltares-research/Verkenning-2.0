@@ -143,6 +143,7 @@ const DikeDesigner = (
 
     const handleLoadDesignGeometries = async (objectId: number) => {
         await loadGeometriesFromDesign(model);
+        setValue(1);
     };
 
     const handleLoadProjectLocal = () => {
@@ -157,6 +158,7 @@ const DikeDesigner = (
                     try {
                         const jsonContent = JSON.parse(event.target?.result as string) as ProjectJSON;
                         loadProjectFromJSON(model, jsonContent);
+                        setValue(1);
                     } catch (error) {
                         console.error("Error parsing JSON file:", error);
                         model.messages.commands.ui.alert.execute({
