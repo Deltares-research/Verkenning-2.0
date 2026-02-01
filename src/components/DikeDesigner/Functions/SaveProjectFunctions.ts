@@ -271,10 +271,14 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         // Load geometries
         if (geometries.design3d?.length > 0) {
             loadGeometriesToLayer(model.graphicsLayer3dPolygon, geometries.design3d, model);
+            // Also load to graphicsLayerTemp for visibility during loaded state
+            loadGeometriesToLayer(model.graphicsLayerTemp, geometries.design3d, model);
         }
         if (geometries.design2d?.length > 0) {
             console.log(geometries.design2d, `Loading ${geometries.design2d.length} 2D design geometries`);
             loadGeometriesToLayer(model.designLayer2D, geometries.design2d, model);
+            // Also load to graphicsLayerTemp for visibility during loaded state
+            loadGeometriesToLayer(model.graphicsLayerTemp, geometries.design2d, model);
         }
         
         // Create meshes from the loaded 3D polygons

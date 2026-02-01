@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
 import Paper from "@vertigis/web/ui/Paper";
@@ -9,6 +9,11 @@ import { Delete as DeleteIcon, Download as DownloadIcon, Clear as ClearIcon, Add
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { type ProjectJSON, buildProjectJSON } from "../../Functions/SaveProjectFunctions";
 import Graphic from "@arcgis/core/Graphic";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
+import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
+import Mesh from "@arcgis/core/geometry/Mesh";
+import Polygon from "@arcgis/core/geometry/Polygon";
 
 interface DesignSnapshot {
     id: string;
@@ -44,9 +49,8 @@ interface DesignSnapshot {
             structureCount: number;
         };
         geometry: {
-            design2d: any[];
             design3d: any[];
-            inputLine: any[];
+            ruimtebeslag2d: any[];
         };
     };
 }
@@ -57,6 +61,8 @@ interface ComparisonPanelProps {
 
 const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ model }) => {
     const designFileInputRef = useRef<HTMLInputElement>(null);
+    const snapshotLayersRef = useRef<Record<string, { ruimtebeslag2d?: GraphicsLayer; design3d?: GraphicsLayer; mesh?: Mesh }>>({});
+    const [layerVisibility, setLayerVisibility] = useState<Record<string, { ruimtebeslag2d: boolean; design3d: boolean }>>({});
     
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
@@ -111,12 +117,137 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ model }) => {
                     structureCount: projectData.constructions?.structures?.length || 0,
                 },
                 geometry: {
-                    design2d: projectData.geometries?.design2d || [],
                     design3d: projectData.geometries?.design3d || [],
-                    inputLine: projectData.geometries?.inputLine || [],
+                    ruimtebeslag2d: projectData.geometries?.ruimtebeslag2d || [],
                 },
             },
         };
+    };
+
+    const buildMeshFromGeometries = (geometries: any[]): Mesh | null => {
+        const meshes: Mesh[] = [];
+        
+        if (!geometries || geometries.length === 0) {
+            return null;
+        }
+
+        geometries.forEach((geomData: any) => {
+            try {
+                if (geomData && geomData.geometry) {
+                    const polygon = Polygon.fromJSON(geomData.geometry);
+                    const mesh = Mesh.createFromPolygon(polygon, {});
+                    mesh.spatialReference = polygon.spatialReference;
+                    meshes.push(mesh);
+                }
+            } catch (e) {
+                console.warn("Could not create mesh from geometry:", e);
+            }
+        });
+
+        if (meshes.length === 0) {
+            return null;
+        }
+
+        if (meshes.length === 1) {
+            return meshes[0];
+        }
+
+        return meshUtils.merge(meshes);
+    };
+
+    const ensureLayer = (
+        snapshot: DesignSnapshot,
+        type: "ruimtebeslag2d" | "design3d"
+    ): GraphicsLayer | null => {
+        if (!model.map) {
+            return null;
+        }
+
+        const existing = snapshotLayersRef.current[snapshot.id]?.[type];
+        if (existing) {
+            return existing;
+        }
+
+        const layer = new GraphicsLayer({
+            title: type === "ruimtebeslag2d"
+                ? `Ruimtebeslag 2D - ${snapshot.name}`
+                : `Ontwerp 3D - ${snapshot.name}`,
+            visible: false,
+        });
+
+        const geometries = type === "ruimtebeslag2d"
+            ? snapshot.data.geometry.ruimtebeslag2d
+            : snapshot.data.geometry.design3d;
+
+        if (type === "design3d" && geometries && geometries.length > 0) {
+            // Build mesh for 3D design
+            const mesh = buildMeshFromGeometries(geometries);
+            if (mesh) {
+                snapshotLayersRef.current[snapshot.id] = {
+                    ...snapshotLayersRef.current[snapshot.id],
+                    mesh,
+                };
+
+                const meshSymbol = new MeshSymbol3D({
+                    symbolLayers: [
+                        {
+                            type: "fill",
+                            material: {
+                                color: [85, 140, 75, 0.8],
+                                colorMixMode: "replace"
+                            },
+                            castShadows: true
+                        }
+                    ]
+                });
+
+                const meshGraphic = new Graphic({
+                    geometry: mesh,
+                    symbol: meshSymbol,
+                });
+                layer.add(meshGraphic);
+            }
+        } else if (geometries && geometries.length > 0) {
+            // Add regular graphics for 2D
+            geometries.forEach((geomData: any) => {
+                try {
+                    if (geomData && geomData.geometry) {
+                        const graphic = Graphic.fromJSON(geomData);
+                        layer.add(graphic);
+                    }
+                } catch (e) {
+                    console.warn(`Could not load ${type} geometry:`, e);
+                }
+            });
+        }
+
+        model.map.add(layer);
+        snapshotLayersRef.current[snapshot.id] = {
+            ...snapshotLayersRef.current[snapshot.id],
+            [type]: layer,
+        };
+
+        return layer;
+    };
+
+    const toggleLayerVisibility = (
+        snapshot: DesignSnapshot,
+        type: "ruimtebeslag2d" | "design3d"
+    ) => {
+        const layer = ensureLayer(snapshot, type);
+        if (!layer) {
+            return;
+        }
+
+        setLayerVisibility(prev => {
+            const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false };
+            const nextState = {
+                ...current,
+                [type]: !current[type],
+            };
+            layer.visible = nextState[type];
+            return { ...prev, [snapshot.id]: nextState };
+        });
     };
 
     const addCurrentDesign = () => {
@@ -203,79 +334,51 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ model }) => {
 
     const removeSnapshot = (id: string) => {
         model.comparisonSnapshots = model.comparisonSnapshots.filter((s) => s.id !== id);
+        const layers = snapshotLayersRef.current[id];
+        if (layers) {
+            if (layers.ruimtebeslag2d) {
+                model.map?.remove(layers.ruimtebeslag2d);
+            }
+            if (layers.design3d) {
+                model.map?.remove(layers.design3d);
+            }
+            delete snapshotLayersRef.current[id];
+        }
+        setLayerVisibility(prev => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
     };
 
     const clearAll = () => {
         model.comparisonSnapshots = [];
-    };
-
-    const loadSnapshotOnMap = (snapshot: DesignSnapshot) => {
-        try {
-            // Clear existing graphics to show only the selected alternative
-            model.graphicsLayerTemp.removeAll();
-            model.graphicsLayer3dPolygon.removeAll();
-            model.graphicsLayerLine.removeAll();
-            
-            // Load 2D geometries
-            if (snapshot.data.geometry.design2d && snapshot.data.geometry.design2d.length > 0) {
-                snapshot.data.geometry.design2d.forEach((geomData: any) => {
-                    try {
-                        if (geomData && geomData.geometry) {
-                            const graphic = Graphic.fromJSON(geomData);
-                            model.graphicsLayerTemp.add(graphic);
-                        }
-                    } catch (e) {
-                        console.warn("Could not load 2D geometry:", e);
-                    }
-                });
+        Object.values(snapshotLayersRef.current).forEach(layers => {
+            if (layers.ruimtebeslag2d) {
+                model.map?.remove(layers.ruimtebeslag2d);
             }
-            
-            // Load 3D geometries
-            if (snapshot.data.geometry.design3d && snapshot.data.geometry.design3d.length > 0) {
-                snapshot.data.geometry.design3d.forEach((geomData: any) => {
-                    try {
-                        if (geomData && geomData.geometry) {
-                            const graphic = Graphic.fromJSON(geomData);
-                            model.graphicsLayer3dPolygon.add(graphic);
-                        }
-                    } catch (e) {
-                        console.warn("Could not load 3D geometry:", e);
-                    }
-                });
+            if (layers.design3d) {
+                model.map?.remove(layers.design3d);
             }
-            
-            // Load input line
-            if (snapshot.data.geometry.inputLine && snapshot.data.geometry.inputLine.length > 0) {
-                snapshot.data.geometry.inputLine.forEach((geomData: any) => {
-                    try {
-                        if (geomData && geomData.geometry) {
-                            const graphic = Graphic.fromJSON(geomData);
-                            model.graphicsLayerLine.add(graphic);
-                        }
-                    } catch (e) {
-                        console.warn("Could not load input line:", e);
-                    }
-                });
-            }
-            
-            model.messages.commands.ui.displayNotification.execute({
-                id: "mapLoaded",
-                message: `Ontwerp "${snapshot.name}" is geladen op de kaart.`,
-            });
-        } catch (error) {
-            console.error("Error loading snapshot on map:", error);
-            model.messages.commands.ui.alert.execute({
-                title: "Error",
-                message: `Kon ontwerp niet laden op de kaart: ${error instanceof Error ? error.message : String(error)}`,
-            });
-        }
+        });
+        snapshotLayersRef.current = {};
+        setLayerVisibility({});
     };
 
     const clearMap = () => {
         try {
-            model.graphicsLayerTemp.removeAll();
-            model.graphicsLayer3dPolygon.removeAll();
-            model.graphicsLayerLine.removeAll();
+            Object.entries(snapshotLayersRef.current).forEach(([id, layers]) => {
+                if (layers.ruimtebeslag2d) {
+                    layers.ruimtebeslag2d.visible = false;
+                }
+                if (layers.design3d) {
+                    layers.design3d.visible = false;
+                }
+                setLayerVisibility(prev => ({
+                    ...prev,
+                    [id]: { ruimtebeslag2d: false, design3d: false },
+                }));
+            });
             model.messages.commands.ui.displayNotification.execute({
                 id: "mapCleared",
                 message: "Kaart is gewist.",
@@ -396,9 +499,17 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ model }) => {
                                                 color="primary"
                                                 size="small"
                                                 startIcon={<VisibilityIcon />}
-                                                onClick={() => loadSnapshotOnMap(snapshot)}
+                                                onClick={() => toggleLayerVisibility(snapshot, "ruimtebeslag2d")}
                                             >
-                                                Toon op Kaart
+                                                {layerVisibility[snapshot.id]?.ruimtebeslag2d ? "Verberg 2D Ruimtebeslag" : "Toon 2D Ruimtebeslag"}
+                                            </Button>
+                                            <Button
+                                                color="primary"
+                                                size="small"
+                                                startIcon={<VisibilityIcon />}
+                                                onClick={() => toggleLayerVisibility(snapshot, "design3d")}
+                                            >
+                                                {layerVisibility[snapshot.id]?.design3d ? "Verberg 3D Ontwerp" : "Toon 3D Ontwerp"}
                                             </Button>
                                             <Button
                                                 color="error"
@@ -623,93 +734,24 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ model }) => {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>2D Geometrie Punten</td>
+                                        <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>2D Ruimtebeslag Punten</td>
                                         {snapshots.map((s) => (
                                             <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee", fontSize: "12px" }}>
-                                                {s.data.geometry.design2d?.length || 0} geometrie(ën)
+                                                {s.data.geometry.ruimtebeslag2d?.length || 0} geometrie(ën)
                                             </td>
                                         ))}
                                     </tr>
                                     <tr>
-                                        <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>3D Geometrie Punten</td>
+                                        <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>3D Ontwerp Punten</td>
                                         {snapshots.map((s) => (
                                             <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee", fontSize: "12px" }}>
                                                 {s.data.geometry.design3d?.length || 0} geometrie(ën)
                                             </td>
                                         ))}
                                     </tr>
-                                    <tr>
-                                        <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Input Lijn Punten</td>
-                                        {snapshots.map((s) => (
-                                            <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee", fontSize: "12px" }}>
-                                                {s.data.geometry.inputLine?.length || 0} punt(en)
-                                            </td>
-                                        ))}
-                                    </tr>
                                 </tbody>
                             </table>
                         </Box>
-                    </Box>
-                )}
-
-                {/* Geometry Viewer */}
-                {snapshots.length > 0 && (
-                    <Box>
-                        <Typography variant="h6" style={{ marginBottom: "15px" }}>
-                            Geometriegegevens
-                        </Typography>
-                        <Stack spacing={2}>
-                            {snapshots.map((snapshot) => (
-                                <Paper
-                                    key={`geom-${snapshot.id}`}
-                                    style={{
-                                        padding: "15px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "4px",
-                                        backgroundColor: "#f9f9f9",
-                                    }}
-                                >
-                                    <Typography variant="h6" style={{ marginBottom: "10px", fontWeight: "bold" }}>
-                                        {snapshot.name}
-                                    </Typography>
-                                    <Stack spacing={1}>
-                                        <Typography variant="body2" style={{ fontSize: "12px" }}>
-                                            <strong>2D Geometrie:</strong> {snapshot.data.geometry.design2d?.length || 0} object(en)
-                                            {snapshot.data.geometry.design2d?.length > 0 && (
-                                                <details style={{ marginTop: "5px", cursor: "pointer" }}>
-                                                    <summary style={{ fontSize: "11px", color: "#0066cc" }}>Details weergeven</summary>
-                                                    <pre style={{ fontSize: "10px", overflow: "auto", maxHeight: "200px", backgroundColor: "#fff", border: "1px solid #ddd", padding: "5px", marginTop: "5px" }}>
-                                                        {JSON.stringify(snapshot.data.geometry.design2d, null, 2).substring(0, 500)}...
-                                                    </pre>
-                                                </details>
-                                            )}
-                                        </Typography>
-                                        <Typography variant="body2" style={{ fontSize: "12px" }}>
-                                            <strong>3D Geometrie:</strong> {snapshot.data.geometry.design3d?.length || 0} object(en)
-                                            {snapshot.data.geometry.design3d?.length > 0 && (
-                                                <details style={{ marginTop: "5px", cursor: "pointer" }}>
-                                                    <summary style={{ fontSize: "11px", color: "#0066cc" }}>Details weergeven</summary>
-                                                    <pre style={{ fontSize: "10px", overflow: "auto", maxHeight: "200px", backgroundColor: "#fff", border: "1px solid #ddd", padding: "5px", marginTop: "5px" }}>
-                                                        {JSON.stringify(snapshot.data.geometry.design3d, null, 2).substring(0, 500)}...
-                                                    </pre>
-                                                </details>
-                                            )}
-                                        </Typography>
-                                        <Typography variant="body2" style={{ fontSize: "12px" }}>
-                                            <strong>Input Lijn:</strong> {snapshot.data.geometry.inputLine?.length || 0} punt(en)
-                                            {snapshot.data.geometry.inputLine?.length > 0 && (
-                                                <details style={{ marginTop: "5px", cursor: "pointer" }}>
-                                                    <summary style={{ fontSize: "11px", color: "#0066cc" }}>Details weergeven</summary>
-                                                    <pre style={{ fontSize: "10px", overflow: "auto", maxHeight: "200px", backgroundColor: "#fff", border: "1px solid #ddd", padding: "5px", marginTop: "5px" }}>
-                                                        {JSON.stringify(snapshot.data.geometry.inputLine, null, 2).substring(0, 500)}...
-                                                    </pre>
-                                                </details>
-                                            )}
-                                        </Typography>
-                                    </Stack>
-                                </Paper>
-                            ))}
-                        </Stack>
                     </Box>
                 )}
 
