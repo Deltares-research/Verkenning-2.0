@@ -38,7 +38,7 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
             await handleCostCalculation(model);
           }}
           fullWidth
-          disabled={!model.graphicsLayerTemp?.graphics.length || model.loading}
+          disabled={!model.graphicsLayerRuimtebeslag?.graphics.length || model.loading}
         >
           Bereken kosten
         </Button>

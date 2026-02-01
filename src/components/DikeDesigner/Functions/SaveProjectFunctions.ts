@@ -40,7 +40,15 @@ export interface ProjectJSON {
         area3d: number | null;
     };
     costs: {
-        [key: string]: any;
+        complexity: string | null;
+        depth: number | null;
+        directCostGroundWork: Record<string, number>;
+        directCostStructures: Record<string, number>;
+        indirectConstructionCosts: Record<string, number>;
+        engineeringCosts: Record<string, number>;
+        otherCosts: Record<string, number>;
+        realEstateCosts: Record<string, number>;
+        risicoreservering: number | null;
     };
     effects: {
         intersectingPanden: object[];
@@ -58,6 +66,21 @@ export interface ProjectJSON {
         intersectingPandenBufferArea: number | null;
         intersectingErven: object[];
         intersectingErvenArea: number | null;
+    };
+    constructions: {
+        structureType: string;
+        depth: number;
+        useOffset: boolean;
+        offsetDistance: number;
+        offsetSide: 'left' | 'right';
+        drawnConstructionLine: any;
+        structures: Array<{
+            geometry: any;
+            attributes: {
+                type: string;
+                depth: number;
+            };
+        }>;
     };
 }
 
@@ -162,7 +185,15 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             area3d: model.total3dArea || null,
         },
         costs: {
-            // Add cost-related data as needed
+            complexity: model.costModel?.complexity || null,
+            depth: model.costModel?.depth || null,
+            directCostGroundWork: model.costModel?.directCostGroundWork?.toDict() || {},
+            directCostStructures: model.costModel?.directCostStructures?.toDict() || {},
+            indirectConstructionCosts: model.costModel?.indirectConstructionCosts?.toDict() || {},
+            engineeringCosts: model.costModel?.engineeringCosts?.toDict() || {},
+            otherCosts: model.costModel?.otherCosts?.toDict() || {},
+            realEstateCosts: model.costModel?.realEstateCosts?.toDict() || {},
+            risicoreservering: model.costModel?.risicoreservering || null,
         },
         effects: {
             intersectingPanden: model.intersectingPanden || [],
@@ -180,6 +211,22 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
             intersectingErven: model.intersectingErven || [],
             intersectingErvenArea: model.intersectingErvenArea || null,
+        },
+        constructions: {
+            structureType: model.constructionModel?.structureType || "Heavescherm",
+            depth: model.constructionModel?.depth || 5,
+            useOffset: model.constructionModel?.useOffset || false,
+            offsetDistance: model.constructionModel?.offsetDistance || 0,
+            offsetSide: model.constructionModel?.offsetSide || 'right',
+            drawnConstructionLine: model.constructionModel?.drawnConstructionLine ? featureToGeoJSON(new Graphic({
+                geometry: model.constructionModel.drawnConstructionLine,
+            })) : null,
+            structures: (model.constructionModel?.structures || []).map(struct => ({
+                geometry: struct.geometry ? featureToGeoJSON(new Graphic({
+                    geometry: struct.geometry,
+                })) : null,
+                attributes: struct.attributes,
+            })) || [],
         },
     };
 };
@@ -207,7 +254,7 @@ const splitDesignName = (name: string) => {
  */
 export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJSON): void => {
     try {
-        const { geometries, chartData, allChartData, chartDataElevation, designValues, effects, metadata } = jsonData;
+        const { geometries, chartData, allChartData, chartDataElevation, designValues, effects, costs, metadata, constructions } = jsonData as any;
 
         // Clear existing graphics
         model.graphicsLayerTemp?.removeAll();
@@ -219,6 +266,7 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         model.graphicsLayerPoint?.removeAll();
         model.graphicsLayerCrossSection?.removeAll();
         model.graphicsLayerProfile?.removeAll();
+        model.constructionModel?.graphicsLayerConstructionLine?.removeAll();
 
         // Load geometries
         if (geometries.design3d?.length > 0) {
@@ -303,6 +351,96 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
             model.intersectingPandenBufferArea = effects.intersectingPandenBufferArea || 0;
             model.intersectingErven = effects.intersectingErven || [];
             model.intersectingErvenArea = effects.intersectingErvenArea || 0;
+        }
+
+        // Load costs
+        if (costs && model.costModel) {
+            model.costModel.complexity = costs.complexity || "makkelijke maatregel";
+            model.costModel.depth = costs.depth || 5;
+            
+            // Directly assign cost properties from saved dict format
+            if (costs.directCostGroundWork) {
+                Object.assign(model.costModel.directCostGroundWork, costs.directCostGroundWork);
+            }
+            if (costs.directCostStructures) {
+                Object.assign(model.costModel.directCostStructures, costs.directCostStructures);
+            }
+            if (costs.indirectConstructionCosts) {
+                Object.assign(model.costModel.indirectConstructionCosts, costs.indirectConstructionCosts);
+            }
+            if (costs.engineeringCosts) {
+                Object.assign(model.costModel.engineeringCosts, costs.engineeringCosts);
+            }
+            if (costs.otherCosts) {
+                Object.assign(model.costModel.otherCosts, costs.otherCosts);
+            }
+            if (costs.realEstateCosts) {
+                Object.assign(model.costModel.realEstateCosts, costs.realEstateCosts);
+            }
+            model.costModel.risicoreservering = costs.risicoreservering || 0;
+        }
+
+        // Load constructions
+        if (jsonData.constructions && model.constructionModel) {
+            const constr = jsonData.constructions;
+            model.constructionModel.structureType = constr.structureType || "Heavescherm";
+            model.constructionModel.depth = constr.depth || 5;
+            model.constructionModel.useOffset = constr.useOffset || false;
+            model.constructionModel.offsetDistance = constr.offsetDistance || 0;
+            model.constructionModel.offsetSide = constr.offsetSide || 'right';
+            
+            // Load drawn construction line geometry
+            if (constr.drawnConstructionLine) {
+                try {
+                    const geometry = featureToGeometry(constr.drawnConstructionLine);
+                    if (geometry) {
+                        model.constructionModel.drawnConstructionLine = geometry;
+                        
+                        // Add the drawn line graphic to the construction layer
+                        if (model.constructionModel.graphicsLayerConstructionLine) {
+                            const graphic = new Graphic({
+                                geometry: geometry,
+                                symbol: {
+                                    type: "simple-line",
+                                    color: [0, 0, 255],
+                                    width: 3
+                                } as any
+                            });
+                            model.constructionModel.graphicsLayerConstructionLine.add(graphic);
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Error loading construction line geometry:", err);
+                }
+            }
+            
+            // Load structures array
+            if (constr.structures && Array.isArray(constr.structures)) {
+                model.constructionModel.structures = constr.structures
+                    .map((struct: any) => ({
+                        geometry: struct.geometry ? featureToGeometry(struct.geometry) : null,
+                        attributes: struct.attributes || { type: "Heavescherm", depth: 5 },
+                    }))
+                    .filter((struct: any) => struct.geometry !== null);
+                
+                // Add structures as graphics to the construction layer
+                if (model.constructionModel.graphicsLayerConstructionLine) {
+                    model.constructionModel.structures.forEach((struct: any) => {
+                        if (struct.geometry) {
+                            const graphic = new Graphic({
+                                geometry: struct.geometry,
+                                symbol: {
+                                    type: "simple-line",
+                                    color: [0, 0, 255],
+                                    width: 3
+                                } as any,
+                                attributes: struct.attributes
+                            });
+                            model.constructionModel.graphicsLayerConstructionLine!.add(graphic);
+                        }
+                    });
+                }
+            }
         }
 
         // Set design name from metadata
@@ -485,6 +623,55 @@ const getDefaultSymbolForGeometry = (geometry: any, layer?: any, model?: any): a
         return undefined;
     }
     return undefined;
+};
+
+/**
+ * Convert a geometry to GeoJSON format (for storage)
+ */
+const featureToGeoJSON = (graphic: any): any => {
+    if (!graphic || !graphic.geometry) return null;
+    
+    return {
+        geometry: graphic.geometry.toJSON(),
+        attributes: graphic.attributes || {}
+    };
+};
+
+/**
+ * Convert GeoJSON format back to a geometry object
+ */
+const featureToGeometry = (feature: any): any => {
+    if (!feature || !feature.geometry) return null;
+    
+    const geom = feature.geometry;
+    
+    try {
+        if (geom.x !== undefined && geom.y !== undefined) {
+            // Point
+            return new Point({
+                x: geom.x,
+                y: geom.y,
+                z: geom.z,
+                spatialReference: geom.spatialReference,
+            });
+        } else if (geom.paths) {
+            // Polyline
+            return new Polyline({
+                paths: geom.paths,
+                spatialReference: geom.spatialReference,
+            });
+        } else if (geom.rings) {
+            // Polygon
+            return new Polygon({
+                rings: geom.rings,
+                spatialReference: geom.spatialReference,
+            });
+        }
+    } catch (err) {
+        console.error("Error converting feature to geometry:", err);
+    }
+    
+    return null;
 };
 
 /**
