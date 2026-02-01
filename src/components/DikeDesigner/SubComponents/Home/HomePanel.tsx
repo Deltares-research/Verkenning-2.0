@@ -111,10 +111,10 @@ const HomePanel: React.FC<HomePanelProps> = ({
                         </Typography>
                     </Button>
 
-                    {/* Load Existing Design Card */}
+                    {/* Load Existing Design Card
                     <Button
                         onClick={onLoadDesign}
-                        disabled={!designFeatureLayer3dUrl}
+                        disabled
                         fullWidth
                         variant="outlined"
                         sx={{
@@ -158,7 +158,7 @@ const HomePanel: React.FC<HomePanelProps> = ({
                         >
                             Ontwerp laden
                         </Typography>
-                    </Button>
+                    </Button> */}
 
                     {/* Load Project Local Card */}
                     <Button

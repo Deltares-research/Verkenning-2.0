@@ -154,6 +154,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectingDwpLocation: boolean = false
     crossSectionLength: number = 100
     
+    // Comparison panel snapshots - persists across tab switches
+    comparisonSnapshots: any[] = [];
 
     lineLayerSymbol = {
         type: "simple-line",

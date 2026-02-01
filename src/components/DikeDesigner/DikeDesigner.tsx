@@ -56,6 +56,7 @@ import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
 import CostChartAndTablePanel from "./SubComponents/Cost/CostChartAndTablePanel";
 import ConstructionPanel from "./SubComponents/Construction/ConstructionPanel";
 import HomePanel from "./SubComponents/Home/HomePanel";
+import { ComparisonPanel } from "./SubComponents/Comparison";
 import LoadDesignsDialog from "./SubComponents/Dimensions/LoadDesignsDialog";
 import SaveDesignsDialog from "./SubComponents/Dimensions/SaveDesignsDialog";
 import DownloadDialog from "./SubComponents/Dimensions/DownloadDialog";
@@ -740,10 +741,7 @@ const DikeDesigner = (
                     <CostCalculationPanel model={model} />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={5}>
-                    {/* TODO: Add Afwegen panel content */}
-                    <Box sx={{ p: 2 }}>
-                        Afwegen - Coming soon
-                    </Box>
+                    <ComparisonPanel model={model} />
                 </CustomTabPanel>
             </Box>
 
