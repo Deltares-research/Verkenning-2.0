@@ -23,7 +23,6 @@ export interface ProjectJSON {
         ruimtebeslag2d: any[];
         ruimtebeslag3d: any[];
         inputLine: any[];
-        constructionLine: any[];
         crossSectionPoints: any[];
         crossSectionLine: any[];
         profilePoints: any[];
@@ -168,7 +167,6 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             ruimtebeslag2d: graphicsToFeatures(Array.from(model.graphicsLayerRuimtebeslag?.graphics || [])),
             ruimtebeslag3d: graphicsToFeatures(Array.from(model.graphicsLayerRuimtebeslag3d?.graphics || [])),
             inputLine: graphicsToFeatures(Array.from(model.graphicsLayerLine?.graphics || [])),
-            constructionLine: graphicsToFeatures(Array.from(model.graphicsLayerControlPoints?.graphics || [])),
             crossSectionPoints: graphicsToFeatures(Array.from(model.graphicsLayerPoint?.graphics || [])),
             crossSectionLine: graphicsToFeatures(Array.from(model.graphicsLayerCrossSection?.graphics || [])),
             profilePoints: graphicsToFeatures(Array.from(model.graphicsLayerProfile?.graphics || [])),
@@ -262,7 +260,6 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         model.graphicsLayerRuimtebeslag?.removeAll();
         model.graphicsLayerRuimtebeslag3d?.removeAll();
         model.graphicsLayerLine?.removeAll();
-        model.graphicsLayerControlPoints?.removeAll();
         model.graphicsLayerPoint?.removeAll();
         model.graphicsLayerCrossSection?.removeAll();
         model.graphicsLayerProfile?.removeAll();
@@ -295,9 +292,6 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         }
         if (geometries.inputLine?.length > 0) {
             loadGeometriesToLayer(model.graphicsLayerLine, geometries.inputLine, model);
-        }
-        if (geometries.constructionLine?.length > 0) {
-            loadGeometriesToLayer(model.graphicsLayerControlPoints, geometries.constructionLine, model);
         }
         if (geometries.crossSectionPoints?.length > 0) {
             loadGeometriesToLayer(model.graphicsLayerPoint, geometries.crossSectionPoints, model);

@@ -23,3 +23,9 @@
  - designer uit
 
  - json opslaan met alle data
+
+
+
+ --> functionaliteit om constructielijn te verbergen/tonen
+ --> na aanpassen alternatief, zorgen voor herberekening/notificatie
+ --> schetslagen punten/lijnen goed verwerken

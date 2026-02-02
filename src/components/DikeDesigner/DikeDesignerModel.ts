@@ -47,6 +47,15 @@ import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 
 import { getLineFeatureLayers } from "./Functions/DesignFunctions";
 import { initializeChart } from "./Functions/ChartFunctions";
+import { 
+    lineLayerSymbol, 
+    lineLayerSymbolCrosssection, 
+    polygonSymbol3D, 
+    cursorSymbol, 
+    dwpPointSymbol, 
+    controlPointSymbol, 
+    getDesignLayer2DSymbol 
+} from "./symbologyConfig";
 import { array } from "@amcharts/amcharts5";
 import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
@@ -70,6 +79,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
     costPanelVisible: boolean = false;
+    comparisonPanelVisible: boolean = false;
 
     loading: boolean = false;
 
@@ -157,70 +167,12 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     // Comparison panel snapshots - persists across tab switches
     comparisonSnapshots: any[] = [];
 
-    lineLayerSymbol = {
-        type: "simple-line",
-        color: [64, 64, 64],
-        width: 3,
-        marker: {
-            style: "arrow",
-            color: "grey",
-            placement: "begin"
-        }
-    };
-
-    lineLayerSymbolCrosssection = {
-        type: "simple-line",
-        color: [36, 161, 14],
-        width: 2,
-        marker: {
-            style: "arrow",
-            color: "grey",
-            placement: "begin"
-        }
-    };
-
-    polygonSymbol3D = new PolygonSymbol3D({
-        symbolLayers: [
-            new FillSymbol3DLayer({
-                material: {
-                    color: [85, 140, 75, 0.8],
-                },
-                castShadows: true,
-            }),
-        ],
-    });
-
-    cursorSymbol = new PointSymbol3D({
-        symbolLayers: [
-            {
-                type: "icon",
-                size: 10,
-                outline: { color: "#bcbcbcff", size: 1 },
-                material: { color: "#F76430" }
-            } as any
-        ]
-    });
-
-    dwpPointSymbol = new PointSymbol3D({
-        symbolLayers: [
-            {
-                type: "icon",
-                size: 8,
-                outline: { color: "#bcbcbcff", size: 1 },
-                material: { color: "#575757ff" }
-            } as any
-        ]
-    });
-    controlPointSymbol = new PointSymbol3D({
-        symbolLayers: [
-            {
-                type: "icon",
-                size: 6,
-                outline: { color: "#bcbcbcff", size: 1 },
-                material: { color: "#000000ff" }
-            } as any
-        ]
-    });
+    lineLayerSymbol = lineLayerSymbol;
+    lineLayerSymbolCrosssection = lineLayerSymbolCrosssection;
+    polygonSymbol3D = polygonSymbol3D;
+    cursorSymbol = cursorSymbol;
+    dwpPointSymbol = dwpPointSymbol;
+    controlPointSymbol = controlPointSymbol;
     // data for analysis
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
@@ -638,28 +590,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
             // Helper to pick color based on rules
             function getSymbolForName(name: string) {
-                if (name.includes("berm")) {
-                    // Green for berms
-                    return {
-                        type: "simple-fill",
-                        color: [102, 204, 102, 0.9], // green
-                        outline: { color: [0, 100, 0, 1], width: 1 }
-                    };
-                }
-                if (name.includes("kruin")) {
-                    // Grey for kruin
-                    return {
-                        type: "simple-fill",
-                        color: [180, 180, 180, 0.9], // grey
-                        outline: { color: [80, 80, 80, 1], width: 1 }
-                    };
-                }
-                // Default color
-                return {
-                    type: "simple-fill",
-                    color: [200, 200, 255, 0.9], // light blue
-                    outline: { color: [100, 100, 200, 1], width: 1 }
-                };
+                return getDesignLayer2DSymbol(name);
             }
 
             // Store the styling function in the model for later use when adding features

@@ -56,7 +56,8 @@ import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
 import CostChartAndTablePanel from "./SubComponents/Cost/CostChartAndTablePanel";
 import ConstructionPanel from "./SubComponents/Construction/ConstructionPanel";
 import HomePanel from "./SubComponents/Home/HomePanel";
-import { ComparisonPanel } from "./SubComponents/Comparison";
+import { ComparisonChartAndTablePanel } from "./SubComponents/Comparison";
+import ComparisonDataPanel from "./SubComponents/Comparison/ComparisonDataPanel";
 import LoadDesignsDialog from "./SubComponents/Dimensions/LoadDesignsDialog";
 import SaveDesignsDialog from "./SubComponents/Dimensions/SaveDesignsDialog";
 import DownloadDialog from "./SubComponents/Dimensions/DownloadDialog";
@@ -129,6 +130,16 @@ const DikeDesigner = (
         if (value) {
             model.designPanelVisible = false;
             model.crossSectionPanelVisible = false;
+            model.comparisonPanelVisible = false;
+        }
+    }
+
+    function setComparisonPanelVisible(value: boolean) {
+        model.comparisonPanelVisible = value;
+        if (value) {
+            model.designPanelVisible = false;
+            model.crossSectionPanelVisible = false;
+            model.costPanelVisible = false;
         }
     }
 
@@ -548,6 +559,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "selectingDwpLocation");
     useWatchAndRerender(model, "crossSectionLength");
     useWatchAndRerender(model, "loading");
+    useWatchAndRerender(model, "comparisonPanelVisible");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");
@@ -743,7 +755,10 @@ const DikeDesigner = (
                     <CostCalculationPanel model={model} />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={5}>
-                    <ComparisonPanel model={model} />
+                    <ComparisonChartAndTablePanel 
+                        model={model}
+                        onLoadDesign={() => setValue(1)}
+                    />
                 </CustomTabPanel>
             </Box>
 
@@ -784,6 +799,16 @@ const DikeDesigner = (
             {model.costPanelVisible && (
                 <CostChartAndTablePanel
                     setPanelVisible={setCostPanelVisible}
+                    mapLeftBorder={mapLeftBorder}
+                    mapRightBorder={mapRightBorder}
+                    model={model}
+                />
+            )}
+
+            {/* Paper for Comparison Table */}
+            {model.comparisonPanelVisible && (
+                <ComparisonDataPanel
+                    setPanelVisible={setComparisonPanelVisible}
                     mapLeftBorder={mapLeftBorder}
                     mapRightBorder={mapRightBorder}
                     model={model}
