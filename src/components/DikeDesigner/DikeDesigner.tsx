@@ -7,6 +7,11 @@ import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import HomeIcon from "@mui/icons-material/Home";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SaveIcon from "@mui/icons-material/Save";
+import UploadIcon from "@mui/icons-material/Upload";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import Box from "@vertigis/web/ui/Box";
 import Button from "@vertigis/web/ui/Button";
@@ -18,6 +23,9 @@ import Input from "@vertigis/web/ui/Input";
 import Alert from "@vertigis/web/ui/Alert"
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
 import Typography from "@vertigis/web/ui/Typography";
+import Menu from "@vertigis/web/ui/Menu";
+import MenuItem from "@vertigis/web/ui/MenuItem";
+import IconButton from "@vertigis/web/ui/IconButton";
 
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
@@ -87,6 +95,8 @@ const DikeDesigner = (
     const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
     const [designNameDialogOpen, setDesignNameDialogOpen] = useState(false);
     const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
+    const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
+    const fileMenuOpen = Boolean(fileMenuAnchor);
 
     const splitDesignName = (name: string) => {
         const trimmed = name?.trim() || "";
@@ -186,6 +196,24 @@ const DikeDesigner = (
 
     const handleSaveProjectLocal = () => {
         saveProjectAsJSON(model);
+    };
+
+    const handleFileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setFileMenuAnchor(event.currentTarget);
+    };
+
+    const handleFileMenuClose = () => {
+        setFileMenuAnchor(null);
+    };
+
+    const handleFileMenuLoad = () => {
+        handleLoadProjectLocal();
+        handleFileMenuClose();
+    };
+
+    const handleFileMenuSave = () => {
+        handleSaveProjectLocal();
+        handleFileMenuClose();
     };
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -621,7 +649,89 @@ const DikeDesigner = (
             <Box
                 sx={{ width: '100%' }}
             >
-                {/* Ontwerp naam - prominent bovenaan als titel */}
+                {/* File menu button bar - full width at top */}
+                <Box sx={{ position: "relative", mb: 3, p: 2, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+                    <Button
+                        onClick={handleFileMenuOpen}
+                        endIcon={<ExpandMoreIcon />}
+                        variant="contained"
+                        fullWidth
+                        sx={{
+                            backgroundColor: "#0078d4",
+                            color: "white",
+                            textTransform: "none",
+                            fontSize: "15px",
+                            fontWeight: 500,
+                            whiteSpace: "nowrap",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                            transition: "all 0.2s ease",
+                            justifyContent: "flex-start",
+                            paddingLeft: 3,
+                            paddingY: 1.5,
+                            "&:hover": {
+                                backgroundColor: "#106ebe",
+                                boxShadow: "0 4px 8px rgba(0, 120, 212, 0.2)",
+                            }
+                        }}
+                    >
+                        Mijn ontwerpen
+                    </Button>
+                    <Menu
+                        anchorEl={fileMenuAnchor}
+                        open={fileMenuOpen}
+                        onClose={handleFileMenuClose}
+                        PaperProps={{
+                            sx: {
+                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                                mt: 0.5,
+                            }
+                        }}
+                    >
+                        <MenuItem 
+                            onClick={handleFileMenuLoad}
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                py: 1.5,
+                                px: 2,
+                            }}
+                        >
+                            <UploadIcon sx={{ fontSize: "20px", color: "#0078d4" }} />
+                            <Box>
+                                <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+                                    Laden
+                                </Typography>
+                                <Typography sx={{ fontSize: "12px", color: "#666" }}>
+                                    Lokaal bestand laden
+                                </Typography>
+                            </Box>
+                        </MenuItem>
+                        <MenuItem 
+                            onClick={handleFileMenuSave} 
+                            disabled={!designName}
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                py: 1.5,
+                                px: 2,
+                            }}
+                        >
+                            <SaveIcon sx={{ fontSize: "20px", color: designName ? "#0078d4" : "#ccc" }} />
+                            <Box>
+                                <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+                                    Opslaan
+                                </Typography>
+                                <Typography sx={{ fontSize: "12px", color: designName ? "#666" : "#999" }}>
+                                    Lokaal opslaan
+                                </Typography>
+                            </Box>
+                        </MenuItem>
+                    </Menu>
+                </Box>
+
+                {/* Ontwerp naam - below the file menu bar */}
                 <Box
                     onClick={() => {
                         if (designName) {
@@ -641,8 +751,8 @@ const DikeDesigner = (
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        gap: 2,
-                        p: 2,
+                        gap: 3,
+                        p: 3,
                         borderRadius: 0,
                         border: "1px solid #0078d4",
                         borderLeft: "4px solid #0078d4",
@@ -666,14 +776,14 @@ const DikeDesigner = (
                                 color: "#605e5c",
                                 textTransform: "uppercase",
                                 letterSpacing: "0.5px",
-                                mb: 0.5,
+                                mb: 1,
                             }}
                         >
                             Ontwerp naam
                         </Typography>
                         <Typography
                             sx={{
-                                fontSize: "16px",
+                                fontSize: "18px",
                                 fontWeight: 600,
                                 color: designName ? "#0078d4" : "#a19f9d",
                             }}
