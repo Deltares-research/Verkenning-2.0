@@ -7,7 +7,7 @@ import Box from "@vertigis/web/ui/Box";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import { Delete as DeleteIcon, Download as DownloadIcon, Clear as ClearIcon, Add as AddIcon, Visibility as VisibilityIcon, Assessment as AssessmentIcon, Upload as UploadIcon } from "@mui/icons-material";
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { type ProjectJSON, buildProjectJSON, loadProjectFromJSON, loadProjectForRecalculation } from "../../Functions/SaveProjectFunctions";
+import { type ProjectJSON, buildProjectJSON, loadProjectFromJSON, recalculateAlternativeData } from "../../Functions/SaveProjectFunctions";
 import { createSnapshot, type DesignSnapshot } from "./snapshotUtils";
 import LoadOptionDialog from "../Dimensions/LoadOptionDialog";
 import { constructionLineSymbol, defaultPointSymbol } from "../../symbologyConfig";
@@ -333,20 +333,10 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     const handleLoadAndRecalculate = async () => {
         if (!pendingProjectData) return;
 
-        // Preserve current design
-        const currentProject = buildProjectJSON(model);
-
-        // Recalculate for the alternative in the model context
-        await loadProjectForRecalculation(model, pendingProjectData);
-
-        // Capture recalculated results as a snapshot
-        const recalculatedProject = buildProjectJSON(model);
+        const recalculatedProject = await recalculateAlternativeData(model, pendingProjectData);
         const snapshot = createSnapshot(recalculatedProject);
         const newSnapshots = [...model.comparisonSnapshots, snapshot];
         model.comparisonSnapshots = newSnapshots;
-
-        // Restore current design
-        loadProjectFromJSON(model, currentProject);
 
         model.messages.commands.ui.displayNotification.execute({
             title: "Succes",

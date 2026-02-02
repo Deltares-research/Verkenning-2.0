@@ -1,5 +1,6 @@
 import type DikeDesignerModel from "../DikeDesignerModel";
 import Graphic from "@arcgis/core/Graphic";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Point from "@arcgis/core/geometry/Point";
@@ -497,6 +498,191 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
             title: "Fout bij laden",
             message: `Er is een fout opgetreden bij het laden van het project: ${(error as Error)?.message}`,
         });
+    }
+};
+
+/**
+ * Recalculate an alternative using temporary layers, without changing the current design.
+ * Returns a ProjectJSON with updated designValues, costs and effects.
+ */
+export const recalculateAlternativeData = async (
+    model: DikeDesignerModel,
+    jsonData: ProjectJSON
+): Promise<ProjectJSON> => {
+    // Snapshot current model state
+    const originalLayers = {
+        graphicsLayer3dPolygon: model.graphicsLayer3dPolygon,
+        graphicsLayerLine: model.graphicsLayerLine,
+        graphicsLayerRuimtebeslag: model.graphicsLayerRuimtebeslag,
+        graphicsLayerRuimtebeslag3d: model.graphicsLayerRuimtebeslag3d,
+        graphicsLayerTemp: model.graphicsLayerTemp,
+        graphicsLayerControlPoints: model.graphicsLayerControlPoints,
+    };
+
+    const originalValues = {
+        designName: model.designName,
+        totalVolumeDifference: model.totalVolumeDifference,
+        excavationVolume: model.excavationVolume,
+        fillVolume: model.fillVolume,
+        total2dArea: model.total2dArea,
+        total3dArea: model.total3dArea,
+        lineLength: model.lineLength,
+        intersectingPanden: [...model.intersectingPanden],
+        intersectingBomen: [...model.intersectingBomen],
+        intersectingPercelen: [...model.intersectingPercelen],
+        intersectingPercelenArea: model.intersectingPercelenArea,
+        intersectingWegdelen2dRuimtebeslag: model.intersectingWegdelen2dRuimtebeslag,
+        intersectingInritten2dRuimtebeslag: model.intersectingInritten2dRuimtebeslag,
+        intersectingInritten2dRuimtebeslagCount: [...model.intersectingInritten2dRuimtebeslagCount],
+        intersectingNatura2000: model.intersectingNatura2000,
+        intersectingGNN: model.intersectingGNN,
+        intersectingBeheertypen: [...model.intersectingBeheertypen],
+        intersectingPandenArea: model.intersectingPandenArea,
+        intersectingPandenBuffer: [...model.intersectingPandenBuffer],
+        intersectingPandenBufferArea: model.intersectingPandenBufferArea,
+        intersectingErven: [...model.intersectingErven],
+        intersectingErvenArea: model.intersectingErvenArea,
+    };
+
+    const originalCosts = model.costModel ? {
+        complexity: model.costModel.complexity,
+        depth: model.costModel.depth,
+        directCostGroundWork: model.costModel.directCostGroundWork?.toDict() || {},
+        directCostStructures: model.costModel.directCostStructures?.toDict() || {},
+        indirectConstructionCosts: model.costModel.indirectConstructionCosts?.toDict() || {},
+        engineeringCosts: model.costModel.engineeringCosts?.toDict() || {},
+        otherCosts: model.costModel.otherCosts?.toDict() || {},
+        realEstateCosts: model.costModel.realEstateCosts?.toDict() || {},
+        risicoreservering: model.costModel.risicoreservering,
+    } : null;
+
+    // Temporary layers for isolated calculation
+    const temp3d = new GraphicsLayer();
+    const tempLine = new GraphicsLayer();
+    const tempRuimtebeslag = new GraphicsLayer();
+    const tempRuimtebeslag3d = new GraphicsLayer();
+    const tempTemp = new GraphicsLayer();
+    const tempControlPoints = new GraphicsLayer();
+
+    try {
+        model.graphicsLayer3dPolygon = temp3d;
+        model.graphicsLayerLine = tempLine;
+        model.graphicsLayerRuimtebeslag = tempRuimtebeslag;
+        model.graphicsLayerRuimtebeslag3d = tempRuimtebeslag3d;
+        model.graphicsLayerTemp = tempTemp;
+        model.graphicsLayerControlPoints = tempControlPoints;
+
+        // Load only 3D geometry and cost line into temp layers
+        if (jsonData.geometries?.design3d?.length) {
+            loadGeometriesToLayer(temp3d, jsonData.geometries.design3d, model);
+            loadGeometriesToLayer(tempTemp, jsonData.geometries.design3d, model);
+        }
+        if (jsonData.geometries?.inputLine?.length) {
+            loadGeometriesToLayer(tempLine, jsonData.geometries.inputLine, model);
+        }
+
+        // Run calculations on the temporary context
+        const { calculateVolume } = await import("./DesignFunctions");
+        const { handleCostCalculation } = await import("./CostFunctions");
+        const { handleEffectAnalysis } = await import("./EffectFunctions");
+
+        await calculateVolume(model);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await handleCostCalculation(model);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await handleEffectAnalysis(model);
+
+        // Build updated project JSON with recalculated geometries
+        const updated: ProjectJSON = {
+            ...jsonData,
+            geometries: {
+                ...jsonData.geometries,
+                ruimtebeslag2d: graphicsToFeatures(Array.from(tempRuimtebeslag?.graphics || [])),
+                ruimtebeslag3d: graphicsToFeatures(Array.from(tempRuimtebeslag3d?.graphics || [])),
+            },
+            designValues: {
+                trajectLength: model.lineLength || null,
+                volumeDifference: model.totalVolumeDifference || null,
+                excavationVolume: model.excavationVolume || null,
+                fillVolume: model.fillVolume || null,
+                area2d: model.total2dArea || null,
+                area3d: model.total3dArea || null,
+            },
+            costs: {
+                complexity: model.costModel?.complexity || null,
+                depth: model.costModel?.depth || null,
+                directCostGroundWork: model.costModel?.directCostGroundWork?.toDict() || {},
+                directCostStructures: model.costModel?.directCostStructures?.toDict() || {},
+                indirectConstructionCosts: model.costModel?.indirectConstructionCosts?.toDict() || {},
+                engineeringCosts: model.costModel?.engineeringCosts?.toDict() || {},
+                otherCosts: model.costModel?.otherCosts?.toDict() || {},
+                realEstateCosts: model.costModel?.realEstateCosts?.toDict() || {},
+                risicoreservering: model.costModel?.risicoreservering || null,
+            },
+            effects: {
+                intersectingPanden: model.intersectingPanden || [],
+                intersectingBomen: model.intersectingBomen || [],
+                intersectingPercelen: model.intersectingPercelen || [],
+                intersectingPercelenArea: model.intersectingPercelenArea || null,
+                intersectingWegdelen2dRuimtebeslag: model.intersectingWegdelen2dRuimtebeslag || null,
+                intersectingInritten2dRuimtebeslag: model.intersectingInritten2dRuimtebeslag || null,
+                intersectingInritten2dRuimtebeslagCount: model.intersectingInritten2dRuimtebeslagCount || [],
+                intersectingNatura2000: model.intersectingNatura2000 || null,
+                intersectingGNN: model.intersectingGNN || null,
+                intersectingBeheertypen: model.intersectingBeheertypen || [],
+                intersectingPandenArea: model.intersectingPandenArea || null,
+                intersectingPandenBuffer: model.intersectingPandenBuffer || [],
+                intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
+                intersectingErven: model.intersectingErven || [],
+                intersectingErvenArea: model.intersectingErvenArea || null,
+            },
+        };
+
+        return updated;
+    } finally {
+        // Restore model state
+        model.graphicsLayer3dPolygon = originalLayers.graphicsLayer3dPolygon;
+        model.graphicsLayerLine = originalLayers.graphicsLayerLine;
+        model.graphicsLayerRuimtebeslag = originalLayers.graphicsLayerRuimtebeslag;
+        model.graphicsLayerRuimtebeslag3d = originalLayers.graphicsLayerRuimtebeslag3d;
+        model.graphicsLayerTemp = originalLayers.graphicsLayerTemp;
+        model.graphicsLayerControlPoints = originalLayers.graphicsLayerControlPoints;
+
+        model.designName = originalValues.designName;
+        model.totalVolumeDifference = originalValues.totalVolumeDifference;
+        model.excavationVolume = originalValues.excavationVolume;
+        model.fillVolume = originalValues.fillVolume;
+        model.total2dArea = originalValues.total2dArea;
+        model.total3dArea = originalValues.total3dArea;
+        model.lineLength = originalValues.lineLength;
+
+        model.intersectingPanden = originalValues.intersectingPanden;
+        model.intersectingBomen = originalValues.intersectingBomen;
+        model.intersectingPercelen = originalValues.intersectingPercelen;
+        model.intersectingPercelenArea = originalValues.intersectingPercelenArea;
+        model.intersectingWegdelen2dRuimtebeslag = originalValues.intersectingWegdelen2dRuimtebeslag;
+        model.intersectingInritten2dRuimtebeslag = originalValues.intersectingInritten2dRuimtebeslag;
+        model.intersectingInritten2dRuimtebeslagCount = originalValues.intersectingInritten2dRuimtebeslagCount;
+        model.intersectingNatura2000 = originalValues.intersectingNatura2000;
+        model.intersectingGNN = originalValues.intersectingGNN;
+        model.intersectingBeheertypen = originalValues.intersectingBeheertypen;
+        model.intersectingPandenArea = originalValues.intersectingPandenArea;
+        model.intersectingPandenBuffer = originalValues.intersectingPandenBuffer;
+        model.intersectingPandenBufferArea = originalValues.intersectingPandenBufferArea;
+        model.intersectingErven = originalValues.intersectingErven;
+        model.intersectingErvenArea = originalValues.intersectingErvenArea;
+
+        if (model.costModel && originalCosts) {
+            model.costModel.complexity = originalCosts.complexity;
+            model.costModel.depth = originalCosts.depth;
+            Object.assign(model.costModel.directCostGroundWork, originalCosts.directCostGroundWork);
+            Object.assign(model.costModel.directCostStructures, originalCosts.directCostStructures);
+            Object.assign(model.costModel.indirectConstructionCosts, originalCosts.indirectConstructionCosts);
+            Object.assign(model.costModel.engineeringCosts, originalCosts.engineeringCosts);
+            Object.assign(model.costModel.otherCosts, originalCosts.otherCosts);
+            Object.assign(model.costModel.realEstateCosts, originalCosts.realEstateCosts);
+            model.costModel.risicoreservering = originalCosts.risicoreservering;
+        }
     }
 };
 
