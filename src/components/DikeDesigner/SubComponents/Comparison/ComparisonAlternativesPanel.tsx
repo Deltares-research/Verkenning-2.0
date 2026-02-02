@@ -659,13 +659,13 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                 <Paper style={{ padding: "16px", backgroundColor: "#f8f9fa" }}>
                     <Stack spacing={2}>
                         {/* Primary Actions */}
-                        <Stack direction="row" spacing={1.5} style={{ flexWrap: "wrap", gap: "8px" }}>
+                        <Stack spacing={1.5}>
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={addCurrentDesign}
                                 size="medium"
-                                style={{ flex: "1 1 auto", minWidth: "180px" }}
+                                fullWidth
                             >
                                 Voeg Huidig Toe
                             </Button>
@@ -681,11 +681,17 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                 startIcon={<UploadIcon />}
                                 onClick={handleFileInputClick}
                                 size="medium"
-                                style={{
-                                    flex: "1 1 auto",
-                                    minWidth: "180px",
-                                    backgroundColor: "#2d3748",
+                                fullWidth
+                                sx={{
+                                    backgroundColor: "#0078d4",
                                     color: "#fff",
+                                    textTransform: "none",
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#106ebe",
+                                        boxShadow: "none",
+                                    },
                                 }}
                             >
                                 Upload Alternatief
