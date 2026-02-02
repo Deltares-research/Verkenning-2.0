@@ -695,6 +695,7 @@ const DikeDesigner = (
                             icon={<HomeIcon />} 
                             label="Home"
                             {...a11yProps(0)}
+                            disabled={!model.mapInitialized}
                         />
                         <Tab 
                             icon={<ArchitectureIcon />} 
@@ -721,6 +722,7 @@ const DikeDesigner = (
                         onSaveProjectLocal={handleSaveProjectLocal}
                         designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
                         designName={designName}
+                        isLoading={!model.mapInitialized}
                     />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>

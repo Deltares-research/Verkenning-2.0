@@ -82,6 +82,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     comparisonPanelVisible: boolean = false;
 
     loading: boolean = false;
+    mapInitialized: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
     apiKey: DikeDesignerModelProperties["apiKey"];
@@ -725,7 +726,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             const temporaryLayersGroup = new GroupLayer({
                 title: "Tijdelijke lagen",
                 visible: true,
-                listMode: "hide",
+                listMode: "show",
                 visibilityMode: "independent",
                 layers: [
                     this.graphicsLayerProfile,
@@ -794,6 +795,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                     
                     // Pass sketchViewModel to ConstructionModel
                     this.constructionModel.sketchViewModel = this.sketchViewModel;
+
+                    // Mark map as initialized, enabling UI
+                    this.mapInitialized = true;
                 });
         });
     }

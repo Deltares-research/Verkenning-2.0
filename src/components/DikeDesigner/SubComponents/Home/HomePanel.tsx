@@ -9,6 +9,7 @@ import Button from "@vertigis/web/ui/Button";
 import Paper from "@vertigis/web/ui/Paper";
 import Typography from "@vertigis/web/ui/Typography";
 import Box from "@vertigis/web/ui/Box";
+import CircularProgress from "@vertigis/web/ui/CircularProgress";
 
 interface HomePanelProps {
     onCreateNewDesign: () => void;
@@ -17,6 +18,7 @@ interface HomePanelProps {
     onSaveProjectLocal: () => void;
     designFeatureLayer3dUrl?: string;
     designName?: string;
+    isLoading?: boolean;
 }
 
 const HomePanel: React.FC<HomePanelProps> = ({
@@ -26,6 +28,7 @@ const HomePanel: React.FC<HomePanelProps> = ({
     onSaveProjectLocal,
     designFeatureLayer3dUrl,
     designName,
+    isLoading = false,
 }) => {
     return (
         <Box
@@ -38,31 +41,44 @@ const HomePanel: React.FC<HomePanelProps> = ({
                 p: 4,
             }}
         >
-            <Stack spacing={2} sx={{ maxWidth: 600, width: "100%" }}>
-                {/* Header */}
-                <Box sx={{ textAlign: "center", mb: 2 }}>
-                    <Typography
-                        sx={{
-                            fontWeight: 600,
-                            color: "#0078d4",
-                            mb: 0.5,
-                            fontSize: "20px",
-                        }}
-                    >
-                        Dijkontwerpen
-                    </Typography>
+            {isLoading ? (
+                <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
+                    <CircularProgress size={60} />
                     <Typography
                         sx={{
                             color: "#323130",
-                            fontSize: "13px",
+                            fontSize: "14px",
                         }}
                     >
-                        Kies een optie om te beginnen
+                        Applicatie wordt geladen...
                     </Typography>
-                </Box>
+                </Stack>
+            ) : (
+                <Stack spacing={2} sx={{ maxWidth: 600, width: "100%" }}>
+                    {/* Header */}
+                    <Box sx={{ textAlign: "center", mb: 2 }}>
+                        <Typography
+                            sx={{
+                                fontWeight: 600,
+                                color: "#0078d4",
+                                mb: 0.5,
+                                fontSize: "20px",
+                            }}
+                        >
+                            Dijkontwerpen
+                        </Typography>
+                        <Typography
+                            sx={{
+                                color: "#323130",
+                                fontSize: "13px",
+                            }}
+                        >
+                            Kies een optie om te beginnen
+                        </Typography>
+                    </Box>
 
-                {/* Action Cards */}
-                <Stack spacing={2}>
+                    {/* Action Cards */}
+                    <Stack spacing={2}>
                     {/* Create New Design Card */}
                     <Button
                         onClick={onCreateNewDesign}
@@ -256,8 +272,9 @@ const HomePanel: React.FC<HomePanelProps> = ({
                             Ontwerp opslaan (lokaal)
                         </Typography>
                     </Button>
+                    </Stack>
                 </Stack>
-            </Stack>
+            )}
         </Box>
     );
 };

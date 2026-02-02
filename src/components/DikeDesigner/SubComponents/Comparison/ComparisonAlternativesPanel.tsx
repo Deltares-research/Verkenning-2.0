@@ -382,30 +382,57 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     };
 
     const removeSnapshot = (id: string) => {
+        console.log(`Removing snapshot ${id}...`);
         model.comparisonSnapshots = model.comparisonSnapshots.filter((s) => s.id !== id);
+        
         const layers = snapshotLayersRef.current[id];
+        console.log(`Found layers for snapshot ${id}:`, layers);
+        
         if (layers) {
+            // Remove all stored layers
             if (layers.ruimtebeslag2d) {
+                console.log("Removing ruimtebeslag2d layer");
                 model.map?.remove(layers.ruimtebeslag2d);
             }
             if (layers.design3d) {
+                console.log("Removing design3d layer");
                 model.map?.remove(layers.design3d);
             }
             if (layers.constructionLine) {
+                console.log("Removing constructionLine layer");
                 model.map?.remove(layers.constructionLine);
             }
             delete snapshotLayersRef.current[id];
+        } else {
+            // If no layers were created yet, check if we need to clean up from map directly
+            console.log(`No stored layers found for ${id}, checking map layers...`);
+            const layersToRemove = model.map?.layers?.toArray()?.filter((layer: any) => 
+                layer.title?.includes(`- ${id.substring(0, 4)}`) || 
+                layer.title?.includes(id)
+            ) || [];
+            
+            layersToRemove.forEach((layer: any) => {
+                console.log(`Removing layer from map: ${layer.title}`);
+                model.map?.remove(layer);
+            });
         }
+        
         setLayerVisibility(prev => {
             const next = { ...prev };
             delete next[id];
             return next;
         });
+        
+        console.log(`Snapshot ${id} removed. Remaining map layers:`, model.map?.layers?.length);
     };
 
     const clearAll = () => {
+        console.log("Clearing all snapshots...");
         model.comparisonSnapshots = [];
-        Object.values(snapshotLayersRef.current).forEach(layers => {
+        
+        // Remove all stored layers from snapshotLayersRef
+        Object.entries(snapshotLayersRef.current).forEach(([id, layers]) => {
+            console.log(`Removing layers for snapshot ${id}`);
             if (layers.ruimtebeslag2d) {
                 model.map?.remove(layers.ruimtebeslag2d);
             }
@@ -416,8 +443,23 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                 model.map?.remove(layers.constructionLine);
             }
         });
+        
+        // Also remove any comparison layers that might still be on the map
+        const comparisonLayers = model.map?.layers?.toArray()?.filter((layer: any) => 
+            layer.title?.includes("Ruimtebeslag 2D") || 
+            layer.title?.includes("Ontwerp 3D") || 
+            layer.title?.includes("Constructielijn")
+        ) || [];
+        
+        comparisonLayers.forEach((layer: any) => {
+            console.log(`Force removing layer: ${layer.title}`);
+            model.map?.remove(layer);
+        });
+        
         snapshotLayersRef.current = {};
         setLayerVisibility({});
+        
+        console.log(`All snapshots cleared. Remaining map layers:`, model.map?.layers?.length);
     };
 
     const clearMap = () => {
