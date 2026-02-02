@@ -5,7 +5,7 @@ import Paper from "@vertigis/web/ui/Paper";
 import Typography from "@vertigis/web/ui/Typography";
 import Box from "@vertigis/web/ui/Box";
 import { useWatchAndRerender } from "@vertigis/web/ui";
-import { Delete as DeleteIcon, Download as DownloadIcon, Clear as ClearIcon, Add as AddIcon, Visibility as VisibilityIcon, Assessment as AssessmentIcon, Upload as UploadIcon } from "@mui/icons-material";
+import { Delete as DeleteIcon, Download as DownloadIcon, Clear as ClearIcon, Add as AddIcon, Visibility as VisibilityIcon, Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon } from "@mui/icons-material";
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { type ProjectJSON, buildProjectJSON, loadProjectFromJSON, recalculateAlternativeData } from "../../Functions/SaveProjectFunctions";
 import { createSnapshot, type DesignSnapshot } from "./snapshotUtils";
@@ -35,6 +35,15 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
     const snapshots = model.comparisonSnapshots || [];
+
+    const formatDateTime = (value?: string) => {
+        if (!value) return "";
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return value;
+        }
+        return parsed.toLocaleString("nl-NL");
+    };
 
     const buildMeshFromGeometries = (geometries: any[]): Mesh | null => {
         const meshes: Mesh[] = [];
@@ -289,6 +298,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
             console.log("Updated comparison snapshots, total:", newSnapshots.length);
 
             model.messages.commands.ui.displayNotification.execute({
+                id: `comparison-add-${snapshot.id}`,
                 title: "Succes",
                 message: `Huidig ontwerp "${snapshot.name}" is toegevoegd aan de vergelijking.`,
                 disableTimeouts: true
@@ -322,6 +332,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         model.comparisonSnapshots = newSnapshots;
 
         model.messages.commands.ui.displayNotification.execute({
+            id: `comparison-loadfull-${snapshot.id}`,
             title: "Succes",
             message: `Ontwerp "${snapshot.name}" is toegevoegd met alle waarden.`,
             disableTimeouts: true,
@@ -334,17 +345,62 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         if (!pendingProjectData) return;
 
         const recalculatedProject = await recalculateAlternativeData(model, pendingProjectData);
-        const snapshot = createSnapshot(recalculatedProject);
+        const recalculatedWithTimestamp: ProjectJSON = {
+            ...recalculatedProject,
+            metadata: {
+                ...recalculatedProject.metadata,
+                lastModified: new Date().toISOString(),
+            },
+        };
+        const snapshot = createSnapshot(recalculatedWithTimestamp);
         const newSnapshots = [...model.comparisonSnapshots, snapshot];
         model.comparisonSnapshots = newSnapshots;
 
         model.messages.commands.ui.displayNotification.execute({
+            id: `comparison-recalc-add-${snapshot.id}`,
             title: "Succes",
             message: `Ontwerp "${snapshot.name}" is herberekend en toegevoegd.`,
             disableTimeouts: true,
         });
 
         handleLoadOptionDialogClose();
+    };
+
+    const handleRecalculateSnapshot = async (snapshot: DesignSnapshot) => {
+        try {
+            model.loading = true;
+            const recalculatedProject = await recalculateAlternativeData(model, snapshot.projectJSON);
+            const updatedSnapshot: DesignSnapshot = {
+                ...snapshot,
+                projectJSON: {
+                    ...recalculatedProject,
+                    metadata: {
+                        ...recalculatedProject.metadata,
+                        lastModified: new Date().toISOString(),
+                    },
+                },
+                timestamp: new Date().toLocaleString("nl-NL"),
+            };
+
+            model.comparisonSnapshots = model.comparisonSnapshots.map((s) =>
+                s.id === snapshot.id ? updatedSnapshot : s
+            );
+
+            model.messages.commands.ui.displayNotification.execute({
+                id: `comparison-recalc-${snapshot.id}`,
+                title: "Succes",
+                message: `Ontwerp "${snapshot.name}" is herberekend.`,
+                disableTimeouts: true,
+            });
+        } catch (error) {
+            console.error("Error recalculating snapshot:", error);
+            model.messages.commands.ui.alert.execute({
+                title: "Fout",
+                message: `Kon het ontwerp niet herberekenen: ${error instanceof Error ? error.message : String(error)}`,
+            });
+        } finally {
+            model.loading = false;
+        }
     };
 
     const handleImportDesignFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -572,6 +628,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
             }
 
             model.messages.commands.ui.displayNotification.execute({
+                id: `comparison-load-${snapshot.id}`,
                 title: "Succes",
                 message: `Ontwerp "${snapshot.name}" is geladen. Ga naar het 'Dimensioneer grondlichaam' tabblad.`,
                 disableTimeouts: true,
@@ -620,11 +677,16 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                 style={{ display: "none" }}
                             />
                             <Button
-                                variant="outlined"
-                                startIcon={<AddIcon />}
+                                variant="contained"
+                                startIcon={<UploadIcon />}
                                 onClick={handleFileInputClick}
                                 size="medium"
-                                style={{ flex: "1 1 auto", minWidth: "180px" }}
+                                style={{
+                                    flex: "1 1 auto",
+                                    minWidth: "180px",
+                                    backgroundColor: "#2d3748",
+                                    color: "#fff",
+                                }}
                             >
                                 Upload Alternatief
                             </Button>
@@ -711,10 +773,11 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                     key={snapshot.id}
                                     elevation={1}
                                     style={{
-                                        padding: "12px 16px",
-                                        border: "1px solid #e0e0e0",
-                                        borderRadius: "6px",
-                                        backgroundColor: "#fff",
+                                        padding: "14px 16px",
+                                        border: "1px solid #e5e7eb",
+                                        borderRadius: "10px",
+                                        background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
+                                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                                     }}
                                 >
                                     <Stack spacing={1.5}>
@@ -724,57 +787,79 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                     {snapshot.name}
                                                 </Typography>
                                                 <Typography variant="caption" style={{ color: "#888" }}>
-                                                    {snapshot.timestamp}
+                                                    Berekend: {formatDateTime(snapshot.projectJSON.metadata?.lastModified || snapshot.projectJSON.metadata?.createdAt)}
                                                 </Typography>
                                             </Box>
-                                        </Box>
-                                        <Stack direction="row" spacing={0.5} style={{ flexWrap: "wrap", gap: "6px" }}>
-                                            <Button
-                                                variant="contained"
-                                                color="success"
-                                                size="small"
-                                                startIcon={<UploadIcon />}
-                                                onClick={() => loadSnapshot(snapshot)}
-                                                style={{ minWidth: "80px", flex: "1 1 auto" }}
-                                            >
-                                                Laden
-                                            </Button>
-                                            <Button
-                                                variant={layerVisibility[snapshot.id]?.ruimtebeslag2d ? "contained" : "outlined"}
-                                                color="primary"
-                                                size="small"
-                                                onClick={() => toggleLayerVisibility(snapshot, "ruimtebeslag2d")}
-                                                style={{ minWidth: "50px", flex: "1 1 auto" }}
-                                            >
-                                                {layerVisibility[snapshot.id]?.ruimtebeslag2d ? "👁" : "👁"} 2D
-                                            </Button>
-                                            <Button
-                                                variant={layerVisibility[snapshot.id]?.design3d ? "contained" : "outlined"}
-                                                color="primary"
-                                                size="small"
-                                                onClick={() => toggleLayerVisibility(snapshot, "design3d")}
-                                                style={{ minWidth: "50px", flex: "1 1 auto" }}
-                                            >
-                                                {layerVisibility[snapshot.id]?.design3d ? "👁" : "👁"} 3D
-                                            </Button>
-                                            <Button
-                                                variant={layerVisibility[snapshot.id]?.constructionLine ? "contained" : "outlined"}
-                                                color="primary"
-                                                size="small"
-                                                onClick={() => toggleLayerVisibility(snapshot, "constructionLine")}
-                                                style={{ minWidth: "80px", flex: "1 1 auto" }}
-                                            >
-                                                {layerVisibility[snapshot.id]?.constructionLine ? "👁" : "👁"} Constr.
-                                            </Button>
                                             <Button
                                                 variant="outlined"
                                                 color="error"
                                                 size="small"
                                                 onClick={() => removeSnapshot(snapshot.id)}
-                                                style={{ minWidth: "36px", padding: "4px 8px" }}
+                                                style={{ alignSelf: "flex-start" }}
                                             >
-                                                <DeleteIcon fontSize="small" />
+                                                Verwijder
                                             </Button>
+                                        </Box>
+                                        <Stack spacing={1}>
+                                            <Box style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+                                                <Typography variant="caption" style={{ color: "#666", fontWeight: 600 }}>
+                                                    Kaartlagen
+                                                </Typography>
+                                                <Box style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                                    <Button
+                                                        variant={layerVisibility[snapshot.id]?.ruimtebeslag2d ? "contained" : "outlined"}
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={() => toggleLayerVisibility(snapshot, "ruimtebeslag2d")}
+                                                        style={{ minWidth: "70px" }}
+                                                    >
+                                                        2D
+                                                    </Button>
+                                                    <Button
+                                                        variant={layerVisibility[snapshot.id]?.design3d ? "contained" : "outlined"}
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={() => toggleLayerVisibility(snapshot, "design3d")}
+                                                        style={{ minWidth: "70px" }}
+                                                    >
+                                                        3D
+                                                    </Button>
+                                                    <Button
+                                                        variant={layerVisibility[snapshot.id]?.constructionLine ? "contained" : "outlined"}
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={() => toggleLayerVisibility(snapshot, "constructionLine")}
+                                                        style={{ minWidth: "90px" }}
+                                                    >
+                                                        Constr.
+                                                    </Button>
+                                                </Box>
+                                            </Box>
+
+                                            <Stack spacing={0.75}>
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    size="small"
+                                                    startIcon={<UploadIcon />}
+                                                    onClick={() => loadSnapshot(snapshot)}
+                                                    fullWidth
+                                                    style={{ justifyContent: "center" }}
+                                                >
+                                                    Laden
+                                                </Button>
+                                                <Button
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    size="small"
+                                                    startIcon={<AutorenewIcon />}
+                                                    onClick={() => handleRecalculateSnapshot(snapshot)}
+                                                    fullWidth
+                                                    style={{ justifyContent: "center" }}
+                                                >
+                                                    Herbereken volledig
+                                                </Button>
+                                            </Stack>
                                         </Stack>
                                     </Stack>
                                 </Paper>

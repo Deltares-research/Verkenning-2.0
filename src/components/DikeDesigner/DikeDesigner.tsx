@@ -650,27 +650,30 @@ const DikeDesigner = (
                 sx={{ width: '100%' }}
             >
                 {/* File menu button bar - full width at top */}
-                <Box sx={{ position: "relative", mb: 3, p: 2, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+                <Box sx={{ position: "relative", mb: 3, p: 2, backgroundColor: "#fafbfc", borderRadius: 0 }}>
                     <Button
                         onClick={handleFileMenuOpen}
                         endIcon={<ExpandMoreIcon />}
-                        variant="contained"
+                        variant="outlined"
                         fullWidth
                         sx={{
-                            backgroundColor: "#0078d4",
-                            color: "white",
+                            backgroundColor: "#fff",
+                            color: "#0078d4",
                             textTransform: "none",
                             fontSize: "15px",
-                            fontWeight: 500,
+                            fontWeight: 600,
                             whiteSpace: "nowrap",
-                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                            boxShadow: "none",
                             transition: "all 0.2s ease",
                             justifyContent: "flex-start",
                             paddingLeft: 3,
                             paddingY: 1.5,
+                            borderRadius: 0,
+                            border: "1px solid #e5e7eb",
+                            borderLeft: "4px solid #0078d4",
                             "&:hover": {
-                                backgroundColor: "#106ebe",
-                                boxShadow: "0 4px 8px rgba(0, 120, 212, 0.2)",
+                                backgroundColor: "#f5f7fa",
+                                boxShadow: "none",
                             }
                         }}
                     >
@@ -731,68 +734,22 @@ const DikeDesigner = (
                     </Menu>
                 </Box>
 
-                {/* Ontwerp naam - below the file menu bar */}
-                <Box
-                    onClick={() => {
-                        if (designName) {
-                            setDesignNameDialogMode("edit");
-                            setDesignNameDialogOpen(true);
-                        }
-                    }}
-                    role="button"
-                    tabIndex={designName ? 0 : -1}
-                    onKeyPress={(event) => {
-                        if (designName && event.key === "Enter") {
-                            setDesignNameDialogMode("edit");
-                            setDesignNameDialogOpen(true);
-                        }
-                    }}
+                {/* Horizontal divider */}
+                <Box sx={{ borderBottom: 1, borderColor: "#e5e7eb", mb: 2, mt: 1 }} />
+                
+                {/* Design title */}
+                <Typography
                     sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 3,
-                        p: 3,
-                        borderRadius: 0,
-                        border: "1px solid #0078d4",
-                        borderLeft: "4px solid #0078d4",
-                        transition: "background-color 0.2s ease",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: designName ? "#323130" : "#a19f9d",
                         opacity: designName ? 1 : 0.6,
-                        pointerEvents: designName ? "auto" : "none",
-                        "&:hover": designName ? {
-                            backgroundColor: "#f0f6ff",
-                            cursor: "pointer",
-                        } : {},
-                        "&:hover .edit-icon": designName ? {
-                            opacity: 1,
-                        } : {},
+                        mb: 2,
+                        px: 2,
                     }}
                 >
-                    <Box sx={{ textAlign: "left", flex: 1 }}>
-                        <Typography
-                            sx={{
-                                fontSize: "11px",
-                                fontWeight: 600,
-                                color: "#605e5c",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                                mb: 1,
-                            }}
-                        >
-                            Ontwerp naam
-                        </Typography>
-                        <Typography
-                            sx={{
-                                fontSize: "18px",
-                                fontWeight: 600,
-                                color: designName ? "#0078d4" : "#a19f9d",
-                            }}
-                        >
-                            {designName || "—"}
-                        </Typography>
-                    </Box>
-                    <EditIcon className="edit-icon" sx={{ opacity: 0, color: "#0078d4" }} />
-                </Box>
+                    {designName ? `Ontwerp: ${designName}` : "Geen ontwerp gekozen"}
+                </Typography>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs
                         value={value}
