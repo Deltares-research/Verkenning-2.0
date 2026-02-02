@@ -7,8 +7,9 @@ import Box from "@vertigis/web/ui/Box";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import { Delete as DeleteIcon, Download as DownloadIcon, Clear as ClearIcon, Add as AddIcon, Visibility as VisibilityIcon, Assessment as AssessmentIcon, Upload as UploadIcon } from "@mui/icons-material";
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { type ProjectJSON, buildProjectJSON, loadProjectFromJSON } from "../../Functions/SaveProjectFunctions";
+import { type ProjectJSON, buildProjectJSON, loadProjectFromJSON, loadProjectForRecalculation } from "../../Functions/SaveProjectFunctions";
 import { createSnapshot, type DesignSnapshot } from "./snapshotUtils";
+import LoadOptionDialog from "../Dimensions/LoadOptionDialog";
 import { constructionLineSymbol, defaultPointSymbol } from "../../symbologyConfig";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
@@ -28,6 +29,8 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     const designFileInputRef = useRef<HTMLInputElement>(null);
     const snapshotLayersRef = useRef<Record<string, { ruimtebeslag2d?: GraphicsLayer; design3d?: GraphicsLayer; constructionLine?: GraphicsLayer; mesh?: Mesh }>>({});
     const [layerVisibility, setLayerVisibility] = useState<Record<string, { ruimtebeslag2d: boolean; design3d: boolean; constructionLine: boolean }>>({});
+    const [loadOptionDialogOpen, setLoadOptionDialogOpen] = useState(false);
+    const [pendingProjectData, setPendingProjectData] = useState<ProjectJSON | null>(null);
     
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
@@ -306,6 +309,54 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         }
     };
 
+    const handleLoadOptionDialogClose = () => {
+        setLoadOptionDialogOpen(false);
+        setPendingProjectData(null);
+    };
+
+    const handleLoadFull = () => {
+        if (!pendingProjectData) return;
+
+        const snapshot = createSnapshot(pendingProjectData);
+        const newSnapshots = [...model.comparisonSnapshots, snapshot];
+        model.comparisonSnapshots = newSnapshots;
+
+        model.messages.commands.ui.displayNotification.execute({
+            title: "Succes",
+            message: `Ontwerp "${snapshot.name}" is toegevoegd met alle waarden.`,
+            disableTimeouts: true,
+        });
+
+        handleLoadOptionDialogClose();
+    };
+
+    const handleLoadAndRecalculate = async () => {
+        if (!pendingProjectData) return;
+
+        // Preserve current design
+        const currentProject = buildProjectJSON(model);
+
+        // Recalculate for the alternative in the model context
+        await loadProjectForRecalculation(model, pendingProjectData);
+
+        // Capture recalculated results as a snapshot
+        const recalculatedProject = buildProjectJSON(model);
+        const snapshot = createSnapshot(recalculatedProject);
+        const newSnapshots = [...model.comparisonSnapshots, snapshot];
+        model.comparisonSnapshots = newSnapshots;
+
+        // Restore current design
+        loadProjectFromJSON(model, currentProject);
+
+        model.messages.commands.ui.displayNotification.execute({
+            title: "Succes",
+            message: `Ontwerp "${snapshot.name}" is herberekend en toegevoegd.`,
+            disableTimeouts: true,
+        });
+
+        handleLoadOptionDialogClose();
+    };
+
     const handleImportDesignFile = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -348,17 +399,8 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                     return;
                 }
 
-                const snapshot = createSnapshot(projectData);
-                console.log("Created snapshot:", snapshot);
-                
-                const newSnapshots = [...model.comparisonSnapshots, snapshot];
-                model.comparisonSnapshots = newSnapshots;
-                console.log("Updated comparison snapshots, total:", newSnapshots.length);
-
-                model.messages.commands.ui.alert.execute({
-                    title: "Succes",
-                    message: `Ontwerp "${snapshot.name}" is toegevoegd aan de vergelijking.`,
-                });
+                setPendingProjectData(projectData);
+                setLoadOptionDialogOpen(true);
             } catch (error) {
                 console.error("Error parsing design file:", error);
                 console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
@@ -596,6 +638,13 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                             >
                                 Upload Alternatief
                             </Button>
+                            <LoadOptionDialog
+                                open={loadOptionDialogOpen}
+                                onClose={handleLoadOptionDialogClose}
+                                onLoadFull={handleLoadFull}
+                                onLoadAndRecalculate={handleLoadAndRecalculate}
+                                isLoading={model.loading}
+                            />
                         </Stack>
                         
                         {/* Comparison Table Button - Prominent */}

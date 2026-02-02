@@ -501,6 +501,129 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
 };
 
 /**
+ * Load only the cost line and 3D polygon, then recalculate volumes, costs and effects.
+ */
+export const loadProjectForRecalculation = async (model: DikeDesignerModel, jsonData: ProjectJSON): Promise<void> => {
+    try {
+        const { geometries, metadata, constructions } = jsonData as any;
+
+        // Clear existing graphics
+        model.graphicsLayerTemp?.removeAll();
+        cleanFeatureLayer(model.designLayer2D);
+        model.graphicsLayerRuimtebeslag?.removeAll();
+        model.graphicsLayerRuimtebeslag3d?.removeAll();
+        model.graphicsLayerLine?.removeAll();
+        model.graphicsLayerPoint?.removeAll();
+        model.graphicsLayerCrossSection?.removeAll();
+        model.graphicsLayerProfile?.removeAll();
+        model.constructionModel?.graphicsLayerConstructionLine?.removeAll();
+
+        // Load 3D design geometry
+        if (geometries.design3d?.length > 0) {
+            loadGeometriesToLayer(model.graphicsLayer3dPolygon, geometries.design3d, model);
+            loadGeometriesToLayer(model.graphicsLayerTemp, geometries.design3d, model);
+        }
+
+        // Load cost line (inputLine)
+        if (geometries.inputLine?.length > 0) {
+            loadGeometriesToLayer(model.graphicsLayerLine, geometries.inputLine, model);
+        }
+
+        // Load constructions (if present)
+        if (constructions && model.constructionModel) {
+            const constr = constructions;
+            model.constructionModel.structureType = constr.structureType || "Heavescherm";
+            model.constructionModel.depth = constr.depth || 5;
+            model.constructionModel.useOffset = constr.useOffset || false;
+            model.constructionModel.offsetDistance = constr.offsetDistance || 0;
+            model.constructionModel.offsetSide = constr.offsetSide || "right";
+
+            if (constr.drawnConstructionLine) {
+                try {
+                    const geometry = featureToGeometry(constr.drawnConstructionLine);
+                    if (geometry && model.constructionModel.graphicsLayerConstructionLine) {
+                        model.constructionModel.drawnConstructionLine = geometry;
+                        const graphic = new Graphic({
+                            geometry,
+                            symbol: {
+                                type: "simple-line",
+                                color: [0, 0, 255],
+                                width: 3,
+                            } as any,
+                        });
+                        model.constructionModel.graphicsLayerConstructionLine.add(graphic);
+                    }
+                } catch (err) {
+                    console.warn("Error loading construction line geometry:", err);
+                }
+            }
+
+            if (constr.structures && Array.isArray(constr.structures)) {
+                model.constructionModel.structures = constr.structures
+                    .map((struct: any) => ({
+                        geometry: struct.geometry ? featureToGeometry(struct.geometry) : null,
+                        attributes: struct.attributes || { type: "Heavescherm", depth: 5 },
+                    }))
+                    .filter((struct: any) => struct.geometry !== null);
+
+                if (model.constructionModel.graphicsLayerConstructionLine) {
+                    model.constructionModel.structures.forEach((struct: any) => {
+                        if (struct.geometry) {
+                            const graphic = new Graphic({
+                                geometry: struct.geometry,
+                                symbol: {
+                                    type: "simple-line",
+                                    color: [0, 0, 255],
+                                    width: 3,
+                                } as any,
+                                attributes: struct.attributes,
+                            });
+                            model.constructionModel.graphicsLayerConstructionLine!.add(graphic);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Set design name from metadata
+        if (metadata?.vak && metadata?.alternatief) {
+            model.designName = `${metadata.vak} - ${metadata.alternatief}`;
+        } else if (metadata?.vak) {
+            model.designName = metadata.vak;
+        }
+
+        // Create meshes from 3D polygons
+        if (geometries.design3d?.length > 0) {
+            import("./SaveFunctions").then(({ loadGeometriesFromDesign }) => {
+                loadGeometriesFromDesign(model).catch(err => console.error("Error loading geometries:", err));
+            });
+        }
+
+        model.messages.commands.ui.displayNotification.execute({
+            title: "Ontwerp geladen",
+            message: "Geometrie geladen. Volumes, kosten en effecten worden herberekend...",
+            disableTimeouts: false,
+        });
+
+        const { calculateVolume } = await import("./DesignFunctions");
+        const { handleCostCalculation } = await import("./CostFunctions");
+        const { handleEffectAnalysis } = await import("./EffectFunctions");
+
+        await calculateVolume(model);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await handleCostCalculation(model);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await handleEffectAnalysis(model);
+    } catch (error) {
+        console.error("Error loading project for recalculation:", error);
+        model.messages.commands.ui.alert.execute({
+            title: "Fout bij laden",
+            message: `Er is een fout opgetreden bij het laden van het project: ${(error as Error)?.message}`,
+        });
+    }
+};
+
+/**
  * Helper function to load features into a graphics layer
  */
 const loadGeometriesToLayer = (layer: any, features: any[], model?: any): void => {
