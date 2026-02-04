@@ -731,7 +731,6 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 layers: [
                     this.graphicsLayerProfile,
                     this.graphicsLayerCrossSection,
-                    graphicsLayerConstructionLine,
                     this.graphicsLayerLine,
                     this.graphicsLayerControlPoints,
                     this.graphicsLayerPoint,
@@ -746,6 +745,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 layers: [
                     this.graphicsLayerMesh,
                     this.graphicsLayer3dPolygon,
+                    graphicsLayerConstructionLine,
                     this.graphicsLayerTemp,
                     this.designLayer2D
                 ]

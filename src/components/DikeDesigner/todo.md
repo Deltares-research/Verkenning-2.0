@@ -26,5 +26,5 @@
 
 
 
- --> na aanpassen alternatief, zorgen voor herberekening/notificatie
  --> schetslagen punten/lijnen goed verwerken
+ --> check exact terugladen berekende waardes

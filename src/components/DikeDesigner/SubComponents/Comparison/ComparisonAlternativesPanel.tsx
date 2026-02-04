@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
 import Paper from "@vertigis/web/ui/Paper";
@@ -27,14 +27,79 @@ interface ComparisonAlternativesPanelProps {
 
 const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = ({ model, onLoadDesign }) => {
     const designFileInputRef = useRef<HTMLInputElement>(null);
-    const snapshotLayersRef = useRef<Record<string, { ruimtebeslag2d?: GraphicsLayer; design3d?: GraphicsLayer; constructionLine?: GraphicsLayer; mesh?: Mesh }>>({});
-    const [layerVisibility, setLayerVisibility] = useState<Record<string, { ruimtebeslag2d: boolean; design3d: boolean; constructionLine: boolean }>>({});
+    const snapshotLayersRef = useRef<Record<string, { ruimtebeslag2d?: GraphicsLayer; design3d?: GraphicsLayer; constructionLine?: GraphicsLayer; mesh?: GraphicsLayer; meshGeometry?: Mesh }>>({});
+    const [layerVisibility, setLayerVisibility] = useState<Record<string, { ruimtebeslag2d: boolean; design3d: boolean; constructionLine: boolean; mesh: boolean }>>({});
     const [loadOptionDialogOpen, setLoadOptionDialogOpen] = useState(false);
     const [pendingProjectData, setPendingProjectData] = useState<ProjectJSON | null>(null);
     
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
     const snapshots = model.comparisonSnapshots || [];
+
+    // Sync visibility state with actual layer visibility
+    useEffect(() => {
+        if (snapshots.length > 0) {
+            const currentSnapshot = snapshots[0];
+            const isCurrentDesign = model.designName === currentSnapshot.name;
+            if (isCurrentDesign) {
+                // Update visibility state based on current layer states
+                const currentState = {
+                    ruimtebeslag2d: model.graphicsLayerRuimtebeslag?.visible ?? false,
+                    design3d: model.graphicsLayerRuimtebeslag3d?.visible ?? false,
+                    constructionLine: model.constructionModel?.graphicsLayerConstructionLine?.visible ?? false,
+                    mesh: model.graphicsLayerMesh?.visible ?? false,
+                };
+                
+                setLayerVisibility(prev => {
+                    const prevState = prev[currentSnapshot.id];
+                    // Only update if something changed
+                    if (!prevState || 
+                        prevState.ruimtebeslag2d !== currentState.ruimtebeslag2d ||
+                        prevState.design3d !== currentState.design3d ||
+                        prevState.constructionLine !== currentState.constructionLine ||
+                        prevState.mesh !== currentState.mesh) {
+                        return { ...prev, [currentSnapshot.id]: currentState };
+                    }
+                    return prev;
+                });
+            }
+        }
+    });
+
+    // Initialize with current design as first alternative
+    useEffect(() => {
+        if (snapshots.length === 0) {
+            try {
+                const projectData = buildProjectJSON(model);
+                const snapshot = createSnapshot(projectData);
+                model.comparisonSnapshots = [snapshot];
+                
+                // Turn on mesh by default for the first alternative
+                if (model.graphicsLayerMesh) {
+                    model.graphicsLayerMesh.visible = true;
+                }
+            } catch (error) {
+                console.error("Error adding initial current design:", error);
+            }
+        }
+        
+        // Initialize visibility state from current model layers
+        if (snapshots.length > 0) {
+            const currentSnapshot = snapshots[0];
+            const isCurrentDesign = model.designName === currentSnapshot.name;
+            if (isCurrentDesign) {
+                setLayerVisibility(prev => ({
+                    ...prev,
+                    [currentSnapshot.id]: {
+                        ruimtebeslag2d: model.graphicsLayerRuimtebeslag?.visible ?? false,
+                        design3d: model.graphicsLayerRuimtebeslag3d?.visible ?? false,
+                        constructionLine: model.constructionModel?.graphicsLayerConstructionLine?.visible ?? false,
+                        mesh: model.graphicsLayerMesh?.visible ?? true,
+                    }
+                }));
+            }
+        }
+    }, []); // Run only once on mount
 
     const formatDateTime = (value?: string) => {
         if (!value) return "";
@@ -78,15 +143,27 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
 
     const ensureLayer = (
         snapshot: DesignSnapshot,
-        type: "ruimtebeslag2d" | "design3d" | "constructionLine"
+        type: "ruimtebeslag2d" | "design3d" | "constructionLine" | "mesh"
     ): GraphicsLayer | null => {
         if (!model.map) {
             return null;
         }
 
         const existing = snapshotLayersRef.current[snapshot.id]?.[type];
-        if (existing) {
+        if (existing && existing instanceof GraphicsLayer) {
             return existing;
+        }
+
+        // For mesh and constructionLine, check if this is the current design
+        if (type === "mesh" && model.graphicsLayerMesh) {
+            const isCurrentSnapshot = model.designName === snapshot.name;
+            if (isCurrentSnapshot) {
+                snapshotLayersRef.current[snapshot.id] = {
+                    ...snapshotLayersRef.current[snapshot.id],
+                    mesh: model.graphicsLayerMesh,
+                };
+                return model.graphicsLayerMesh;
+            }
         }
 
         if (type === "constructionLine" && model.constructionModel?.graphicsLayerConstructionLine) {
@@ -104,13 +181,14 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
             ruimtebeslag2d: `Ruimtebeslag 2D - ${snapshot.name}`,
             design3d: `Ontwerp 3D - ${snapshot.name}`,
             constructionLine: `Constructielijn - ${snapshot.name}`,
+            mesh: `Dijklichaam 3D - ${snapshot.name}`,
         };
 
         const layer = new GraphicsLayer({
             title: layerTitles[type],
             visible: false,
             elevationInfo: {
-                mode: "on-the-ground",
+                mode: type === "design3d" || type === "mesh" ? "absolute-height" : "on-the-ground",
                 offset: 0
             }
         });
@@ -120,6 +198,8 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         if (type === "ruimtebeslag2d") {
             geometries = snapshot.projectJSON.geometries?.ruimtebeslag2d || [];
         } else if (type === "design3d") {
+            geometries = snapshot.projectJSON.geometries?.design3d || [];
+        } else if (type === "mesh") {
             geometries = snapshot.projectJSON.geometries?.design3d || [];
         } else if (type === "constructionLine") {
             console.log("Loading construction geometries for snapshot:", snapshot.projectJSON.constructions);
@@ -141,12 +221,12 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
             console.log("Total construction geometries:", geometries.length, geometries);
         }
 
-        if (type === "design3d" && geometries && geometries.length > 0) {
+        if ((type === "design3d" || type === "mesh") && geometries && geometries.length > 0) {
             const mesh = buildMeshFromGeometries(geometries);
             if (mesh) {
                 snapshotLayersRef.current[snapshot.id] = {
                     ...snapshotLayersRef.current[snapshot.id],
-                    mesh,
+                    meshGeometry: mesh,
                 };
 
                 const meshSymbol = new MeshSymbol3D({
@@ -242,16 +322,60 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
 
     const toggleLayerVisibility = (
         snapshot: DesignSnapshot,
-        type: "ruimtebeslag2d" | "design3d" | "constructionLine"
+        type: "ruimtebeslag2d" | "design3d" | "constructionLine" | "mesh"
     ) => {
         console.log(`Toggle ${type} for snapshot ${snapshot.id} (${snapshot.name})`);
         
-        if (type === "constructionLine" && model.constructionModel?.graphicsLayerConstructionLine) {
-            const isCurrentSnapshot = model.designName === snapshot.name;
-            console.log(`Is current snapshot: ${isCurrentSnapshot}, model.designName: ${model.designName}`);
-            if (isCurrentSnapshot) {
+        const isCurrentSnapshot = model.designName === snapshot.name;
+        console.log(`Is current snapshot: ${isCurrentSnapshot}, model.designName: ${model.designName}`);
+        
+        // Handle current design's existing layers
+        if (isCurrentSnapshot) {
+            if (type === "ruimtebeslag2d" && model.graphicsLayerRuimtebeslag) {
                 setLayerVisibility(prev => {
-                    const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false };
+                    const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false, mesh: false };
+                    const nextState = {
+                        ...current,
+                        ruimtebeslag2d: !current.ruimtebeslag2d,
+                    };
+                    console.log(`Toggling current 2D layer visibility to: ${nextState.ruimtebeslag2d}`);
+                    model.graphicsLayerRuimtebeslag.visible = nextState.ruimtebeslag2d;
+                    return { ...prev, [snapshot.id]: nextState };
+                });
+                return;
+            }
+            
+            if (type === "design3d" && model.graphicsLayerRuimtebeslag3d) {
+                setLayerVisibility(prev => {
+                    const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false, mesh: false };
+                    const nextState = {
+                        ...current,
+                        design3d: !current.design3d,
+                    };
+                    console.log(`Toggling current 3D layer visibility to: ${nextState.design3d}`);
+                    model.graphicsLayerRuimtebeslag3d.visible = nextState.design3d;
+                    return { ...prev, [snapshot.id]: nextState };
+                });
+                return;
+            }
+            
+            if (type === "mesh" && model.graphicsLayerMesh) {
+                setLayerVisibility(prev => {
+                    const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false, mesh: false };
+                    const nextState = {
+                        ...current,
+                        mesh: !current.mesh,
+                    };
+                    console.log(`Toggling current mesh layer visibility to: ${nextState.mesh}`);
+                    model.graphicsLayerMesh.visible = nextState.mesh;
+                    return { ...prev, [snapshot.id]: nextState };
+                });
+                return;
+            }
+            
+            if (type === "constructionLine" && model.constructionModel?.graphicsLayerConstructionLine) {
+                setLayerVisibility(prev => {
+                    const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false, mesh: false };
                     const nextState = {
                         ...current,
                         constructionLine: !current.constructionLine,
@@ -275,7 +399,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         }
 
         setLayerVisibility(prev => {
-            const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false };
+            const current = prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false, mesh: false };
             const nextState = {
                 ...current,
                 [type]: !current[type],
@@ -564,7 +688,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                 }
                 setLayerVisibility(prev => ({
                     ...prev,
-                    [id]: { ruimtebeslag2d: false, design3d: false, constructionLine: false },
+                    [id]: { ruimtebeslag2d: false, design3d: false, constructionLine: false, mesh: false },
                 }));
             });
             model.messages.commands.ui.displayNotification.execute({
@@ -595,6 +719,27 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
             // Load the project data - use the stored ProjectJSON directly
             loadProjectFromJSON(model, snapshot.projectJSON);
 
+            // Turn on mesh by default after loading
+            setTimeout(() => {
+                if (model.graphicsLayerMesh) {
+                    model.graphicsLayerMesh.visible = true;
+                }
+            }, 100);
+
+            // After loading, initialize the visibility state for this snapshot
+            // This ensures the buttons reflect the actual layer visibility
+            setTimeout(() => {
+                setLayerVisibility(prev => ({
+                    ...prev,
+                    [snapshot.id]: {
+                        ruimtebeslag2d: model.graphicsLayerRuimtebeslag?.visible ?? false,
+                        design3d: model.graphicsLayerRuimtebeslag3d?.visible ?? false,
+                        constructionLine: model.constructionModel?.graphicsLayerConstructionLine?.visible ?? false,
+                        mesh: model.graphicsLayerMesh?.visible ?? true,
+                    }
+                }));
+            }, 300);
+
             // Track the construction layer from the loaded snapshot
             if (
                 model.constructionModel?.graphicsLayerConstructionLine
@@ -607,11 +752,6 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                     ...snapshotLayersRef.current[snapshot.id],
                     constructionLine: model.constructionModel.graphicsLayerConstructionLine,
                 };
-                // Initialize visibility state
-                setLayerVisibility(prev => ({
-                    ...prev,
-                    [snapshot.id]: prev[snapshot.id] || { ruimtebeslag2d: false, design3d: false, constructionLine: false },
-                }));
             }
 
             // Trigger a model update by modifying a property to ensure re-render
@@ -660,15 +800,6 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                     <Stack spacing={2}>
                         {/* Primary Actions */}
                         <Stack spacing={1.5}>
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={addCurrentDesign}
-                                size="medium"
-                                fullWidth
-                            >
-                                Voeg Huidig Toe
-                            </Button>
                             <input
                                 type="file"
                                 accept=".json"
@@ -808,7 +939,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                         </Box>
                                         <Stack spacing={1}>
                                             <Box style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-                                                <Typography variant="caption" style={{ color: "#666", fontWeight: 600 }}>
+                                                <Typography variant="caption" style={{ color: "#666", fontWeight: 600, marginRight: "4px" }}>
                                                     Kaartlagen
                                                 </Typography>
                                                 <Box style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -817,7 +948,16 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         color="primary"
                                                         size="small"
                                                         onClick={() => toggleLayerVisibility(snapshot, "ruimtebeslag2d")}
-                                                        style={{ minWidth: "70px" }}
+                                                        sx={{
+                                                            minWidth: "70px",
+                                                            textTransform: "none",
+                                                            fontWeight: 500,
+                                                            borderRadius: "6px",
+                                                            boxShadow: "none",
+                                                            "&:hover": {
+                                                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                                            }
+                                                        }}
                                                     >
                                                         2D
                                                     </Button>
@@ -826,7 +966,16 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         color="primary"
                                                         size="small"
                                                         onClick={() => toggleLayerVisibility(snapshot, "design3d")}
-                                                        style={{ minWidth: "70px" }}
+                                                        sx={{
+                                                            minWidth: "70px",
+                                                            textTransform: "none",
+                                                            fontWeight: 500,
+                                                            borderRadius: "6px",
+                                                            boxShadow: "none",
+                                                            "&:hover": {
+                                                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                                            }
+                                                        }}
                                                     >
                                                         3D
                                                     </Button>
@@ -835,9 +984,36 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         color="primary"
                                                         size="small"
                                                         onClick={() => toggleLayerVisibility(snapshot, "constructionLine")}
-                                                        style={{ minWidth: "90px" }}
+                                                        sx={{
+                                                            minWidth: "90px",
+                                                            textTransform: "none",
+                                                            fontWeight: 500,
+                                                            borderRadius: "6px",
+                                                            boxShadow: "none",
+                                                            "&:hover": {
+                                                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                                            }
+                                                        }}
                                                     >
                                                         Constr.
+                                                    </Button>
+                                                    <Button
+                                                        variant={layerVisibility[snapshot.id]?.mesh ? "contained" : "outlined"}
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={() => toggleLayerVisibility(snapshot, "mesh")}
+                                                        sx={{
+                                                            minWidth: "85px",
+                                                            textTransform: "none",
+                                                            fontWeight: 500,
+                                                            borderRadius: "6px",
+                                                            boxShadow: "none",
+                                                            "&:hover": {
+                                                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                                            }
+                                                        }}
+                                                    >
+                                                        3D Mesh
                                                     </Button>
                                                 </Box>
                                             </Box>
@@ -850,7 +1026,16 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                     startIcon={<UploadIcon />}
                                                     onClick={() => loadSnapshot(snapshot)}
                                                     fullWidth
-                                                    style={{ justifyContent: "center" }}
+                                                    sx={{
+                                                        justifyContent: "center",
+                                                        textTransform: "none",
+                                                        fontWeight: 500,
+                                                        borderRadius: "6px",
+                                                        boxShadow: "none",
+                                                        "&:hover": {
+                                                            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                                                        }
+                                                    }}
                                                 >
                                                     Laden
                                                 </Button>
@@ -861,7 +1046,16 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                     startIcon={<AutorenewIcon />}
                                                     onClick={() => handleRecalculateSnapshot(snapshot)}
                                                     fullWidth
-                                                    style={{ justifyContent: "center" }}
+                                                    sx={{
+                                                        justifyContent: "center",
+                                                        textTransform: "none",
+                                                        fontWeight: 500,
+                                                        borderRadius: "6px",
+                                                        boxShadow: "none",
+                                                        "&:hover": {
+                                                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                                        }
+                                                    }}
                                                 >
                                                     Herbereken volledig
                                                 </Button>

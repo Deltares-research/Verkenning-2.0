@@ -378,7 +378,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     Download geselecteerd
                 </Button>
             </Stack>
-            <Stack 
+            {/* <Stack 
                 spacing={1.5} 
                 sx={{
                     ...stackStyle,
@@ -398,7 +398,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 >
                     Ontwerpen opslaan
                 </Button>
-            </Stack>
+            </Stack> */}
 
         </Stack>
     );

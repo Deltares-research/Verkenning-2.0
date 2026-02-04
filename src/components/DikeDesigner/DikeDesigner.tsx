@@ -12,6 +12,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import UploadIcon from "@mui/icons-material/Upload";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 
 import Box from "@vertigis/web/ui/Box";
 import Button from "@vertigis/web/ui/Button";
@@ -97,6 +99,7 @@ const DikeDesigner = (
     const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
     const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
     const fileMenuOpen = Boolean(fileMenuAnchor);
+    const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
     const splitDesignName = (name: string) => {
         const trimmed = name?.trim() || "";
@@ -633,7 +636,7 @@ const DikeDesigner = (
     };
 
     return (
-        <LayoutElement {...props} style={{ width: "100%", overflowY: "auto" }}>
+        <LayoutElement {...props} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: "auto" }}>
             {model.loading && (
                 <LinearProgress
                     sx={{
@@ -646,191 +649,381 @@ const DikeDesigner = (
                     }}
                 />
             )}
-            <Box
-                sx={{ width: '100%' }}
-            >
-                {/* File menu button bar - full width at top */}
-                <Box sx={{ position: "relative", mb: 3, p: 2, backgroundColor: "#fafbfc", borderRadius: 0 }}>
-                    <Button
-                        onClick={handleFileMenuOpen}
-                        endIcon={<ExpandMoreIcon />}
-                        variant="outlined"
-                        fullWidth
+            <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                {/* Left Sidebar - Collapsible */}
+                {model.mapInitialized && (
+                <Box sx={{
+                    width: sidebarExpanded ? "220px" : "70px",
+                    backgroundColor: "#fafbfc",
+                    borderRight: "1px solid #e5e7eb",
+                    p: sidebarExpanded ? 2 : 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: sidebarExpanded ? 2 : 1,
+                    minHeight: "100%",
+                    transition: "all 0.3s ease",
+                    position: "relative",
+                }}>
+                    {/* Collapse/Expand Toggle Button - Middle Right */}
+                    <IconButton
+                        onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                        title={sidebarExpanded ? "Samenvouwen" : "Uitvouwen"}
                         sx={{
-                            backgroundColor: "#fff",
+                            position: "absolute",
+                            top: "50%",
+                            right: -12,
+                            transform: "translateY(-50%)",
                             color: "#0078d4",
-                            textTransform: "none",
-                            fontSize: "15px",
-                            fontWeight: 600,
-                            whiteSpace: "nowrap",
-                            boxShadow: "none",
-                            transition: "all 0.2s ease",
-                            justifyContent: "flex-start",
-                            paddingLeft: 3,
-                            paddingY: 1.5,
-                            borderRadius: 0,
+                            width: "32px",
+                            height: "32px",
+                            backgroundColor: "#fff",
                             border: "1px solid #e5e7eb",
-                            borderLeft: "4px solid #0078d4",
+                            zIndex: 10,
+                            transition: "all 0.3s ease",
                             "&:hover": {
+                                color: "#106ebe",
                                 backgroundColor: "#f5f7fa",
+                                borderColor: "#0078d4",
+                            }
+                        }}
+                    >
+                        {sidebarExpanded ? <ChevronLeftIcon sx={{ fontSize: "18px" }} /> : <ChevronRightIcon sx={{ fontSize: "18px" }} />}
+                    </IconButton>
+
+                    {/* Sidebar Title */}
+                    {sidebarExpanded && (
+                        <Typography
+                            sx={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                color: "#666",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                mb: 1,
+                            }}
+                        >
+                            Dijkontwerper
+                        </Typography>
+                    )}
+
+                    {/* Sidebar Action Buttons */}
+                    <Stack spacing={sidebarExpanded ? 1.5 : 1}>
+                        {/* Load Button */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={!sidebarExpanded ? "Laden" : ""}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<UploadIcon />}
+                                onClick={handleFileMenuLoad}
+                                fullWidth={sidebarExpanded}
+                                size="small"
+                                sx={{
+                                    backgroundColor: "#fff",
+                                    color: "#0078d4",
+                                    textTransform: "none",
+                                    fontSize: sidebarExpanded ? "13px" : "0px",
+                                    fontWeight: 600,
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    borderColor: "#e5e7eb",
+                                    borderLeft: "3px solid #0078d4",
+                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                    minWidth: sidebarExpanded ? "auto" : "44px",
+                                    width: sidebarExpanded ? "100%" : "44px",
+                                    height: "44px",
+                                    "&:hover": {
+                                        backgroundColor: "#f5f7fa",
+                                        boxShadow: "none",
+                                        borderColor: "#0078d4",
+                                    }
+                                }}
+                            >
+                                {sidebarExpanded ? "Laden" : ""}
+                            </Button>
+                        </Box>
+
+                        {/* Save Button */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={!sidebarExpanded ? "Opslaan" : ""}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<SaveIcon />}
+                                onClick={handleFileMenuSave}
+                                disabled={!designName}
+                                fullWidth={sidebarExpanded}
+                                size="small"
+                                sx={{
+                                    backgroundColor: "#fff",
+                                    color: designName ? "#0078d4" : "#ccc",
+                                    textTransform: "none",
+                                    fontSize: sidebarExpanded ? "13px" : "0px",
+                                    fontWeight: 600,
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                    borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                    minWidth: sidebarExpanded ? "auto" : "44px",
+                                    width: sidebarExpanded ? "100%" : "44px",
+                                    height: "44px",
+                                    "&:hover": designName ? {
+                                        backgroundColor: "#f5f7fa",
+                                        boxShadow: "none",
+                                        borderColor: "#0078d4",
+                                    } : {},
+                                }}
+                            >
+                                {sidebarExpanded ? "Opslaan" : ""}
+                            </Button>
+                        </Box>
+
+                        {/* Change Title Button */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={!sidebarExpanded ? "Titel wijzigen" : ""}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<EditIcon />}
+                                onClick={() => {
+                                    setDesignNameDialogMode("edit");
+                                    setDesignNameDialogOpen(true);
+                                }}
+                                disabled={!designName}
+                                fullWidth={sidebarExpanded}
+                                size="small"
+                                sx={{
+                                    backgroundColor: "#fff",
+                                    color: designName ? "#0078d4" : "#ccc",
+                                    textTransform: "none",
+                                    fontSize: sidebarExpanded ? "13px" : "0px",
+                                    fontWeight: 600,
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                    borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                    minWidth: sidebarExpanded ? "auto" : "44px",
+                                    width: sidebarExpanded ? "100%" : "44px",
+                                    height: "44px",
+                                    "&:hover": designName ? {
+                                        backgroundColor: "#f5f7fa",
+                                        boxShadow: "none",
+                                        borderColor: "#0078d4",
+                                    } : {},
+                                }}
+                            >
+                                {sidebarExpanded ? "Titel wijzigen" : ""}
+                            </Button>
+                        </Box>
+                    </Stack>
+                </Box>
+                )}
+
+                {/* Main Content Area */}
+                <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto", width: 0 }}>
+                    {/* File menu button bar - kept for backward compatibility but hidden */}
+                    <Box sx={{ position: "relative", mb: 0, p: 0, backgroundColor: "#fafbfc", borderRadius: 0, display: "none" }}>
+                        <Button
+                            onClick={handleFileMenuOpen}
+                            endIcon={<ExpandMoreIcon />}
+                            variant="outlined"
+                            fullWidth
+                            sx={{
+                                backgroundColor: "#fff",
+                                color: "#0078d4",
+                                textTransform: "none",
+                                fontSize: "15px",
+                                fontWeight: 600,
+                                whiteSpace: "nowrap",
                                 boxShadow: "none",
-                            }
-                        }}
-                    >
-                        Mijn ontwerpen
-                    </Button>
-                    <Menu
-                        anchorEl={fileMenuAnchor}
-                        open={fileMenuOpen}
-                        onClose={handleFileMenuClose}
-                        PaperProps={{
-                            sx: {
-                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                                mt: 0.5,
-                            }
-                        }}
-                    >
-                        <MenuItem 
-                            onClick={handleFileMenuLoad}
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                py: 1.5,
-                                px: 2,
+                                transition: "all 0.2s ease",
+                                justifyContent: "flex-start",
+                                paddingLeft: 3,
+                                paddingY: 1.5,
+                                borderRadius: 0,
+                                border: "1px solid #e5e7eb",
+                                borderLeft: "4px solid #0078d4",
+                                "&:hover": {
+                                    backgroundColor: "#f5f7fa",
+                                    boxShadow: "none",
+                                }
                             }}
                         >
-                            <UploadIcon sx={{ fontSize: "20px", color: "#0078d4" }} />
-                            <Box>
-                                <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
-                                    Laden
-                                </Typography>
-                                <Typography sx={{ fontSize: "12px", color: "#666" }}>
-                                    Lokaal bestand laden
-                                </Typography>
-                            </Box>
-                        </MenuItem>
-                        <MenuItem 
-                            onClick={handleFileMenuSave} 
-                            disabled={!designName}
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                py: 1.5,
-                                px: 2,
+                            Mijn ontwerpen
+                        </Button>
+                        <Menu
+                            anchorEl={fileMenuAnchor}
+                            open={fileMenuOpen}
+                            onClose={handleFileMenuClose}
+                            PaperProps={{
+                                sx: {
+                                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                                    mt: 0.5,
+                                }
                             }}
                         >
-                            <SaveIcon sx={{ fontSize: "20px", color: designName ? "#0078d4" : "#ccc" }} />
-                            <Box>
-                                <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
-                                    Opslaan
-                                </Typography>
-                                <Typography sx={{ fontSize: "12px", color: designName ? "#666" : "#999" }}>
-                                    Lokaal opslaan
-                                </Typography>
-                            </Box>
-                        </MenuItem>
-                    </Menu>
-                </Box>
+                            <MenuItem 
+                                onClick={handleFileMenuLoad}
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    py: 1.5,
+                                    px: 2,
+                                }}
+                            >
+                                <UploadIcon sx={{ fontSize: "20px", color: "#0078d4" }} />
+                                <Box>
+                                    <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Laden
+                                    </Typography>
+                                    <Typography sx={{ fontSize: "12px", color: "#666" }}>
+                                        Lokaal bestand laden
+                                    </Typography>
+                                </Box>
+                            </MenuItem>
+                            <MenuItem 
+                                onClick={handleFileMenuSave} 
+                                disabled={!designName}
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    py: 1.5,
+                                    px: 2,
+                                }}
+                            >
+                                <SaveIcon sx={{ fontSize: "20px", color: designName ? "#0078d4" : "#ccc" }} />
+                                <Box>
+                                    <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Opslaan
+                                    </Typography>
+                                    <Typography sx={{ fontSize: "12px", color: designName ? "#666" : "#999" }}>
+                                        Lokaal opslaan
+                                    </Typography>
+                                </Box>
+                            </MenuItem>
+                        </Menu>
+                    </Box>
 
-                {/* Horizontal divider */}
-                <Box sx={{ borderBottom: 1, borderColor: "#e5e7eb", mb: 2, mt: 1 }} />
-                
-                {/* Design title */}
-                <Typography
-                    sx={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: designName ? "#323130" : "#a19f9d",
-                        opacity: designName ? 1 : 0.6,
-                        mb: 2,
-                        px: 2,
-                    }}
-                >
-                    {designName ? `Ontwerp: ${designName}` : "Geen ontwerp gekozen"}
-                </Typography>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs
-                        value={value}
-                        onChange={handleChange}
-                        variant="scrollable"
-                        scrollButtons="auto"
-                        aria-label="scrollable auto tabs example"
+                    {/* Horizontal divider */}
+                    <Box sx={{ borderBottom: 1, borderColor: "#e5e7eb", mb: 2, mt: 0 }} />
+                    
+                    <Typography
+                        sx={{
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: designName ? "#323130" : "#a19f9d",
+                            opacity: designName ? 1 : 0.6,
+                            mb: 2,
+                            px: 2,
+                        }}
                     >
-                        <Tab 
-                            icon={<HomeIcon />} 
-                            label="Home"
-                            {...a11yProps(0)}
-                            disabled={!model.mapInitialized}
-                        />
-                        <Tab 
-                            icon={<ArchitectureIcon />} 
-                            label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
-                            {...a11yProps(1)}
-                            disabled={!designName}
-                        />
-                        <Tab 
-                            icon={<BuildIcon />} 
-                            label={(<span>Dimensioneer<br />constructie</span>) as any}
-                            {...a11yProps(2)}
-                            disabled={!designName}
-                        />
-                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} disabled={!designName} />
-                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} disabled={!designName} />
-                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} disabled={!designName} />
-                    </Tabs>
+                        {designName ? `Ontwerp: ${designName}` : "Geen ontwerp gekozen"}
+                    </Typography>
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                        <Tabs
+                            value={value}
+                            onChange={handleChange}
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            aria-label="scrollable auto tabs example"
+                        >
+                            <Tab 
+                                icon={<HomeIcon />} 
+                                label="Home"
+                                {...a11yProps(0)}
+                                disabled={!model.mapInitialized}
+                            />
+                            <Tab 
+                                icon={<ArchitectureIcon />} 
+                                label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
+                                {...a11yProps(1)}
+                                disabled={!designName}
+                            />
+                            <Tab 
+                                icon={<BuildIcon />} 
+                                label={(<span>Dimensioneer<br />constructie</span>) as any}
+                                {...a11yProps(2)}
+                                disabled={!designName}
+                            />
+                            <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} disabled={!designName} />
+                            <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} disabled={!designName} />
+                            <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} disabled={!designName} />
+                            </Tabs>
+                        </Box>
+                        <Box sx={{ flex: 1, overflow: "auto" }}>
+                            <CustomTabPanel value={value} index={0}>
+                            <HomePanel
+                                onCreateNewDesign={handleCreateNewDesign}
+                                onLoadDesign={handleLoadDesign}
+                                onLoadProjectLocal={handleLoadProjectLocal}
+                                onSaveProjectLocal={handleSaveProjectLocal}
+                                designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                                designName={designName}
+                                isLoading={!model.mapInitialized}
+                            />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={1}>
+                            <DimensionsPanel
+                                model={model}
+                                isLayerListVisible={isLayerListVisible}
+                                setSelectedLineLayerId={setSelectedLineLayerId}
+                                handleUploadGeoJSON={handleUploadGeoJSON}
+                                handleSelectFromMap={handleSelectFromMap}
+                                handleFileChange={handleFileChange}
+                                handleClearGraphics={handleClearGraphics}
+                                handleGridChange={handleGridChange}
+                                handleExcelUpload={handleExcelUpload}
+                                handleClearExcel={handleClearExcel}
+                                handleOpenOverview={handleOpenOverview}
+                                handleCreateDesign={handleCreateDesign}
+                                handleClearDesign={handleClearDesign}
+                                handleCreateCrossSection={handleCreateCrossSection}
+                                handleSaveWithDialog={handleSaveWithDialog}
+                                handleOpenDownloadDialog={handleOpenDownloadDialog}
+                                designName={designName}
+                            />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={2}>
+                            <ConstructionPanel model={model} />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={3}>
+                            <EffectAnalysisPanel model={model} />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={4}>
+                            {/* TODO: Add Kosten panel content */}
+                            <CostCalculationPanel model={model} />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={5}>
+                            <ComparisonChartAndTablePanel 
+                                model={model}
+                                onLoadDesign={() => setValue(1)}
+                            />
+                        </CustomTabPanel>
+                    </Box>
                 </Box>
-                <CustomTabPanel value={value} index={0}>
-                    <HomePanel
-                        onCreateNewDesign={handleCreateNewDesign}
-                        onLoadDesign={handleLoadDesign}
-                        onLoadProjectLocal={handleLoadProjectLocal}
-                        onSaveProjectLocal={handleSaveProjectLocal}
-                        designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
-                        designName={designName}
-                        isLoading={!model.mapInitialized}
-                    />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={1}>
-                    <DimensionsPanel
-                        model={model}
-                        isLayerListVisible={isLayerListVisible}
-                        setSelectedLineLayerId={setSelectedLineLayerId}
-                        handleUploadGeoJSON={handleUploadGeoJSON}
-                        handleSelectFromMap={handleSelectFromMap}
-                        handleFileChange={handleFileChange}
-                        handleClearGraphics={handleClearGraphics}
-                        handleGridChange={handleGridChange}
-                        handleExcelUpload={handleExcelUpload}
-                        handleClearExcel={handleClearExcel}
-                        handleOpenOverview={handleOpenOverview}
-                        handleCreateDesign={handleCreateDesign}
-                        handleClearDesign={handleClearDesign}
-                        handleCreateCrossSection={handleCreateCrossSection}
-                        handleSaveWithDialog={handleSaveWithDialog}
-                        handleOpenDownloadDialog={handleOpenDownloadDialog}
-                        designName={designName}
-                    />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={2}>
-                    <ConstructionPanel model={model} />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={3}>
-                    <EffectAnalysisPanel model={model} />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={4}>
-                    {/* TODO: Add Kosten panel content */}
-                    <CostCalculationPanel model={model} />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={5}>
-                    <ComparisonChartAndTablePanel 
-                        model={model}
-                        onLoadDesign={() => setValue(1)}
-                    />
-                </CustomTabPanel>
             </Box>
-
 
             {/* Paper for Chart and Table */}
             {model.designPanelVisible && (() => {

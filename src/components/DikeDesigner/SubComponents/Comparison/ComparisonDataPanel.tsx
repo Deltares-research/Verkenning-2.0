@@ -70,7 +70,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                         borderTopRightRadius: "4px",
                     }}
                 >
-                    <Typography variant="h6" sx={{ fontWeight: "bold", margin: 0, fontSize: "12px" }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", margin: 0, fontSize: "12px", color: "white" }}>
                         Vergelijkingstabel
                     </Typography>
                     <IconButton
@@ -117,8 +117,8 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                     backgroundColor: "#1565C0",
                     color: "white",
                     px: 2,
-                    py: 1,
-                    fontSize: "12px",
+                    py: 1.5,
+                    fontSize: "14px",
                     borderTopLeftRadius: "4px",
                     borderTopRightRadius: "4px",
                     display: "flex",
@@ -127,7 +127,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                     flexShrink: 0,
                 }}
             >
-                <Typography variant="h6" sx={{ fontWeight: "bold", margin: 0, fontSize: "12px" }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, margin: 0, fontSize: "12px", color: "white" }}>
                     Vergelijkingstabel
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
