@@ -567,18 +567,15 @@ const DikeDesigner = (
     useWatchAndRerender(model, "graphicsLayerLine.graphics.length");
     useWatchAndRerender(model, "graphicsLayerTemp.graphics.length");
     useWatchAndRerender(model, "graphicsLayer3dPolygon.graphics.length");
-    useWatchAndRerender(model, "chartData.length");
     useWatchAndRerender(model, "overviewVisible");
     useWatchAndRerender(model, "selectedLineLayerId");
     useWatchAndRerender(model, "gridSize");
     useWatchAndRerender(model, "activeSheet");
-    useWatchAndRerender(model, "activeTab");
     useWatchAndRerender(model, "selectedDijkvakField");
     useWatchAndRerender(model, "chartData");
     useWatchAndRerender(model, "allChartData");
     useWatchAndRerender(model, "crossSectionChartData");
     useWatchAndRerender(model, "chartDataElevation");
-    useWatchAndRerender(model, "crossSectionChartData.length");
     useWatchAndRerender(model, "crossSectionPanelVisible");
     useWatchAndRerender(model, "designPanelVisible");
     useWatchAndRerender(model, "costPanelVisible");
