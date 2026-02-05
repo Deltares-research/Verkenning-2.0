@@ -26,5 +26,5 @@
 
 
 
- --> schetslagen punten/lijnen goed verwerken
  --> check exact terugladen berekende waardes
+ --> move compare functions to own model

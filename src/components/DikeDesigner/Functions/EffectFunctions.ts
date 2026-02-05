@@ -555,6 +555,7 @@ export async function handleEffectAnalysis(model) {
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
+
     model.loading = false;
 
 

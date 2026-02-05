@@ -28,6 +28,10 @@ import Typography from "@vertigis/web/ui/Typography";
 import Menu from "@vertigis/web/ui/Menu";
 import MenuItem from "@vertigis/web/ui/MenuItem";
 import IconButton from "@vertigis/web/ui/IconButton";
+import { Dialog } from "@mui/material";
+import DialogTitle from "@vertigis/web/ui/DialogTitle";
+import DialogContent from "@vertigis/web/ui/DialogContent";
+import DialogActions from "@vertigis/web/ui/DialogActions";
 
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
@@ -54,7 +58,7 @@ import {
 } from "./Functions/ExportFunctions";
 
 import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
-
+import { handleEffectAnalysis } from "./Functions/EffectFunctions";
 
 import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer, loadGeometriesFromDesign } from "./Functions/SaveFunctions";
 import { saveProjectAsJSON, loadProjectFromJSON, type ProjectJSON } from "./Functions/SaveProjectFunctions";
@@ -97,6 +101,7 @@ const DikeDesigner = (
     const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
     const [designNameDialogOpen, setDesignNameDialogOpen] = useState(false);
     const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
+    const [effectAnalysisDialogOpen, setEffectAnalysisDialogOpen] = useState(false);
     const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
     const fileMenuOpen = Boolean(fileMenuAnchor);
     const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -377,10 +382,13 @@ const DikeDesigner = (
         model.graphicsLayerPoint.removeAll();
         model.graphicsLayerProfile.removeAll();
         model.crossSectionChartData = [];
+        model.chartData = [];
+        model.chartDataElevation = [];
         model.selectedLineLayerId = null;
         model.selectedDijkvakField = null;
         model.lineLength = null;
         model.view.analyses.removeAll()
+        handleClearDesign();
     };
 
     const handleGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,8 +452,7 @@ const DikeDesigner = (
         console.log("Excel uploaded and design panel opened");
 
     }
-
-    const handleCreateDesign = async () => {
+    const performDesignCreation = async () => {
 
         model.graphicsLayerMesh.removeAll();
         model.mergedMesh = null;
@@ -482,6 +489,18 @@ const DikeDesigner = (
         } finally {
             model.loading = false; // Hide loader
             model.messages.commands.ui.hideNotification.execute({ id: "designCreation" });
+        }
+    };
+
+    const handleCreateDesign = () => {
+        setEffectAnalysisDialogOpen(true);
+    };
+
+    const handleEffectAnalysisChoice = async (runEffectAnalysis: boolean) => {
+        setEffectAnalysisDialogOpen(false);
+        await performDesignCreation();
+        if (runEffectAnalysis) {
+            await handleEffectAnalysis(model);
         }
     };
 
@@ -1110,6 +1129,43 @@ const DikeDesigner = (
                 initialAlternatief={designNameDialogMode === "create" ? "" : designNameParts.alternatief}
                 title={designNameDialogMode === "create" ? "Nieuw ontwerp maken" : "Ontwerp naam wijzigen"}
             />
+
+            <Dialog open={effectAnalysisDialogOpen} onClose={() => setEffectAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+                <Box sx={{ p: 2, backgroundColor: '#f3f2f1', borderBottom: '1px solid #e1dfdd' }}>
+                    <DialogTitle sx={{ p: 0, fontSize: '18px', fontWeight: 600, color: '#323130' }}>
+                        Voer effectenanalyse uit?
+                    </DialogTitle>
+                </Box>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 2 }}>
+                        <Typography>
+                            Wil je ook de effectenanalyse uitvoeren na het aanmaken van het 3D-ontwerp?
+                        </Typography>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, gap: 1 }}>
+                    <Button onClick={() => handleEffectAnalysisChoice(false)} color="inherit" sx={{ fontSize: '14px', fontWeight: 500 }}>
+                        Nee
+                    </Button>
+                    <Button 
+                        onClick={() => handleEffectAnalysisChoice(true)} 
+                        variant="contained"
+                        sx={{ 
+                            fontSize: '14px', 
+                            fontWeight: 600,
+                            px: 3,
+                            py: 1.2,
+                            color: '#fff',
+                            backgroundColor: '#0078d4',
+                            '&:hover': {
+                                backgroundColor: '#005a9e',
+                            }
+                        }}
+                    >
+                        Ja
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </LayoutElement>
     );
 };
