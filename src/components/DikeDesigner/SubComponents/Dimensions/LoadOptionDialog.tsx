@@ -43,9 +43,16 @@ const LoadOptionDialog: React.FC<LoadOptionDialogProps> = ({
     return (
         <Dialog
             open={open}
-            onClose={onClose}
+            onClose={(event, reason) => {
+                // Prevent closing on backdrop click or escape key
+                if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+                    return;
+                }
+                onClose();
+            }}
             maxWidth="sm"
             fullWidth
+            disableEscapeKeyDown
             PaperProps={{
                 sx: {
                     borderRadius: "8px",
