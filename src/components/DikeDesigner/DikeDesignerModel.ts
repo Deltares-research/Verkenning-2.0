@@ -6,6 +6,7 @@
 /* eslint-disable import/order */
 import * as am5 from "@amcharts/amcharts5";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
+import { whenOnce } from "@vertigis/arcgis-extensions/support/observableUtils";
 import {
     ComponentModelBase,
     ComponentModelProperties,
@@ -40,7 +41,8 @@ import Mesh from "@arcgis/core/geometry/Mesh";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils";
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator";
+
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
@@ -254,7 +256,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 const inEPSG = extractEPSG(geojson.crs?.properties?.name || "");
                 console.log("Input EPSG:", inEPSG);
 
-                projection.load().then(() => {
+                projectOperator.load().then(() => {
                     geojson.features.forEach(feature => {
                         const { geometry, properties } = feature;
 
@@ -283,7 +285,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                             return;
                         }
 
-                        const projected = projection.project(esriGeometry, spatialRefOut);
+                        const projected = projectOperator.execute(esriGeometry, spatialRefOut);
 
 
                         const graphic = new Graphic({
@@ -769,36 +771,28 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             // Pass construction layer to ConstructionModel
             this.constructionModel.graphicsLayerConstructionLine = graphicsLayerConstructionLine;
 
-
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);
-            console.log("Line feature layers:", this.lineFeatureLayers);
 
+            await whenOnce(this.view, "basemapView.baseLayerViews");
 
+            this.sketchViewModel = new SketchViewModel({
+                polylineSymbol: this.lineLayerSymbol as any,
+                view: this.view,
+                snappingOptions: {
+                    enabled: true,
+                    featureSources: [{
+                        layer: this.graphicsLayerLine,
+                        enabled: true
+                    }]
+                }
+            });
+            
+            // Pass sketchViewModel to ConstructionModel
+            this.constructionModel.sketchViewModel = this.sketchViewModel;
 
-            await reactiveUtils
-                .whenOnce(() => this.view)
-                .then(() => {
+            // Mark map as initialized, enabling UI
+            this.mapInitialized = true;
 
-                    console.log("Graphics layer added to the map.");
-
-                    this.sketchViewModel = new SketchViewModel({
-                        polylineSymbol: this.lineLayerSymbol as any,
-                        view: this.view,
-                        snappingOptions: {
-                            enabled: true,
-                            featureSources: [{
-                                layer: this.graphicsLayerLine,
-                                enabled: true
-                            }]
-                        }
-                    });
-                    
-                    // Pass sketchViewModel to ConstructionModel
-                    this.constructionModel.sketchViewModel = this.sketchViewModel;
-
-                    // Mark map as initialized, enabling UI
-                    this.mapInitialized = true;
-                });
         });
     }
 }

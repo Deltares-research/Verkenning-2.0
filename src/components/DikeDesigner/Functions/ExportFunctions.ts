@@ -1,4 +1,4 @@
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator"
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 
 export function export3dGraphicsLayerAsGeoJSON(model): void {
@@ -11,12 +11,12 @@ export function export3dGraphicsLayerAsGeoJSON(model): void {
         features: [],
     };
 
-    projection.load().then(() => {
+    projectOperator.load().then(() => {
         model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
-                const projectedGeometry = projection.project(
+                const projectedGeometry = projectOperator.execute(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
@@ -59,12 +59,12 @@ export function exportRuimteslagLayerAsGeoJSON(model): void {
         features: [],
     };
 
-    projection.load().then(() => {
+    projectOperator.load().then(() => {
         model.graphicsLayerRuimtebeslag.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
 
             if (geometry) {
-                const projectedGeometry = projection.project(
+                const projectedGeometry = projectOperator.execute(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
@@ -146,11 +146,11 @@ export function exportInputLinesAsGeoJSON(model): void {
         features: [],
     };
     
-    projection.load().then(() => {
+    projectOperator.load().then(() => {
         model.graphicsLayerLine.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
             if (geometry) {
-                const projectedGeometry = projection.project(
+                const projectedGeometry = projectOperator.execute(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );

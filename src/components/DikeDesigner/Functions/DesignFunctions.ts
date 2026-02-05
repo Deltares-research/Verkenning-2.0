@@ -30,7 +30,7 @@ import Mesh from "@arcgis/core/geometry/Mesh";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils";
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
 import { calculate2dAreas, calculate3dAreas } from "./EffectFunctions";
@@ -98,7 +98,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
 
     // Ensure projection module is loaded
-    await projection.load();
+    await projectOperator.load();
 
     // Use Promise.all() to process all chart data in parallel
     const offsetPromises = chartData.map(async (row) => {
@@ -126,7 +126,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
             console.log(offsetDistance, "Offset distance for row:", row);
 
             // Project to RD New for accurate planar offset
-            const projectedLine = projection.project(basePath, rdNewSpatialRef) as Polyline;
+            const projectedLine = projectOperator.execute(basePath, rdNewSpatialRef) as Polyline;
 
             if (!projectedLine) {
                 console.warn(`Failed to project line for row:`, row);
@@ -142,7 +142,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
             }
 
             // Project back to Web Mercator
-            const offsetLine = projection.project(offsetLineRD, SpatialReference.WebMercator) as Polyline;
+            const offsetLine = projectOperator.execute(offsetLineRD, SpatialReference.WebMercator) as Polyline;
 
             if (offsetLine) {
                 const elevation = row.hoogte || 0;
@@ -355,12 +355,12 @@ export async function calculateVolume(model): Promise<void> {
         };
 
         // Project polygons to WGS84 and add to GeoJSON
-        await projection.load();
+        await projectOperator.load();
 
         model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
             if (geometry) {
-                const projectedGeometry = projection.project(
+                const projectedGeometry = projectOperator.execute(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
@@ -422,7 +422,7 @@ export async function calculateVolume(model): Promise<void> {
                 spatialReference: spatialRefRd
             });
 
-            const multiPointAboveGroundWebMerc = projection.project(multipointAboveGround, SpatialReference.WebMercator) as Multipoint;
+            const multiPointAboveGroundWebMerc = projectOperator.execute(multipointAboveGround, SpatialReference.WebMercator) as Multipoint;
 
             // Store z-values mapped to Web Mercator coordinates (since alpha shape is in Web Mercator)
             const zValueMap: { [key: string]: number } = {};
@@ -769,8 +769,8 @@ export function setInputLineFromFeatureLayer(model) {
             features.forEach((feature) => {
 
                 const lineGeometry = feature.geometry;
-                projection.load().then(() => {
-                    const projectedGeometry = projection.project(
+                projectOperator.load().then(() => {
+                    const projectedGeometry = projectOperator.execute(
                         lineGeometry,
                         new SpatialReference({ wkid: 3857 })
                     );
