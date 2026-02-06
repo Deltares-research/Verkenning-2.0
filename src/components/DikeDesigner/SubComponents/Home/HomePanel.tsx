@@ -43,7 +43,7 @@ const HomePanel: React.FC<HomePanelProps> = ({
                             fontSize: "14px",
                         }}
                     >
-                        Applicatie wordt geladen...
+                        Dijkontwerper wordt geladen...
                     </Typography>
                 </Stack>
             ) : (

@@ -713,24 +713,110 @@ const DikeDesigner = (
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        background: "linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         zIndex: 9999,
                     }}
                 >
-                    <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
-                        <CircularProgress size={60} sx={{ color: "#0078d4" }} />
-                        <Typography
+                    <Stack 
+                        spacing={4} 
+                        sx={{ 
+                            alignItems: "center", 
+                            textAlign: "center",
+                            animation: "smoothFadeIn 1s ease-out",
+                            "@keyframes smoothFadeIn": {
+                                "0%": { opacity: 0, transform: "translateY(10px)" },
+                                "100%": { opacity: 1, transform: "translateY(0)" },
+                            },
+                        }}
+                    >
+                        {/* Subtle Loading Circle */}
+                        <Box
                             sx={{
-                                color: "#323130",
-                                fontSize: "14px",
-                                fontWeight: 500,
+                                position: "relative",
+                                width: "50px",
+                                height: "50px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                             }}
                         >
-                            Applicatie wordt geladen...
-                        </Typography>
+                            <Box
+                                sx={{
+                                    width: "50px",
+                                    height: "50px",
+                                    borderRadius: "50%",
+                                    border: "2px solid rgba(0, 120, 212, 0.08)",
+                                    borderTopColor: "#0078d4",
+                                    animation: "subtleRotate 2.5s linear infinite",
+                                    "@keyframes subtleRotate": {
+                                        "0%": { transform: "rotate(0deg)" },
+                                        "100%": { transform: "rotate(360deg)" },
+                                    },
+                                }}
+                            />
+                        </Box>
+
+                        {/* Text Content */}
+                        <Box sx={{ maxWidth: "320px" }}>
+                            <Typography
+                                sx={{
+                                    color: "#2d3748",
+                                    fontSize: "18px",
+                                    fontWeight: 500,
+                                    letterSpacing: "-0.2px",
+                                    mb: 0.5,
+                                }}
+                            >
+                                Dijkontwerper versie 1.0.0
+                            </Typography>
+                            <Typography
+                                sx={{
+                                    color: "#8b92a3",
+                                    fontSize: "13px",
+                                    fontWeight: 400,
+                                }}
+                            >
+                                Even geduld...
+                            </Typography>
+                        </Box>
+
+                        {/* Smooth Loading Dots */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                gap: 0.8,
+                                alignItems: "center",
+                                height: "10px",
+                            }}
+                        >
+                            {[0, 1, 2].map((i) => (
+                                <Box
+                                    key={i}
+                                    sx={{
+                                        width: "5px",
+                                        height: "5px",
+                                        borderRadius: "50%",
+                                        backgroundColor: "#0078d4",
+                                        animation: "dotPulse 1.5s ease-in-out infinite",
+                                        animationDelay: `${i * 0.2}s`,
+                                        opacity: 0.3,
+                                        "@keyframes dotPulse": {
+                                            "0%, 100%": { 
+                                                opacity: 0.2,
+                                                transform: "scale(0.85)",
+                                            },
+                                            "50%": { 
+                                                opacity: 0.7,
+                                                transform: "scale(1.1)",
+                                            },
+                                        },
+                                    }}
+                                />
+                            ))}
+                        </Box>
                     </Stack>
                 </Box>
             )}
@@ -1284,7 +1370,12 @@ const DikeDesigner = (
                 initialDesignName={designName}
             />
 
-            <Dialog open={homeDialogOpen} onClose={() => setHomeDialogOpen(false)} maxWidth="md" fullWidth>
+            <Dialog 
+                open={homeDialogOpen} 
+                maxWidth="md" 
+                fullWidth
+                disableEscapeKeyDown={true}
+            >
                 <Box sx={{ p: 2, backgroundColor: '#f3f2f1', borderBottom: '1px solid #e1dfdd' }}>
                     <DialogTitle sx={{ p: 0, fontSize: '18px', fontWeight: 600, color: '#323130' }}>
                         Welkom
