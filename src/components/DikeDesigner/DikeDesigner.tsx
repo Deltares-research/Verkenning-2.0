@@ -59,6 +59,7 @@ import {
 
 import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
 import { handleEffectAnalysis } from "./Functions/EffectFunctions";
+import { handleCostCalculation } from "./Functions/CostFunctions";
 
 import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer, loadGeometriesFromDesign } from "./Functions/SaveFunctions";
 import { saveProjectAsJSON, loadProjectFromJSON, type ProjectJSON } from "./Functions/SaveProjectFunctions";
@@ -101,7 +102,8 @@ const DikeDesigner = (
     const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
     const [designNameDialogOpen, setDesignNameDialogOpen] = useState(false);
     const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
-    const [effectAnalysisDialogOpen, setEffectAnalysisDialogOpen] = useState(false);
+    const [recalculateDialogOpen, setRecalculateDialogOpen] = useState(false);
+    const [pendingAction, setPendingAction] = useState<"design" | "construction" | null>(null);
     const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
     const fileMenuOpen = Boolean(fileMenuAnchor);
     const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -493,15 +495,33 @@ const DikeDesigner = (
     };
 
     const handleCreateDesign = () => {
-        setEffectAnalysisDialogOpen(true);
+        setPendingAction("design");
+        setRecalculateDialogOpen(true);
     };
 
-    const handleEffectAnalysisChoice = async (runEffectAnalysis: boolean) => {
-        setEffectAnalysisDialogOpen(false);
-        await performDesignCreation();
-        if (runEffectAnalysis) {
-            await handleEffectAnalysis(model);
+    const handleCreateConstructionWithRecalculate = () => {
+        setPendingAction("construction");
+        setRecalculateDialogOpen(true);
+    };
+
+    const handleRecalculateChoice = async (recalculate: boolean) => {
+        setRecalculateDialogOpen(false);
+        
+        if (pendingAction === "design") {
+            await performDesignCreation();
+        } else if (pendingAction === "construction") {
+            model.constructionModel.createConstruction();
         }
+        
+        if (recalculate) {
+            // Effects should be calculated first as they provide input for costs
+            await handleEffectAnalysis(model);
+            
+            // Then calculate costs
+            await handleCostCalculation(model);
+        }
+        
+        setPendingAction(null);
     };
 
 
@@ -1022,7 +1042,7 @@ const DikeDesigner = (
                             />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={2}>
-                            <ConstructionPanel model={model} />
+                            <ConstructionPanel model={model} onCreateConstruction={handleCreateConstructionWithRecalculate} />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={3}>
                             <EffectAnalysisPanel model={model} />
@@ -1130,25 +1150,25 @@ const DikeDesigner = (
                 title={designNameDialogMode === "create" ? "Nieuw ontwerp maken" : "Ontwerp naam wijzigen"}
             />
 
-            <Dialog open={effectAnalysisDialogOpen} onClose={() => setEffectAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+            <Dialog open={recalculateDialogOpen} onClose={() => setRecalculateDialogOpen(false)} maxWidth="sm" fullWidth>
                 <Box sx={{ p: 2, backgroundColor: '#f3f2f1', borderBottom: '1px solid #e1dfdd' }}>
                     <DialogTitle sx={{ p: 0, fontSize: '18px', fontWeight: 600, color: '#323130' }}>
-                        Voer effectenanalyse uit?
+                        Herberekeningen uitvoeren?
                     </DialogTitle>
                 </Box>
                 <DialogContent>
                     <Stack spacing={2} sx={{ mt: 2 }}>
                         <Typography>
-                            Wil je ook de effectenanalyse uitvoeren na het aanmaken van het 3D-ontwerp?
+                            Wil je effecten en kosten herberekenen na deze actie?
                         </Typography>
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <Button onClick={() => handleEffectAnalysisChoice(false)} color="inherit" sx={{ fontSize: '14px', fontWeight: 500 }}>
+                    <Button onClick={() => handleRecalculateChoice(false)} color="inherit" sx={{ fontSize: '14px', fontWeight: 500 }}>
                         Nee
                     </Button>
                     <Button 
-                        onClick={() => handleEffectAnalysisChoice(true)} 
+                        onClick={() => handleRecalculateChoice(true)}
                         variant="contained"
                         sx={{ 
                             fontSize: '14px', 

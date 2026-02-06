@@ -21,9 +21,10 @@ import { useWatchAndRerender } from "@vertigis/web/ui";
 
 interface ConstructionPanelProps {
     model: any;
+    onCreateConstruction?: () => void;
 }
 
-const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
+const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateConstruction }) => {
     
     useWatchAndRerender(model, "constructionModel");
     useWatchAndRerender(model.constructionModel, "drawnConstructionLine");
@@ -55,8 +56,12 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
     };
 
     const handleCreateConstruction = () => {
-        // Create construction from selected line with current parameters
-        model.constructionModel.createConstruction();
+        // Use the callback if provided, otherwise create construction directly
+        if (onCreateConstruction) {
+            onCreateConstruction();
+        } else {
+            model.constructionModel.createConstruction();
+        }
     };
 
     const handleClearLine = () => {
@@ -135,7 +140,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
                 </FormControl>
 
                 <FormControl fullWidth>
-                    <FormLabel>Diepte t.o.v. maaiveld (m)</FormLabel>
+                    <FormLabel>Onderkant constructie t.o.v. NAP (m)</FormLabel>
                     <TextField
                         type="number"
                         value={model.constructionModel.depth}
