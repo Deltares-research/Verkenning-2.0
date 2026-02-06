@@ -3,6 +3,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
+import Alert from "@vertigis/web/ui/Alert";
 import FormLabel from "@vertigis/web/ui/FormLabel";
 import FormControl from "@vertigis/web/ui/FormControl";
 import Select from "@vertigis/web/ui/Select";
@@ -18,6 +19,8 @@ interface CostCalculationPanelProps {
 }
 
 const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) => {
+  useWatchAndRerender(model, "effectsCalculated");
+  useWatchAndRerender(model, "costsCalculated");
   useWatchAndRerender(model.costModel, "directCostGroundWork");
   useWatchAndRerender(model.costModel, "directCostStructures");
   useWatchAndRerender(model.costModel, "indirectConstructionCosts");
@@ -38,10 +41,22 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
             await handleCostCalculation(model);
           }}
           fullWidth
-          disabled={!model.graphicsLayerRuimtebeslag?.graphics.length || model.loading}
+          disabled={!model.graphicsLayerRuimtebeslag?.graphics.length || model.loading || !model.effectsCalculated}
         >
           Bereken kosten
         </Button>
+
+        {!model.effectsCalculated && (
+          <Alert severity="error" sx={{ fontSize: "13px" }}>
+            Effecten moeten eerst worden berekend voordat kosten kunnen worden berekend.
+          </Alert>
+        )}
+
+        {model.effectsCalculated && !model.costsCalculated && (
+          <Alert severity="warning" sx={{ fontSize: "13px" }}>
+            Kosten zijn nog niet berekend. Voer alstublieft de kostenberekening uit om de resultaten weer te geven.
+          </Alert>
+        )}
       </Stack>
 
       <FormControl fullWidth>

@@ -173,8 +173,10 @@ export const handleCostCalculation = async (
             errorMessage = error.message;
         }
 
+
     } finally {
         model.loading = false;
+        model.costsCalculated = true;
     }
 };
 

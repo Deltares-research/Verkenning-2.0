@@ -12,6 +12,7 @@ import Box from "@vertigis/web/ui/Box";
 import CircularProgress from "@vertigis/web/ui/CircularProgress";
 
 interface HomePanelProps {
+    onQuickStart: () => void;
     onCreateNewDesign: () => void;
     onLoadDesign: () => void;
     onLoadProjectLocal: () => void;
@@ -22,6 +23,7 @@ interface HomePanelProps {
 }
 
 const HomePanel: React.FC<HomePanelProps> = ({
+    onQuickStart,
     onCreateNewDesign,
     onLoadDesign,
     onLoadProjectLocal,
@@ -31,16 +33,7 @@ const HomePanel: React.FC<HomePanelProps> = ({
     isLoading = false,
 }) => {
     return (
-        <Box
-            sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: "calc(100vh - 200px)",
-                backgroundColor: "white",
-                p: 4,
-            }}
-        >
+        <Box>
             {isLoading ? (
                 <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
                     <CircularProgress size={60} />
@@ -54,9 +47,9 @@ const HomePanel: React.FC<HomePanelProps> = ({
                     </Typography>
                 </Stack>
             ) : (
-                <Stack spacing={2} sx={{ maxWidth: 600, width: "100%" }}>
+                <Stack spacing={2}>
                     {/* Header */}
-                    <Box sx={{ textAlign: "center", mb: 2 }}>
+                    <Box sx={{ textAlign: "center", mb: 1 }}>
                         <Typography
                             sx={{
                                 fontWeight: 600,
@@ -79,6 +72,53 @@ const HomePanel: React.FC<HomePanelProps> = ({
 
                     {/* Action Cards */}
                     <Stack spacing={2}>
+                    {/* Quick Start Button - First */}
+                    <Button
+                        onClick={onQuickStart}
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-start",
+                            gap: 2,
+                            p: 2,
+                            textTransform: "none",
+                            color: "#fff",
+                            backgroundColor: "#107c10",
+                            "&:hover": {
+                                backgroundColor: "#0a5e0d",
+                            },
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                backgroundColor: "#ffffff20",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <AddIcon
+                                sx={{
+                                    fontSize: 24,
+                                    color: "white",
+                                }}
+                            />
+                        </Box>
+                        <Typography
+                            sx={{
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: "white",
+                            }}
+                        >
+                            Ik wil een schets maken
+                        </Typography>
+                    </Button>
+
                     {/* Create New Design Card */}
                     <Button
                         onClick={onCreateNewDesign}

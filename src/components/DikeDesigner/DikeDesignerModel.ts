@@ -85,6 +85,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     loading: boolean = false;
     mapInitialized: boolean = false;
+    
+    // Tracking calculation status for effects and costs
+    effectsCalculated: boolean = false;
+    costsCalculated: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
     apiKey: DikeDesignerModelProperties["apiKey"];

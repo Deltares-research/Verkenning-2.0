@@ -6,6 +6,8 @@ import SelectAllIcon from "@mui/icons-material/SelectAll";
 import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import WarningIcon from "@mui/icons-material/Warning";
 import HomeIcon from "@mui/icons-material/Home";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SaveIcon from "@mui/icons-material/Save";
@@ -24,11 +26,13 @@ import FormLabel from "@vertigis/web/ui/FormLabel";
 import Input from "@vertigis/web/ui/Input";
 import Alert from "@vertigis/web/ui/Alert"
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
+import CircularProgress from "@vertigis/web/ui/CircularProgress";
 import Typography from "@vertigis/web/ui/Typography";
 import Menu from "@vertigis/web/ui/Menu";
 import MenuItem from "@vertigis/web/ui/MenuItem";
 import IconButton from "@vertigis/web/ui/IconButton";
 import { Dialog } from "@mui/material";
+import Tooltip from "@mui/material/Tooltip";
 import DialogTitle from "@vertigis/web/ui/DialogTitle";
 import DialogContent from "@vertigis/web/ui/DialogContent";
 import DialogActions from "@vertigis/web/ui/DialogActions";
@@ -102,8 +106,7 @@ const DikeDesigner = (
     const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
     const [designNameDialogOpen, setDesignNameDialogOpen] = useState(false);
     const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
-    const [recalculateDialogOpen, setRecalculateDialogOpen] = useState(false);
-    const [pendingAction, setPendingAction] = useState<"design" | "construction" | null>(null);
+    const [homeDialogOpen, setHomeDialogOpen] = useState(!model.designName && model.mapInitialized);
     const [constructionChartVersion, setConstructionChartVersion] = useState(0);
     const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
     const fileMenuOpen = Boolean(fileMenuAnchor);
@@ -164,18 +167,30 @@ const DikeDesigner = (
         }
     }
 
-    const handleCreateNewDesign = () => {
+    const handleCreateNewDesign = async () => {
+        setHomeDialogOpen(false);
         setDesignNameDialogMode("create");
         setDesignNameDialogOpen(true);
+    };
+
+    const handleQuickStart = async () => {
+        // Quick start with default values "schets"
+        setHomeDialogOpen(false);
+        const fullName = buildDesignName("schets", "schets");
+        model.designName = fullName;
     };
 
     const handleLoadDesign = () => {
         setLoadDesignsDialogOpen(true);
     };
 
-    const handleLoadDesignGeometries = async (objectId: number) => {
+    const handleLoadDesignGeometries = async (objectId: number, designName?: string) => {
         await loadGeometriesFromDesign(model);
-        setValue(1);
+        // Set the design name if provided
+        if (designName) {
+            model.designName = designName;
+        }
+        setValue(0);
     };
 
     const handleLoadProjectLocal = () => {
@@ -190,7 +205,7 @@ const DikeDesigner = (
                     try {
                         const jsonContent = JSON.parse(event.target?.result as string) as ProjectJSON;
                         loadProjectFromJSON(model, jsonContent);
-                        setValue(1);
+                        setValue(0);
                     } catch (error) {
                         console.error("Error parsing JSON file:", error);
                         model.messages.commands.ui.alert.execute({
@@ -470,6 +485,11 @@ const DikeDesigner = (
         model.total2dArea = null;
         model.total3dArea = null;
         model.lineLength = null;
+        
+        // Reset calculation status when new design is created
+        model.effectsCalculated = false;
+        model.costsCalculated = false;
+        
         cleanFeatureLayer(model.designLayer2D);
 
         model.loading = true; // Show loader
@@ -498,36 +518,26 @@ const DikeDesigner = (
         }
     };
 
-    const handleCreateDesign = () => {
-        setPendingAction("design");
-        setRecalculateDialogOpen(true);
+    const handleCreateDesign = async () => {
+        await performDesignCreation();
     };
 
     const handleCreateConstructionWithRecalculate = () => {
-        setPendingAction("construction");
-        setRecalculateDialogOpen(true);
+        model.constructionModel.createConstruction();
+        // Reset calculation status when new construction is created
+        model.effectsCalculated = false;
+        model.costsCalculated = false;
+        setConstructionChartVersion((prev) => prev + 1);
     };
 
-    const handleRecalculateChoice = async (recalculate: boolean) => {
-        setRecalculateDialogOpen(false);
-        
-        if (pendingAction === "design") {
-            await performDesignCreation();
-        } else if (pendingAction === "construction") {
-            model.constructionModel.createConstruction();
-            setConstructionChartVersion((prev) => prev + 1);
+    React.useEffect(() => {
+        // Show home dialog when designName becomes empty, close it when filled
+        if (!model.designName && model.mapInitialized) {
+            setHomeDialogOpen(true);
+        } else if (model.designName) {
+            setHomeDialogOpen(false);
         }
-        
-        if (recalculate) {
-            // Effects should be calculated first as they provide input for costs
-            await handleEffectAnalysis(model);
-            
-            // Then calculate costs
-            await handleCostCalculation(model);
-        }
-        
-        setPendingAction(null);
-    };
+    }, [model.designName, model.mapInitialized]);
 
 
     const handleCreateCrossSection = () => async () => {
@@ -553,6 +563,10 @@ const DikeDesigner = (
         model.total2dArea = null;
         model.total3dArea = null;
         model.lineLength = null;
+
+        // Reset calculation status
+        model.effectsCalculated = false;
+        model.costsCalculated = false;
 
         // intersection resets
         model.intersectingPanden = [];
@@ -652,6 +666,16 @@ const DikeDesigner = (
         };
     }
 
+    // Create tab label with status indicator
+    const TabLabelWithStatus = ({ label, isCalculated }: { label: string; isCalculated: boolean }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <span>{label}</span>
+            {isCalculated && (
+                <CheckCircleIcon sx={{ fontSize: '16px', color: '#107c10' }} />
+            )}
+        </Box>
+    );
+
     function CustomTabPanel(props: TabPanelProps) {
         const { children, value, index, ...other } = props;
 
@@ -674,12 +698,42 @@ const DikeDesigner = (
         model.designName = fullName;
         setDesignNameDialogOpen(false);
         if (designNameDialogMode === "create") {
-            setValue(1);
+            setValue(0);
         }
     };
 
     return (
         <LayoutElement {...props} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+            {/* Global Loading Overlay */}
+            {!model.mapInitialized && (
+                <Box
+                    sx={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 9999,
+                    }}
+                >
+                    <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
+                        <CircularProgress size={60} sx={{ color: "#0078d4" }} />
+                        <Typography
+                            sx={{
+                                color: "#323130",
+                                fontSize: "14px",
+                                fontWeight: 500,
+                            }}
+                        >
+                            Applicatie wordt geladen...
+                        </Typography>
+                    </Stack>
+                </Box>
+            )}
             {model.loading && (
                 <LinearProgress
                     sx={{
@@ -879,6 +933,95 @@ const DikeDesigner = (
                             </Button>
                         </Box>
                     </Stack>
+
+                    {/* Global Status Indicator */}
+                    {designName && (
+                        <Box sx={{ 
+                            mt: "auto", 
+                            pt: 2, 
+                            borderTop: "1px solid #e5e7eb",
+                        }}>
+                            {model.effectsCalculated && model.costsCalculated ? (
+                                <Tooltip title="Berekeningen compleet: effecten en kosten berekend" placement="top" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                                    <Box sx={{ 
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: sidebarExpanded ? "space-between" : "center",
+                                        gap: 1,
+                                        cursor: "pointer",
+                                    }}>
+                                        <CheckCircleIcon sx={{ 
+                                            fontSize: "20px", 
+                                            color: "#107c10",
+                                            flexShrink: 0
+                                        }} />
+                                        {sidebarExpanded && (
+                                            <Typography sx={{ 
+                                                fontSize: "12px", 
+                                                color: "#107c10",
+                                                fontWeight: 500,
+                                                flex: 1,
+                                            }}>
+                                                Alles berekend
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </Tooltip>
+                            ) : model.effectsCalculated ? (
+                                <Tooltip title="Berekeningen onvolledig: alleen effecten berekend, kosten nog nodig" placement="top" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                                    <Box sx={{ 
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: sidebarExpanded ? "space-between" : "center",
+                                        gap: 1,
+                                        cursor: "pointer",
+                                    }}>
+                                        <WarningIcon sx={{ 
+                                            fontSize: "20px", 
+                                            color: "#ffb900",
+                                            flexShrink: 0
+                                        }} />
+                                        {sidebarExpanded && (
+                                            <Typography sx={{ 
+                                                fontSize: "12px", 
+                                                color: "#ffb900",
+                                                fontWeight: 500,
+                                                flex: 1,
+                                            }}>
+                                                Gedeeltelijk
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip title="Berekeningen nodig: effecten en kosten moeten nog berekend worden" placement="top" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                                    <Box sx={{ 
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: sidebarExpanded ? "space-between" : "center",
+                                        gap: 1,
+                                        cursor: "pointer",
+                                    }}>
+                                        <ErrorIcon sx={{ 
+                                            fontSize: "20px", 
+                                            color: "#d13438",
+                                            flexShrink: 0
+                                        }} />
+                                        {sidebarExpanded && (
+                                            <Typography sx={{ 
+                                                fontSize: "12px", 
+                                                color: "#d13438",
+                                                fontWeight: 500,
+                                                flex: 1,
+                                            }}>
+                                                Niet berekend
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </Tooltip>
+                            )}
+                        </Box>
+                    )}
                 </Box>
                 )}
 
@@ -993,41 +1136,34 @@ const DikeDesigner = (
                             aria-label="scrollable auto tabs example"
                         >
                             <Tab 
-                                icon={<HomeIcon />} 
-                                label="Home"
-                                {...a11yProps(0)}
-                                disabled={!model.mapInitialized}
-                            />
-                            <Tab 
                                 icon={<ArchitectureIcon />} 
                                 label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
-                                {...a11yProps(1)}
+                                {...a11yProps(0)}
                                 disabled={!designName}
                             />
                             <Tab 
                                 icon={<BuildIcon />} 
                                 label={(<span>Dimensioneer<br />constructie</span>) as any}
-                                {...a11yProps(2)}
+                                {...a11yProps(1)}
                                 disabled={!designName}
                             />
-                            <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} disabled={!designName} />
-                            <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} disabled={!designName} />
-                            <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} disabled={!designName} />
+                            <Tab 
+                                icon={<AssessmentIcon />} 
+                                label={(<TabLabelWithStatus label="Effecten" isCalculated={model.effectsCalculated} />) as any}
+                                {...a11yProps(2)} 
+                                disabled={!designName} 
+                            />
+                            <Tab 
+                                icon={<AttachMoneyIcon />} 
+                                label={(<TabLabelWithStatus label="Kosten" isCalculated={model.costsCalculated} />) as any}
+                                {...a11yProps(3)} 
+                                disabled={!designName} 
+                            />
+                            <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(4)} disabled={!designName} />
                             </Tabs>
                         </Box>
                         <Box sx={{ flex: 1, overflow: "auto" }}>
                             <CustomTabPanel value={value} index={0}>
-                            <HomePanel
-                                onCreateNewDesign={handleCreateNewDesign}
-                                onLoadDesign={handleLoadDesign}
-                                onLoadProjectLocal={handleLoadProjectLocal}
-                                onSaveProjectLocal={handleSaveProjectLocal}
-                                designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
-                                designName={designName}
-                                isLoading={!model.mapInitialized}
-                            />
-                        </CustomTabPanel>
-                        <CustomTabPanel value={value} index={1}>
                             <DimensionsPanel
                                 model={model}
                                 isLayerListVisible={isLayerListVisible}
@@ -1048,20 +1184,20 @@ const DikeDesigner = (
                                 designName={designName}
                             />
                         </CustomTabPanel>
-                        <CustomTabPanel value={value} index={2}>
+                        <CustomTabPanel value={value} index={1}>
                             <ConstructionPanel model={model} onCreateConstruction={handleCreateConstructionWithRecalculate} />
                         </CustomTabPanel>
-                        <CustomTabPanel value={value} index={3}>
+                        <CustomTabPanel value={value} index={2}>
                             <EffectAnalysisPanel model={model} />
                         </CustomTabPanel>
-                        <CustomTabPanel value={value} index={4}>
+                        <CustomTabPanel value={value} index={3}>
                             {/* TODO: Add Kosten panel content */}
                             <CostCalculationPanel model={model} />
                         </CustomTabPanel>
-                        <CustomTabPanel value={value} index={5}>
+                        <CustomTabPanel value={value} index={4}>
                             <ComparisonChartAndTablePanel 
                                 model={model}
-                                onLoadDesign={() => setValue(1)}
+                                onLoadDesign={() => setValue(0)}
                             />
                         </CustomTabPanel>
                     </Box>
@@ -1148,6 +1284,26 @@ const DikeDesigner = (
                 initialDesignName={designName}
             />
 
+            <Dialog open={homeDialogOpen} onClose={() => setHomeDialogOpen(false)} maxWidth="md" fullWidth>
+                <Box sx={{ p: 2, backgroundColor: '#f3f2f1', borderBottom: '1px solid #e1dfdd' }}>
+                    <DialogTitle sx={{ p: 0, fontSize: '18px', fontWeight: 600, color: '#323130' }}>
+                        Welkom
+                    </DialogTitle>
+                </Box>
+                <DialogContent sx={{ p: 3 }}>
+                    <HomePanel
+                        onQuickStart={handleQuickStart}
+                        onCreateNewDesign={handleCreateNewDesign}
+                        onLoadDesign={handleLoadDesign}
+                        onLoadProjectLocal={handleLoadProjectLocal}
+                        onSaveProjectLocal={handleSaveProjectLocal}
+                        designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                        designName={designName}
+                        isLoading={!model.mapInitialized}
+                    />
+                </DialogContent>
+            </Dialog>
+
             <DesignNameDialog
                 open={designNameDialogOpen}
                 onClose={() => setDesignNameDialogOpen(false)}
@@ -1157,42 +1313,7 @@ const DikeDesigner = (
                 title={designNameDialogMode === "create" ? "Nieuw ontwerp maken" : "Ontwerp naam wijzigen"}
             />
 
-            <Dialog open={recalculateDialogOpen} onClose={() => setRecalculateDialogOpen(false)} maxWidth="sm" fullWidth>
-                <Box sx={{ p: 2, backgroundColor: '#f3f2f1', borderBottom: '1px solid #e1dfdd' }}>
-                    <DialogTitle sx={{ p: 0, fontSize: '18px', fontWeight: 600, color: '#323130' }}>
-                        Herberekeningen uitvoeren?
-                    </DialogTitle>
-                </Box>
-                <DialogContent>
-                    <Stack spacing={2} sx={{ mt: 2 }}>
-                        <Typography>
-                            Wil je effecten en kosten herberekenen na deze actie?
-                        </Typography>
-                    </Stack>
-                </DialogContent>
-                <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <Button onClick={() => handleRecalculateChoice(false)} color="inherit" sx={{ fontSize: '14px', fontWeight: 500 }}>
-                        Nee
-                    </Button>
-                    <Button 
-                        onClick={() => handleRecalculateChoice(true)}
-                        variant="contained"
-                        sx={{ 
-                            fontSize: '14px', 
-                            fontWeight: 600,
-                            px: 3,
-                            py: 1.2,
-                            color: '#fff',
-                            backgroundColor: '#0078d4',
-                            '&:hover': {
-                                backgroundColor: '#005a9e',
-                            }
-                        }}
-                    >
-                        Ja
-                    </Button>
-                </DialogActions>
-            </Dialog>
+
         </LayoutElement>
     );
 };

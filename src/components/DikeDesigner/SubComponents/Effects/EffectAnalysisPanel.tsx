@@ -1,6 +1,7 @@
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import Stack from "@vertigis/web/ui/Stack"
 import Button from "@vertigis/web/ui/Button";
+import Alert from "@vertigis/web/ui/Alert";
 import Table from "@vertigis/web/ui/Table";
 import TableBody from "@vertigis/web/ui/TableBody";
 import TableCell from "@vertigis/web/ui/TableCell";
@@ -25,8 +26,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     model
 }) => {
 
-
-
+    useWatchAndRerender(model, "effectsCalculated")
     useWatchAndRerender(model, "intersectingPanden")
     useWatchAndRerender(model, "intersectingPandenArea")
     useWatchAndRerender(model, "intersectingPandenBuffer")
@@ -62,6 +62,12 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                 >
                     Voer effectenanalyse uit
                 </Button>
+
+                {!model.effectsCalculated && (
+                    <Alert severity="warning" sx={{ fontSize: "13px" }}>
+                        Effecten zijn nog niet berekend. Voer alstublieft de effectenanalyse uit om de resultaten weer te geven.
+                    </Alert>
+                )}
 
                 {/* Summary Table */}
                 <TableContainer component={Paper} sx={{}}>

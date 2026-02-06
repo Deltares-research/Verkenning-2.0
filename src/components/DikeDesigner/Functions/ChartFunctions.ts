@@ -23,7 +23,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             panX: false,
             panY: false,
             wheelX: "panX",
-            wheelY: "zoomX",
+            wheelY: "zoomXY",
             pinchZoomX: false,
         })
     );
@@ -440,6 +440,18 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
     let cursor = chart.get("cursor");
 
+    // Add X-axis scrollbar
+    chart.set("scrollbarX", am5xy.XYChartScrollbar.new(root, {
+        orientation: "horizontal",
+        height: 20
+    }));
+
+    // Add Y-axis scrollbar
+    chart.set("scrollbarY", am5xy.XYChartScrollbar.new(root, {
+        orientation: "vertical",
+        width: 20
+    }));
+
     cursor.events.on("cursormoved", (ev) => {
         if (elevationSeries.data.length) {
             const positionX = ev.target.getPrivate("positionX");
@@ -657,6 +669,19 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
     let cursor = chart.get("cursor");
+
+    // Add X-axis scrollbar
+    chart.set("scrollbarX", am5xy.XYChartScrollbar.new(root, {
+        orientation: "horizontal",
+        height: 20
+    }));
+
+    // Add Y-axis scrollbar
+    chart.set("scrollbarY", am5xy.XYChartScrollbar.new(root, {
+        orientation: "vertical",
+        width: 20
+    }));
+
     cursor.events.on("cursormoved", (ev) => {
         if (elevationSeries.data.length) {
             const positionX = ev.target.getPrivate("positionX");

@@ -557,8 +557,6 @@ export async function handleEffectAnalysis(model) {
     });
 
     model.loading = false;
-
-
-
+    model.effectsCalculated = true;
 
 }
