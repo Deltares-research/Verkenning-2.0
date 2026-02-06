@@ -141,7 +141,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
                         value={model.constructionModel.depth}
                         onChange={(e) => model.constructionModel.depth = parseFloat(e.target.value)}
                         fullWidth
-                        inputProps={{ step: 0.5, min: 0 }}
+                        inputProps={{ step: 0.5, min: -Infinity }}
                     />
                 </FormControl>
 
@@ -191,7 +191,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model }) => {
                 
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
-                        disabled={!hasSelectedLine}
+                        disabled={!hasSelectedLine || model.constructionModel.depth === null || isNaN(model.constructionModel.depth)}
                         color="primary"
                         onClick={handleCreateConstruction}
                         variant="contained"

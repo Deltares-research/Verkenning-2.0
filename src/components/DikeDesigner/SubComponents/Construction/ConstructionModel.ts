@@ -44,7 +44,7 @@ export default class ConstructionModel extends ModelBase {
         "Verticaal Zanddicht Geotextiel"
     ];
     structureType: string = "Heavescherm";
-    depth: number = 5;
+    depth: number | null = null;
 
     logMap(): void {
         console.log("ConstructionModel - Map:", this.map);
