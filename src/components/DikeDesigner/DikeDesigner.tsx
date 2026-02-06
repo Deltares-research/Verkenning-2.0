@@ -281,6 +281,7 @@ const DikeDesigner = (
     const meshSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const userSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const constructionSeriesRef = useRef<am5xy.LineSeries | null>(null);
+    const crossSectionConstructionSeriesRef = useRef<am5xy.LineSeries | null>(null);
 
     const mapResizeObserver = () => {
         const mapElement = model.mapElement;
@@ -348,7 +349,8 @@ const DikeDesigner = (
         initializeCrossSectionChart(model, crossSectionChartContainerRef, {
             chartSeriesRef,
             meshSeriesRef,
-            userSeriesRef
+            userSeriesRef,
+            constructionSeriesRef: crossSectionConstructionSeriesRef
         });
         return () => {
             if (model.crossSectionChartRoot) {
@@ -356,7 +358,7 @@ const DikeDesigner = (
                 console.log("Cross-section chart disposed");
             }
         };
-    }, [model, crossSectionChartContainerRef, model.crossSectionChartData, model.meshSeriesData]);
+    }, [model, crossSectionChartContainerRef, model.crossSectionChartData, model.meshSeriesData, constructionChartVersion]);
 
 
 
