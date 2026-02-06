@@ -14,7 +14,7 @@ import Divider from "@vertigis/web/ui/Divider";
 import Checkbox from "@vertigis/web/ui/Checkbox";
 import FormControlLabel from "@vertigis/web/ui/FormControlLabel";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { stackStyle } from "../../../styles";
 import { useWatchAndRerender } from "@vertigis/web/ui";
@@ -35,6 +35,36 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
     useWatchAndRerender(model.constructionModel, "offsetDistance");
     useWatchAndRerender(model.constructionModel, "offsetSide");
     useWatchAndRerender(model, "loading");
+
+    const [depthInput, setDepthInput] = useState(() => {
+        const depth = model.constructionModel.depth;
+        return depth === null || depth === undefined || Number.isNaN(depth) ? "" : String(depth);
+    });
+    const [offsetDistanceInput, setOffsetDistanceInput] = useState(() => {
+        const offset = model.constructionModel.offsetDistance;
+        return offset === null || offset === undefined || Number.isNaN(offset) ? "" : String(offset);
+    });
+
+    useEffect(() => {
+        const depth = model.constructionModel.depth;
+        setDepthInput(depth === null || depth === undefined || Number.isNaN(depth) ? "" : String(depth));
+    }, [model.constructionModel.depth]);
+
+    useEffect(() => {
+        const offset = model.constructionModel.offsetDistance;
+        setOffsetDistanceInput(offset === null || offset === undefined || Number.isNaN(offset) ? "" : String(offset));
+    }, [model.constructionModel.offsetDistance]);
+
+    const commitNumberInput = (rawValue: string, setter: (value: number | null) => void) => {
+        const trimmed = rawValue.trim();
+        if (!trimmed) {
+            setter(null);
+            return;
+        }
+
+        const parsed = Number.parseFloat(trimmed);
+        setter(Number.isNaN(parsed) ? null : parsed);
+    };
 
     const handleDrawLine = () => {
         // Start drawing a line directly in the construction layer
@@ -143,8 +173,14 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                     <FormLabel>Onderkant constructie t.o.v. NAP (m)</FormLabel>
                     <TextField
                         type="number"
-                        value={model.constructionModel.depth}
-                        onChange={(e) => model.constructionModel.depth = parseFloat(e.target.value)}
+                        value={depthInput}
+                        onChange={(e) => setDepthInput(e.target.value)}
+                        onBlur={() => commitNumberInput(depthInput, (value) => { model.constructionModel.depth = value; })}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                commitNumberInput(depthInput, (value) => { model.constructionModel.depth = value; });
+                            }
+                        }}
                         fullWidth
                         inputProps={{ step: 0.5, min: -Infinity }}
                     />
@@ -168,8 +204,14 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                             <FormLabel>Offset afstand (m)</FormLabel>
                             <TextField
                                 type="number"
-                                value={model.constructionModel.offsetDistance}
-                                onChange={(e) => model.constructionModel.offsetDistance = parseFloat(e.target.value)}
+                                value={offsetDistanceInput}
+                                onChange={(e) => setOffsetDistanceInput(e.target.value)}
+                                onBlur={() => commitNumberInput(offsetDistanceInput, (value) => { model.constructionModel.offsetDistance = value ?? 0; })}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        commitNumberInput(offsetDistanceInput, (value) => { model.constructionModel.offsetDistance = value ?? 0; });
+                                    }
+                                }}
                                 fullWidth
                                 inputProps={{ step: 0.5, min: 0 }}
                             />
