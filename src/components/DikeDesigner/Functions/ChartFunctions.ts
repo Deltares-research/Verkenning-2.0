@@ -4,9 +4,11 @@ import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import Point from "@arcgis/core/geometry/Point";
+import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
+import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 
-export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef; userSeriesRef }): () => void {
+export function initializeChart(model, activeTab, refs: { chartContainerRef; seriesRef; elevationSeriesRef; userSeriesRef; constructionSeriesRef }): () => void {
     if (activeTab !== 0 || !model.chartData || !refs.chartContainerRef.current) {
         console.log(activeTab, model.chartData, refs.chartContainerRef.current, "Chart not initialized");
         return
@@ -469,6 +471,162 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     chart.events.on("pointerout", (ev) => {
         model.cursorLocationLayer.visible = false
     });
+
+    // Add construction visualization lines
+    if (model.constructionModel?.drawnConstructionLine && model.chartDataElevation?.length > 0) {
+        const constructionDepth = model.constructionModel.depth;
+        const constructionLine = model.constructionModel.drawnConstructionLine;
+        
+            // Get the perpendicular profile line from graphicsLayerCrossSection (the one used for the chart)
+            if (model.graphicsLayerCrossSection?.graphics?.length > 0) {
+                const profileLineGraphic = model.graphicsLayerCrossSection.graphics.getItemAt(0);
+            const profileLine = profileLineGraphic.geometry;
+            
+            // Create 2D versions of both lines (remove z-values) to ensure intersection works
+            const constructionLine2D = new Polyline({
+                paths: (constructionLine as any).paths.map(path => 
+                    path.map(coord => [coord[0], coord[1]])
+                ),
+                spatialReference: (constructionLine as any).spatialReference
+            });
+            
+            const profileLine2D = new Polyline({
+                paths: (profileLine as any).paths.map(path => 
+                    path.map(coord => [coord[0], coord[1]])
+                ),
+                spatialReference: (profileLine as any).spatialReference
+            });
+            
+            // Find intersection points using 2D geometries
+            const aPath = constructionLine2D.paths?.[0];
+            const bPath = profileLine2D.paths?.[0];
+            const useFallbackOnly = !!aPath && !!bPath && aPath.length === 2 && bPath.length === 2;
+            const intersections = useFallbackOnly
+                ? null
+                : geometryEngine.intersect(constructionLine2D, profileLine2D);
+            
+            const tryFallbackIntersection = () => {
+                if (!aPath || !bPath || aPath.length < 2 || bPath.length < 2) {
+                    return null;
+                }
+
+                const [a1, a2] = aPath;
+                const [b1, b2] = bPath;
+                const x1 = a1[0];
+                const y1 = a1[1];
+                const x2 = a2[0];
+                const y2 = a2[1];
+                const x3 = b1[0];
+                const y3 = b1[1];
+                const x4 = b2[0];
+                const y4 = b2[1];
+
+                const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+                if (Math.abs(denom) < 1e-9) {
+                    return null;
+                }
+
+                const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+                const u = ((x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)) / denom;
+
+                if (t < 0 || t > 1 || u < 0 || u > 1) {
+                    return null;
+                }
+
+                return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+            };
+
+            let resolvedIntersections = intersections;
+            if (!resolvedIntersections) {
+                const fallbackPoint = tryFallbackIntersection();
+                if (fallbackPoint) {
+                    resolvedIntersections = new Point({
+                        x: fallbackPoint[0],
+                        y: fallbackPoint[1],
+                        spatialReference: profileLine2D.spatialReference
+                    }) as any;
+                }
+            }
+
+            if (resolvedIntersections) {
+                // Handle different intersection result types
+                const constructionData = [];
+                let points: number[][] = [];
+                
+                // Check if it's a Point geometry
+                if ((resolvedIntersections as any).type === "point") {
+                    points = [[(resolvedIntersections as any).x, (resolvedIntersections as any).y]];
+                }
+                // Check if it's a Multipoint geometry
+                else if ((resolvedIntersections as any).type === "multipoint") {
+                    points = (resolvedIntersections as any).points;
+                }
+                // Handle array of geometries
+                else if (Array.isArray(resolvedIntersections) && resolvedIntersections.length > 0) {
+                    const firstIntersection = resolvedIntersections[0] as any;
+                    if (firstIntersection.type === "point") {
+                        points = [[firstIntersection.x, firstIntersection.y]];
+                    }
+                }
+                
+                // For each intersection point, create vertical line in chart
+                if (points.length > 0) {
+                    points.forEach(point => {
+                        // Find the distance along the profile (afstand) for this intersection
+                        // by finding the closest point in chartDataElevation
+                        let closestElevPoint = model.chartDataElevation[0];
+                        let minDistance = Infinity;
+                        
+                        model.chartDataElevation.forEach(dataPoint => {
+                            const dx = dataPoint.x - point[0];
+                            const dy = dataPoint.y - point[1];
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                                closestElevPoint = dataPoint;
+                            }
+                        });
+                        
+                        const afstand = closestElevPoint.afstand;
+                        const ahnHeight = closestElevPoint.hoogte;
+                        
+                        // Create vertical line from AHN height to construction depth
+                        // Add two points: top (AHN) and bottom (depth)
+                        if (constructionDepth !== null && !isNaN(constructionDepth)) {
+                            constructionData.push(
+                                { afstand, hoogte: ahnHeight, isConstruction: true },
+                                { afstand, hoogte: constructionDepth, isConstruction: true }
+                            );
+                        }
+                        });
+                    
+                    // Create construction series
+                    if (constructionData.length > 0) {
+                        const constructionSeries = chart.series.push(
+                            am5xy.LineSeries.new(root, {
+                                name: "Constructie",
+                                xAxis: xAxis as any,
+                                yAxis: yAxis as any,
+                                valueYField: "hoogte",
+                                valueXField: "afstand",
+                                stroke: am5.color(0xff4500), // Orange-red color
+                                fill: am5.color(0xff4500),
+                                connect: false, // Don't connect all points, treat as separate segments
+                            })
+                        );
+                        
+                        constructionSeries.strokes.template.setAll({
+                            strokeWidth: 3,
+                            stroke: am5.color(0xff4500),
+                        });
+                        
+                        constructionSeries.data.setAll(constructionData);
+                        refs.constructionSeriesRef.current = constructionSeries;
+                    }
+                }
+            }
+        }
+    }
 
     return () => {
         // Clean up context menu listener on disposal

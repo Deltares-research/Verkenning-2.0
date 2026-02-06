@@ -104,6 +104,7 @@ const DikeDesigner = (
     const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
     const [recalculateDialogOpen, setRecalculateDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<"design" | "construction" | null>(null);
+    const [constructionChartVersion, setConstructionChartVersion] = useState(0);
     const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
     const fileMenuOpen = Boolean(fileMenuAnchor);
     const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -279,6 +280,7 @@ const DikeDesigner = (
     const chartSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const meshSeriesRef = useRef<am5xy.LineSeries | null>(null);
     const userSeriesRef = useRef<am5xy.LineSeries | null>(null);
+    const constructionSeriesRef = useRef<am5xy.LineSeries | null>(null);
 
     const mapResizeObserver = () => {
         const mapElement = model.mapElement;
@@ -306,14 +308,14 @@ const DikeDesigner = (
     }, ); 
 
     useEffect(() => {
-        initializeChart(model, activeTab, { chartContainerRef, seriesRef, elevationSeriesRef, userSeriesRef });
+        initializeChart(model, activeTab, { chartContainerRef, seriesRef, elevationSeriesRef, userSeriesRef, constructionSeriesRef });
         return () => {
             if (model.chartRoot) {
                 model.chartRoot.dispose();
                 console.log("Chart disposed");
             }
         }
-    }, [model.overviewVisible, model, activeTab, chartContainerRef, model.chartData, model.crossSectionChartData, model.chartDataElevation]);
+    }, [model.overviewVisible, model, activeTab, chartContainerRef, model.chartData, model.crossSectionChartData, model.chartDataElevation, constructionChartVersion]);
 
     useEffect(() => {
         // Compare and log changes
@@ -511,6 +513,7 @@ const DikeDesigner = (
             await performDesignCreation();
         } else if (pendingAction === "construction") {
             model.constructionModel.createConstruction();
+            setConstructionChartVersion((prev) => prev + 1);
         }
         
         if (recalculate) {
@@ -627,6 +630,8 @@ const DikeDesigner = (
     useWatchAndRerender(model, "crossSectionLength");
     useWatchAndRerender(model, "loading");
     useWatchAndRerender(model, "comparisonPanelVisible");
+    useWatchAndRerender(model.constructionModel, "drawnConstructionLine");
+    useWatchAndRerender(model.constructionModel, "depth");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");

@@ -29,10 +29,7 @@
  --> check exact terugladen berekende waardes
  --> move compare functions to own model
 
- --> na maken constructie, prompt gebruiker om nieuwe effect bepalen
  --> constructie weergeven in in dwarsprofiel + controle
- --> na uitrol kosten+effecten
- --> na constructie uitrol kosten+effecten
  --> stoplicht functie bij NEE!
  --> zoomfunctie x-as ontwerpen
  --> knopjes om effect-laag aan te zetten bij alternatieven als bij effecten
