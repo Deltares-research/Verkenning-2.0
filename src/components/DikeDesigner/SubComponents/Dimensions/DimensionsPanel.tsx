@@ -8,6 +8,7 @@ import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SaveIcon from "@mui/icons-material/Save";
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import HistoryIcon from '@mui/icons-material/History';
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -29,6 +30,8 @@ import Checkbox from "@vertigis/web/ui/Checkbox";
 import ListItemText from "@vertigis/web/ui/ListItemText";
 import Input from "@vertigis/web/ui/Input";
 import Alert from "@vertigis/web/ui/Alert";
+import IconButton from "@vertigis/web/ui/IconButton";
+import Box from "@vertigis/web/ui/Box";
 
 import React, { useState, useRef, useEffect } from "react";
 
@@ -51,15 +54,10 @@ interface DimensionsPanelProps {
     handleOpenOverview: () => void;
     handleCreateCrossSection: () => () => void;
     handleCreateDesign: () => void;
-    handleExport3dDesign: () => void;
-    handleExportInputLine: () => void;
-    handleExport2D: () => void;
-    handleExportRuimtebeslag: () => void;
     handleClearDesign: () => void;
-    handleSaveDesign: () => Promise<void>;
-    setShowNameWarning: (show: boolean) => void;
-    selectedDownloads: string[];
-    setSelectedDownloads: (downloads: string[]) => void;
+    handleSaveWithDialog: () => void;
+    handleOpenDownloadDialog: () => void;
+    designName: string;
 }
 
 const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
@@ -76,15 +74,10 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleOpenOverview,
     handleCreateCrossSection,
     handleCreateDesign,
-    handleExport3dDesign,
-    handleExportInputLine,
-    handleExport2D,
-    handleExportRuimtebeslag,
     handleClearDesign,
-    handleSaveDesign,
-    setShowNameWarning,
-    selectedDownloads,
-    setSelectedDownloads,
+    handleSaveWithDialog,
+    handleOpenDownloadDialog,
+    designName,
 }) => {
 
 
@@ -98,85 +91,12 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     useWatchAndRerender(model, "graphicsLayerLine");
     useWatchAndRerender(model, "loading");
 
-    const validateDesignName = (): boolean => {
-        // Check if design name is filled in
-        if (!model.designName || !model.designName.trim()) {
-            setShowNameWarning(true);
-            return false;
-        }
-
-        // Hide warning if name is valid
-        setShowNameWarning(false);
-        return true;
-    };
-
-    const handleDownloadSelected = async () => {
-        if (!validateDesignName()) {
-            return;
-        }
-
-        for (const downloadType of selectedDownloads) {
-            switch (downloadType) {
-                case 'inputline':
-                    handleExportInputLine();
-                    break;
-                case '3d':
-                    handleExport3dDesign();
-                    break;
-                case '2d':
-                    handleExport2D();
-                    break;
-                case 'ruimtebeslag':
-                    handleExportRuimtebeslag();
-                    break;
-            }
-            // Small delay between downloads to avoid browser blocking
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        // Clear selection after download
-        setSelectedDownloads([]);
-    };
-
     const handleCreateLine = () => {
             model.startDrawingLine(model.graphicsLayerLine);
     };
 
-    const downloadOptions = [
-        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
-        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
-        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
-        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
-    ];
-
-    const handleDownloadChange = (event) => {
-        const value = event.target.value;
-        setSelectedDownloads(typeof value === 'string' ? value.split(',') : value);
-    };
-
-    const [saveLoading, setSaveLoading] = useState(false);
-
-    const handleSaveClick = async () => {
-        if (!validateDesignName()) {
-            return;
-        }
-
-        setSaveLoading(true);
-        try {
-            await handleSaveDesign();
-        } finally {
-            setSaveLoading(false);
-        }
-    };
-
     // Common button style for consistent icon alignment
-    const buttonWithIconStyle = {
-        // justifyContent: 'flex-center',
-        // paddingLeft: '12px',
-        // '& .MuiButton-startIcon': {
-        //     marginRight: '8px',
-        //     marginLeft: 0,
-        // },
-    };
+    const buttonWithIconStyle = {};
 
     // Check if reference line exists
     const hasReferenceLine = Boolean(model.graphicsLayerLine?.graphics.length);
@@ -446,44 +366,19 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
             >
                 <FormLabel>Stap 4: bestanden downloaden</FormLabel>
                 
-                <FormControl fullWidth size="small">
-                    <InputLabel sx={{ fontSize: "11px" }}>Selecteer data om te downloaden</InputLabel>
-                    <Select
-                        multiple
-                        value={selectedDownloads}
-                        onChange={handleDownloadChange}
-                        renderValue={(selected) => (selected as string[]).map(val => 
-                            downloadOptions.find(opt => opt.value === val)?.label
-                        ).join(', ')}
-                 
-                    >
-                        {downloadOptions.map((option) => (
-                            <MenuItem 
-                                key={option.value} 
-                                value={option.value}
-                                disabled={option.disabled}
-    
-                            >
-                                <Checkbox checked={selectedDownloads.indexOf(option.value) > -1} />
-                                <ListItemText primary={option.label} />
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-                
                 <Button
-                    disabled={!hasReferenceLine || selectedDownloads.length === 0}
+                    disabled={!hasReferenceLine || !designName}
                     variant="contained"
                     color="secondary"
                     startIcon={<CloudDownloadIcon />}
-                    onClick={handleDownloadSelected}
+                    onClick={handleOpenDownloadDialog}
                     fullWidth
                     sx={buttonWithIconStyle}
                 >
-                    Download geselecteerd ({selectedDownloads.length})
+                    Download geselecteerd
                 </Button>
             </Stack>
-            <Stack 
+            {/* <Stack 
                 spacing={1.5} 
                 sx={{
                     ...stackStyle,
@@ -493,17 +388,17 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
             >
                 <FormLabel>Stap 5: ontwerpen opslaan</FormLabel>
                 <Button
-                    disabled={!hasReferenceLine || !model.graphicsLayer3dPolygon?.graphics?.length || saveLoading}
+                    disabled={!hasReferenceLine || !model.graphicsLayer3dPolygon?.graphics?.length || !designName}
                     variant="contained"
                     color="primary"
                     startIcon={<SaveIcon />}
-                    onClick={handleSaveClick}
+                    onClick={handleSaveWithDialog}
                     fullWidth
                     sx={buttonWithIconStyle}
                 >
-                    {saveLoading ? "Opslaan..." : "Ontwerpen opslaan"}
+                    Ontwerpen opslaan
                 </Button>
-            </Stack>
+            </Stack> */}
 
         </Stack>
     );

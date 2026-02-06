@@ -30,7 +30,7 @@ import Mesh from "@arcgis/core/geometry/Mesh";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils";
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
 import { calculate2dAreas, calculate3dAreas } from "./EffectFunctions";
@@ -98,7 +98,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
 
     // Ensure projection module is loaded
-    await projection.load();
+    await projectOperator.load();
 
     // Use Promise.all() to process all chart data in parallel
     const offsetPromises = chartData.map(async (row) => {
@@ -126,7 +126,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
             console.log(offsetDistance, "Offset distance for row:", row);
 
             // Project to RD New for accurate planar offset
-            const projectedLine = projection.project(basePath, rdNewSpatialRef) as Polyline;
+            const projectedLine = projectOperator.execute(basePath, rdNewSpatialRef) as Polyline;
 
             if (!projectedLine) {
                 console.warn(`Failed to project line for row:`, row);
@@ -142,7 +142,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
             }
 
             // Project back to Web Mercator
-            const offsetLine = projection.project(offsetLineRD, SpatialReference.WebMercator) as Polyline;
+            const offsetLine = projectOperator.execute(offsetLineRD, SpatialReference.WebMercator) as Polyline;
 
             if (offsetLine) {
                 const elevation = row.hoogte || 0;
@@ -355,12 +355,12 @@ export async function calculateVolume(model): Promise<void> {
         };
 
         // Project polygons to WGS84 and add to GeoJSON
-        await projection.load();
+        await projectOperator.load();
 
         model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
             if (geometry) {
-                const projectedGeometry = projection.project(
+                const projectedGeometry = projectOperator.execute(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
@@ -422,7 +422,7 @@ export async function calculateVolume(model): Promise<void> {
                 spatialReference: spatialRefRd
             });
 
-            const multiPointAboveGroundWebMerc = projection.project(multipointAboveGround, SpatialReference.WebMercator) as Multipoint;
+            const multiPointAboveGroundWebMerc = projectOperator.execute(multipointAboveGround, SpatialReference.WebMercator) as Multipoint;
 
             // Store z-values mapped to Web Mercator coordinates (since alpha shape is in Web Mercator)
             const zValueMap: { [key: string]: number } = {};
@@ -439,8 +439,18 @@ export async function calculateVolume(model): Promise<void> {
 
                 // iterate over singlePartAlphaShape parts and create graphics
                 singlePartAlphaShape.forEach(part => {
+                    // Remove z-coordinates to create 2D polygon
+                    const polygon2D = part.type === 'polygon' && 'rings' in part
+                        ? new Polygon({
+                            rings: (part as Polygon).rings.map(ring => 
+                                ring.map(coord => [coord[0], coord[1]])
+                            ),
+                            spatialReference: part.spatialReference
+                        })
+                        : part;
+                    
                     const aboveGroundGraphic = new Graphic({
-                        geometry: part,
+                        geometry: polygon2D,
                         attributes: {
                             zValues: zValueMap,
                             originalPoints: result.ruimtebeslag_2d_points,
@@ -559,12 +569,13 @@ export async function calculateDesignValues(model): Promise<void> {
 }
 
 
-function createMeshFromPolygon(model, polygon, textureUrl = null) {
+export function createMeshFromPolygon(model, polygon, textureUrl = null) {
 
     const mesh = Mesh.createFromPolygon(polygon, {
 
     });
     mesh.spatialReference = polygon.spatialReference
+
 
     // const symbol = {
     //     type: "mesh-3d",
@@ -616,11 +627,12 @@ export function createPolygonBetween(model: any, nameA: string, nameB: string, o
 
     model.graphicsLayer3dPolygon.add(graphic3d);
 
-    model.designLayer2D.applyEdits({
-        addFeatures: [graphics2D]
-    }).catch((error) => {
-        console.error("Error adding 2D polygon to design layer:", error);
-    });
+    // Add 2D polygon to graphics layer with styling
+    if (model.designLayer2DGetSymbol) {
+        const symbol = model.designLayer2DGetSymbol(partName);
+        graphics2D.symbol = symbol as any;
+    }
+    model.designLayer2D.add(graphics2D);
 
     // part for meshes, taking care of proper triangulation
     const pathAforMesh = geomA.paths[0];
@@ -691,11 +703,12 @@ export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistance
 
     model.graphicsLayer3dPolygon.add(graphic3d);
 
-    model.designLayer2D.applyEdits({
-        addFeatures: [graphics2D]
-    }).catch((error) => {
-        console.error("Error adding 2D polygon to design layer:", error);
-    });
+    // Add 2D polygon to graphics layer with styling
+    if (model.designLayer2DGetSymbol) {
+        const symbol = model.designLayer2DGetSymbol(polygonName);
+        graphics2D.symbol = symbol as any;
+    }
+    model.designLayer2D.add(graphics2D);
 
     // part for meshes, taking care of proper triangulation
     const pathAforMesh = geomA.paths[0];
@@ -756,8 +769,8 @@ export function setInputLineFromFeatureLayer(model) {
             features.forEach((feature) => {
 
                 const lineGeometry = feature.geometry;
-                projection.load().then(() => {
-                    const projectedGeometry = projection.project(
+                projectOperator.load().then(() => {
+                    const projectedGeometry = projectOperator.execute(
                         lineGeometry,
                         new SpatialReference({ wkid: 3857 })
                     );
@@ -780,21 +793,29 @@ export function setInputLineFromFeatureLayer(model) {
 }
 
 export function cleanFeatureLayer(layer) {
-    layer.queryObjectIds().then((objectIds) => {
-        if (objectIds.length === 0) {
-            console.log("No features to delete.");
-            return;
-        }
-        const deletes = objectIds.map(id => ({
-            objectId: id
-        }));
+    // Handle both FeatureLayer and GraphicsLayer
+    if (layer.removeAll) {
+        // GraphicsLayer has removeAll method
+        layer.removeAll();
+        console.log("Graphics cleared from layer.");
+    } else if (layer.queryObjectIds) {
+        // FeatureLayer uses applyEdits
+        layer.queryObjectIds().then((objectIds) => {
+            if (objectIds.length === 0) {
+                console.log("No features to delete.");
+                return;
+            }
+            const deletes = objectIds.map(id => ({
+                objectId: id
+            }));
 
-        layer.applyEdits({
-            deleteFeatures: deletes
-        }).catch((error) => {
-            console.error("Error deleting features:", error);
+            layer.applyEdits({
+                deleteFeatures: deletes
+            }).catch((error) => {
+                console.error("Error deleting features:", error);
+            });
         });
-    });
+    }
 }
 
 

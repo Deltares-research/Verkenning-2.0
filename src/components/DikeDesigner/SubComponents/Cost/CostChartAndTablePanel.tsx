@@ -189,7 +189,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 <LinearProgress />
               </Box>
               <Typography sx={{ fontSize: "13px", color: "#1976d2", fontWeight: 600 }}>
-                Kosten worden berekend...
+                Berekening actief...
               </Typography>
               <Typography sx={{ fontSize: "11px", color: "#555" }}>
                 Even geduld, dit kan een paar seconden duren.

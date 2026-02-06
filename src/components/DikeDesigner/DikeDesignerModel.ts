@@ -6,6 +6,7 @@
 /* eslint-disable import/order */
 import * as am5 from "@amcharts/amcharts5";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
+import { whenOnce } from "@vertigis/arcgis-extensions/support/observableUtils";
 import {
     ComponentModelBase,
     ComponentModelProperties,
@@ -27,6 +28,8 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import Graphic from "@arcgis/core/Graphic";
 
 import Polyline from "@arcgis/core/geometry/Polyline";
@@ -38,13 +41,23 @@ import Mesh from "@arcgis/core/geometry/Mesh";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils";
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator";
+
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 
 import { getLineFeatureLayers } from "./Functions/DesignFunctions";
 import { initializeChart } from "./Functions/ChartFunctions";
+import { 
+    lineLayerSymbol, 
+    lineLayerSymbolCrosssection, 
+    polygonSymbol3D, 
+    cursorSymbol, 
+    dwpPointSymbol, 
+    controlPointSymbol, 
+    getDesignLayer2DSymbol 
+} from "./symbologyConfig";
 import { array } from "@amcharts/amcharts5";
 import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
@@ -68,8 +81,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
     costPanelVisible: boolean = false;
+    comparisonPanelVisible: boolean = false;
 
     loading: boolean = false;
+    mapInitialized: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
     apiKey: DikeDesignerModelProperties["apiKey"];
@@ -96,7 +111,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     graphicsLayerControlPoints: GraphicsLayer;
 
-    designLayer2D: FeatureLayer | null = null;
+    designLayer2D: FeatureLayer | GraphicsLayer | null = null;
+    designLayer2DGetSymbol: ((name: string) => any) | null = null;
     uniqueParts: string[] = [];
 
     map: any;
@@ -151,60 +167,15 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectingDwpLocation: boolean = false
     crossSectionLength: number = 100
     
+    // Comparison panel snapshots - persists across tab switches
+    comparisonSnapshots: any[] = [];
 
-    lineLayerSymbol = {
-        type: "simple-line",
-        color: [64, 64, 64],
-        width: 3,
-        marker: {
-            style: "arrow",
-            color: "grey",
-            placement: "begin"
-        }
-    };
-
-    lineLayerSymbolCrosssection = {
-        type: "simple-line",
-        color: [36, 161, 14],
-        width: 2,
-        marker: {
-            style: "arrow",
-            color: "grey",
-            placement: "begin"
-        }
-    };
-
-    cursorSymbol = new PointSymbol3D({
-        symbolLayers: [
-            {
-                type: "icon",
-                size: 10,
-                outline: { color: "#bcbcbcff", size: 1 },
-                material: { color: "#F76430" }
-            } as any
-        ]
-    });
-
-    dwpPointSymbol = new PointSymbol3D({
-        symbolLayers: [
-            {
-                type: "icon",
-                size: 8,
-                outline: { color: "#bcbcbcff", size: 1 },
-                material: { color: "#575757ff" }
-            } as any
-        ]
-    });
-    controlPointSymbol = new PointSymbol3D({
-        symbolLayers: [
-            {
-                type: "icon",
-                size: 6,
-                outline: { color: "#bcbcbcff", size: 1 },
-                material: { color: "#000000ff" }
-            } as any
-        ]
-    });
+    lineLayerSymbol = lineLayerSymbol;
+    lineLayerSymbolCrosssection = lineLayerSymbolCrosssection;
+    polygonSymbol3D = polygonSymbol3D;
+    cursorSymbol = cursorSymbol;
+    dwpPointSymbol = dwpPointSymbol;
+    controlPointSymbol = controlPointSymbol;
     // data for analysis
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
@@ -285,7 +256,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 const inEPSG = extractEPSG(geojson.crs?.properties?.name || "");
                 console.log("Input EPSG:", inEPSG);
 
-                projection.load().then(() => {
+                projectOperator.load().then(() => {
                     geojson.features.forEach(feature => {
                         const { geometry, properties } = feature;
 
@@ -314,7 +285,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                             return;
                         }
 
-                        const projected = projection.project(esriGeometry, spatialRefOut);
+                        const projected = projectOperator.execute(esriGeometry, spatialRefOut);
 
 
                         const graphic = new Graphic({
@@ -610,81 +581,23 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.constructionModel.view = this.view;
             this.constructionModel.logMap();
 
-            this.designLayer2D = new FeatureLayer({
+            this.designLayer2D = new GraphicsLayer({
                 title: "Ontwerpdata - 2D",
                 listMode: "show",
                 visible: false,
-                geometryType: "polygon",
-                objectIdField: "ObjectID",
-                source: [],
-                fields: [
-                    {
-                        name: "ObjectID",
-                        alias: "ObjectID",
-                        type: "oid"
-                    },
-                    {
-                        name: "name",
-                        alias: "Name",
-                        type: "string"
-                    }
-                    // Add more fields if needed
-                ]
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                }
             });
-
-            // Your unique values (deduplicated)
-            const uniqueNames = [
-                "buitenkruin-binnenkruin",
-                "buitenkruin-bovenkant_buitenberm",
-                "binnenkruin-bovenkant_binnenberm",
-                "bovenkant_buitenberm-onderkant_buitenberm",
-                "onderkant_buitenberm-buitenteen",
-                "bovenkant_binnenberm-onderkant_binnenberm",
-                "onderkant_binnenberm-binnenteen"
-            ];
 
             // Helper to pick color based on rules
             function getSymbolForName(name: string) {
-                if (name.includes("berm")) {
-                    // Green for berms
-                    return {
-                        type: "simple-fill",
-                        color: [102, 204, 102, 0.9], // green
-                        outline: { color: [0, 100, 0, 1], width: 1 }
-                    };
-                }
-                if (name.includes("kruin")) {
-                    // Grey for kruin
-                    return {
-                        type: "simple-fill",
-                        color: [180, 180, 180, 0.9], // grey
-                        outline: { color: [80, 80, 80, 1], width: 1 }
-                    };
-                }
-                // Default color
-                return {
-                    type: "simple-fill",
-                    color: [200, 200, 255, 0.9], // light blue
-                    outline: { color: [100, 100, 200, 1], width: 1 }
-                };
+                return getDesignLayer2DSymbol(name);
             }
 
-            const uniqueValueInfos = uniqueNames.map(name => ({
-                value: name,
-                symbol: getSymbolForName(name)
-            }));
-
-
-
-            this.designLayer2D.renderer = new UniqueValueRenderer({
-                field: "name",
-                uniqueValueInfos: uniqueValueInfos as any[],
-                defaultSymbol: {
-                    type: "simple-fill",
-                    color: [204, 255, 204, 0.7], // light green
-                    outline: { color: [0, 128, 0, 1], width: 1 }
-                } as any
-            });
+            // Store the styling function in the model for later use when adding features
+            this.designLayer2DGetSymbol = getSymbolForName;
 
             this.graphicsLayerPoint = new GraphicsLayer({
                 title: "Point Layer",
@@ -815,12 +728,11 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             const temporaryLayersGroup = new GroupLayer({
                 title: "Tijdelijke lagen",
                 visible: true,
-                listMode: "hide",
+                listMode: "show",
                 visibilityMode: "independent",
                 layers: [
                     this.graphicsLayerProfile,
                     this.graphicsLayerCrossSection,
-                    graphicsLayerConstructionLine,
                     this.graphicsLayerLine,
                     this.graphicsLayerControlPoints,
                     this.graphicsLayerPoint,
@@ -835,6 +747,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 layers: [
                     this.graphicsLayerMesh,
                     this.graphicsLayer3dPolygon,
+                    graphicsLayerConstructionLine,
                     this.graphicsLayerTemp,
                     this.designLayer2D
                 ]
@@ -858,33 +771,28 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             // Pass construction layer to ConstructionModel
             this.constructionModel.graphicsLayerConstructionLine = graphicsLayerConstructionLine;
 
-
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);
-            console.log("Line feature layers:", this.lineFeatureLayers);
 
+            await whenOnce(this.view, "basemapView.baseLayerViews");
 
+            this.sketchViewModel = new SketchViewModel({
+                polylineSymbol: this.lineLayerSymbol as any,
+                view: this.view,
+                snappingOptions: {
+                    enabled: true,
+                    featureSources: [{
+                        layer: this.graphicsLayerLine,
+                        enabled: true
+                    }]
+                }
+            });
+            
+            // Pass sketchViewModel to ConstructionModel
+            this.constructionModel.sketchViewModel = this.sketchViewModel;
 
-            await reactiveUtils
-                .whenOnce(() => this.view)
-                .then(() => {
+            // Mark map as initialized, enabling UI
+            this.mapInitialized = true;
 
-                    console.log("Graphics layer added to the map.");
-
-                    this.sketchViewModel = new SketchViewModel({
-                        polylineSymbol: this.lineLayerSymbol as any,
-                        view: this.view,
-                        snappingOptions: {
-                            enabled: true,
-                            featureSources: [{
-                                layer: this.graphicsLayerLine,
-                                enabled: true
-                            }]
-                        }
-                    });
-                    
-                    // Pass sketchViewModel to ConstructionModel
-                    this.constructionModel.sketchViewModel = this.sketchViewModel;
-                });
         });
     }
 }

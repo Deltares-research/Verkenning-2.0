@@ -1,5 +1,98 @@
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Graphic from "@arcgis/core/Graphic";
+import Polygon from "@arcgis/core/geometry/Polygon";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
+import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
+import { createMeshFromPolygon } from "./DesignFunctions";
+
+export async function loadGeometriesFromDesign(model): Promise<void> {
+    try {
+        // Clear previous meshes
+        model.meshes = [];
+        model.graphicsLayerMesh.removeAll();
+        model.designLayer2D.removeAll();
+
+        // Get all graphics from the 3D polygon layer
+        const graphics = model.graphicsLayer3dPolygon.graphics.items;
+
+        if (graphics && graphics.length > 0) {
+            graphics.forEach((graphic) => {
+                // Create mesh from the polygon
+                if (graphic.geometry && graphic.geometry.type === "polygon") {
+                    createMeshFromPolygon(model, graphic.geometry as __esri.Polygon, null);
+                    console.log(graphic.geometry, "geometry added to mesh");
+                }
+            });
+
+            // Also add 2D representation to designLayer2D
+            graphics.forEach((graphic) => {
+                if (graphic.geometry && graphic.geometry.type === "polygon") {
+                    const polygon2d = new Polygon({
+                        rings: (graphic.geometry as __esri.Polygon).rings.map(ring =>
+                            ring.map(coord => [coord[0], coord[1]])
+                        ),
+                        spatialReference: graphic.geometry.spatialReference
+                    });
+
+                    const graphics2D = new Graphic({
+                        geometry: polygon2d,
+                        attributes: graphic.attributes
+                    });
+
+                    // Apply styling if available
+                    if (model.designLayer2DGetSymbol && graphic.attributes?.name) {
+                        const symbol = model.designLayer2DGetSymbol(graphic.attributes.name);
+                        graphics2D.symbol = symbol as any;
+                    }
+
+                    model.designLayer2D.add(graphics2D);
+                }
+            });
+
+            // Merge all meshes and add to graphics layer
+            if (model.meshes.length > 0) {
+                const merged = meshUtils.merge(model.meshes);
+                const mergedGraphic = new Graphic({
+                    geometry: merged,
+                    symbol: new MeshSymbol3D({
+                        symbolLayers: [
+                            {
+                                type: "fill",
+                                material: {
+                                    color: [85, 140, 75, 1],  // Green grass color for dike
+                                    colorMixMode: "replace"
+                                },
+                                castShadows: true
+                            }
+                        ]
+                    })
+                });
+                model.graphicsLayerMesh.add(mergedGraphic);
+                model.mergedMesh = merged;
+                model.meshGraphic = mergedGraphic;
+            }
+
+            console.log(`Loaded ${graphics.length} geometries from design and created mesh`);
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Het ontwerp met ${graphics.length} onderdelen is succesvol geladen.`,
+                title: "Ontwerp geladen",
+                type: "success"
+            });
+        } else {
+            console.warn("No geometries found");
+            model.messages.commands.ui.alert.execute({
+                message: "Geen ontwerpelementen gevonden.",
+                title: "Ontwerp laden mislukt",
+            });
+        }
+    } catch (error) {
+        console.error("Error loading geometries from design:", error);
+        model.messages.commands.ui.alert.execute({
+            message: (error as Error)?.message || "Er is een fout opgetreden tijdens het laden van het ontwerp.",
+            title: "Ontwerp laden mislukt",
+        });
+    }
+}
 
 export async function save3dDesignToFeatureLayer(model): Promise<number> {
     if (!model.graphicsLayer3dPolygon?.graphics?.length) {

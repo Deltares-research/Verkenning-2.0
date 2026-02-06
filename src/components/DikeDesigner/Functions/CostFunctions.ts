@@ -1,4 +1,4 @@
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator"
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
@@ -40,14 +40,13 @@ export const handleCostCalculation = async (
             };
 
         // Project polygons to WGS84 and add to GeoJSON
-        const projection = await import("@arcgis/core/geometry/projection");
-        const SpatialReference = (await import("@arcgis/core/geometry/SpatialReference")).default;
-        await projection.load();
+        await projectOperator.load();
+        
 
         model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
             const geometry = graphic.geometry;
             if (geometry) {
-                const projectedGeometry = projection.project(
+                const projectedGeometry = projectOperator.execute(
                     geometry,
                     new SpatialReference({ wkid: 4326 })
                 );
@@ -73,7 +72,7 @@ export const handleCostCalculation = async (
             const geometry = structure.geometry;
             if (!geometry) return;
 
-            const projected = projection.project(
+            const projected = projectOperator.execute(
                 geometry,
                 new SpatialReference({ wkid: 4326 })
             );

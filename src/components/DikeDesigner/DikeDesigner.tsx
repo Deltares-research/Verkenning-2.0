@@ -6,8 +6,17 @@ import SelectAllIcon from "@mui/icons-material/SelectAll";
 import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HomeIcon from "@mui/icons-material/Home";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SaveIcon from "@mui/icons-material/Save";
+import UploadIcon from "@mui/icons-material/Upload";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 
 import Box from "@vertigis/web/ui/Box";
+import Button from "@vertigis/web/ui/Button";
 import Tab from "@vertigis/web/ui/Tab"
 import Tabs from "@vertigis/web/ui/Tabs"
 import Stack from "@vertigis/web/ui/Stack";
@@ -15,6 +24,14 @@ import FormLabel from "@vertigis/web/ui/FormLabel";
 import Input from "@vertigis/web/ui/Input";
 import Alert from "@vertigis/web/ui/Alert"
 import LinearProgress from "@vertigis/web/ui/LinearProgress";
+import Typography from "@vertigis/web/ui/Typography";
+import Menu from "@vertigis/web/ui/Menu";
+import MenuItem from "@vertigis/web/ui/MenuItem";
+import IconButton from "@vertigis/web/ui/IconButton";
+import { Dialog } from "@mui/material";
+import DialogTitle from "@vertigis/web/ui/DialogTitle";
+import DialogContent from "@vertigis/web/ui/DialogContent";
+import DialogActions from "@vertigis/web/ui/DialogActions";
 
 import { LayoutElement } from "@vertigis/web/components";
 import type { LayoutElementProperties } from "@vertigis/web/components";
@@ -41,9 +58,10 @@ import {
 } from "./Functions/ExportFunctions";
 
 import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
+import { handleEffectAnalysis } from "./Functions/EffectFunctions";
 
-
-import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer } from "./Functions/SaveFunctions";
+import { save2dRuimtebeslagToFeatureLayer, save3dDesignToFeatureLayer, loadGeometriesFromDesign } from "./Functions/SaveFunctions";
+import { saveProjectAsJSON, loadProjectFromJSON, type ProjectJSON } from "./Functions/SaveProjectFunctions";
 import ChartAndTablePanel from "./SubComponents/Dimensions/ChartAndTablePanel";
 import CrossSectionChartPanel from "./SubComponents/Dimensions/CrossSectionChartPanel";
 import DimensionsPanel from "./SubComponents/Dimensions/DimensionsPanel";
@@ -51,6 +69,13 @@ import EffectAnalysisPanel from "./SubComponents/Effects/EffectAnalysisPanel";
 import CostCalculationPanel from "./SubComponents/Cost/CostPanel";
 import CostChartAndTablePanel from "./SubComponents/Cost/CostChartAndTablePanel";
 import ConstructionPanel from "./SubComponents/Construction/ConstructionPanel";
+import HomePanel from "./SubComponents/Home/HomePanel";
+import { ComparisonChartAndTablePanel } from "./SubComponents/Comparison";
+import ComparisonDataPanel from "./SubComponents/Comparison/ComparisonDataPanel";
+import LoadDesignsDialog from "./SubComponents/Dimensions/LoadDesignsDialog";
+import SaveDesignsDialog from "./SubComponents/Dimensions/SaveDesignsDialog";
+import DownloadDialog from "./SubComponents/Dimensions/DownloadDialog";
+import DesignNameDialog from "./SubComponents/Dimensions/DesignNameDialog";
 
 
 // import { SimpleWorker } from "./Workers/SimpleWorker"; // adjust path as needed
@@ -69,10 +94,38 @@ const DikeDesigner = (
     const [activeTab, setActiveTab] = useState(0);
     const [value, setValue] = React.useState(0);
     const [isLayerListVisible, setIsLayerListVisible] = useState(false);
-    const [designName, setDesignName] = useState<string>(() => model.designName || "");
-    const [isDesignNameConfirmed, setIsDesignNameConfirmed] = useState<boolean>(() => Boolean(model.designName));
     const [showNameWarning, setShowNameWarning] = useState(false);
     const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
+    const [loadDesignsDialogOpen, setLoadDesignsDialogOpen] = useState(false);
+    const [saveDesignsDialogOpen, setSaveDesignsDialogOpen] = useState(false);
+    const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+    const [designNameDialogOpen, setDesignNameDialogOpen] = useState(false);
+    const [designNameDialogMode, setDesignNameDialogMode] = useState<"create" | "edit">("edit");
+    const [effectAnalysisDialogOpen, setEffectAnalysisDialogOpen] = useState(false);
+    const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
+    const fileMenuOpen = Boolean(fileMenuAnchor);
+    const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+    const splitDesignName = (name: string) => {
+        const trimmed = name?.trim() || "";
+        if (!trimmed) {
+            return { vak: "", alternatief: "" };
+        }
+        const parts = trimmed.split(" - ");
+        if (parts.length >= 2) {
+            return {
+                vak: parts[0].trim(),
+                alternatief: parts.slice(1).join(" - ").trim(),
+            };
+        }
+        return { vak: trimmed, alternatief: "" };
+    };
+
+    const buildDesignName = (vak: string, alternatief: string) =>
+        [vak.trim(), alternatief.trim()].filter(Boolean).join(" - ");
+
+    const designName = model.designName || "";
+    const designNameParts = splitDesignName(designName);
 
     function setcrossSectionPanelVisible(value: boolean) {
         model.crossSectionPanelVisible = value;
@@ -95,41 +148,129 @@ const DikeDesigner = (
         if (value) {
             model.designPanelVisible = false;
             model.crossSectionPanelVisible = false;
+            model.comparisonPanelVisible = false;
         }
     }
 
+    function setComparisonPanelVisible(value: boolean) {
+        model.comparisonPanelVisible = value;
+        if (value) {
+            model.designPanelVisible = false;
+            model.crossSectionPanelVisible = false;
+            model.costPanelVisible = false;
+        }
+    }
 
+    const handleCreateNewDesign = () => {
+        setDesignNameDialogMode("create");
+        setDesignNameDialogOpen(true);
+    };
+
+    const handleLoadDesign = () => {
+        setLoadDesignsDialogOpen(true);
+    };
+
+    const handleLoadDesignGeometries = async (objectId: number) => {
+        await loadGeometriesFromDesign(model);
+        setValue(1);
+    };
+
+    const handleLoadProjectLocal = () => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".json";
+        fileInput.onchange = (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const jsonContent = JSON.parse(event.target?.result as string) as ProjectJSON;
+                        loadProjectFromJSON(model, jsonContent);
+                        setValue(1);
+                    } catch (error) {
+                        console.error("Error parsing JSON file:", error);
+                        model.messages.commands.ui.alert.execute({
+                            title: "Fout bij laden",
+                            message: "Het gekozen bestand is geen geldig project bestand.",
+                        });
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+        fileInput.click();
+    };
+
+    const handleSaveProjectLocal = () => {
+        saveProjectAsJSON(model);
+    };
+
+    const handleFileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setFileMenuAnchor(event.currentTarget);
+    };
+
+    const handleFileMenuClose = () => {
+        setFileMenuAnchor(null);
+    };
+
+    const handleFileMenuLoad = () => {
+        handleLoadProjectLocal();
+        handleFileMenuClose();
+    };
+
+    const handleFileMenuSave = () => {
+        handleSaveProjectLocal();
+        handleFileMenuClose();
+    };
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
-    const handleDesignNameChange = (e) => {
-        setDesignName(e.target.value);
-        // Mark as unconfirmed when user is editing
-        setIsDesignNameConfirmed(false);
-        // Hide warning when user starts typing
-        if (e.target.value.trim()) {
-            setShowNameWarning(false);
-        }
+    const handleSaveWithDialog = () => {
+        setSaveDesignsDialogOpen(true);
     };
 
-    const handleDesignNameBlur = () => {
-        // Update model when input loses focus
-        if (designName.trim()) {
-            model.designName = designName.trim();
-            setIsDesignNameConfirmed(true);
-        }
+    const handleSaveDesignWithName = async (name: string) => {
+        model.designName = name;
+        await handleSaveDesign();
     };
 
-    const handleDesignNameKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && designName.trim()) {
-            model.designName = designName.trim();
-            setIsDesignNameConfirmed(true);
-            // Optionally blur the input
-            (e.target as HTMLInputElement).blur();
-        }
+    const handleOpenDownloadDialog = () => {
+        setDownloadDialogOpen(true);
     };
+
+    const handleDownload = (downloads: string[], newDesignName: string) => {
+        // Update design name if it changed
+        if (newDesignName !== designName) {
+            model.designName = newDesignName;
+        }
+        
+        downloads.forEach(download => {
+            switch (download) {
+                case 'inputline':
+                    handleExportInputLine();
+                    break;
+                case '3d':
+                    handleExport3dDesign();
+                    break;
+                case '2d':
+                    handleExport2D();
+                    break;
+                case 'ruimtebeslag':
+                    handleExportRuimtebeslag();
+                    break;
+            }
+        });
+    };
+
+    const downloadOptions = [
+        { value: 'inputline', label: 'Invoerlijn', disabled: !model.graphicsLayerLine?.graphics.length },
+        { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
+    ];
 
     const seriesRef = useRef<am5xy.LineSeries | null>(null);
     const elevationSeriesRef = useRef<am5xy.LineSeries | null>(null);
@@ -241,10 +382,13 @@ const DikeDesigner = (
         model.graphicsLayerPoint.removeAll();
         model.graphicsLayerProfile.removeAll();
         model.crossSectionChartData = [];
+        model.chartData = [];
+        model.chartDataElevation = [];
         model.selectedLineLayerId = null;
         model.selectedDijkvakField = null;
         model.lineLength = null;
         model.view.analyses.removeAll()
+        handleClearDesign();
     };
 
     const handleGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -308,8 +452,7 @@ const DikeDesigner = (
         console.log("Excel uploaded and design panel opened");
 
     }
-
-    const handleCreateDesign = async () => {
+    const performDesignCreation = async () => {
 
         model.graphicsLayerMesh.removeAll();
         model.mergedMesh = null;
@@ -346,6 +489,18 @@ const DikeDesigner = (
         } finally {
             model.loading = false; // Hide loader
             model.messages.commands.ui.hideNotification.execute({ id: "designCreation" });
+        }
+    };
+
+    const handleCreateDesign = () => {
+        setEffectAnalysisDialogOpen(true);
+    };
+
+    const handleEffectAnalysisChoice = async (runEffectAnalysis: boolean) => {
+        setEffectAnalysisDialogOpen(false);
+        await performDesignCreation();
+        if (runEffectAnalysis) {
+            await handleEffectAnalysis(model);
         }
     };
 
@@ -431,18 +586,15 @@ const DikeDesigner = (
     useWatchAndRerender(model, "graphicsLayerLine.graphics.length");
     useWatchAndRerender(model, "graphicsLayerTemp.graphics.length");
     useWatchAndRerender(model, "graphicsLayer3dPolygon.graphics.length");
-    useWatchAndRerender(model, "chartData.length");
     useWatchAndRerender(model, "overviewVisible");
     useWatchAndRerender(model, "selectedLineLayerId");
     useWatchAndRerender(model, "gridSize");
     useWatchAndRerender(model, "activeSheet");
-    useWatchAndRerender(model, "activeTab");
     useWatchAndRerender(model, "selectedDijkvakField");
     useWatchAndRerender(model, "chartData");
     useWatchAndRerender(model, "allChartData");
     useWatchAndRerender(model, "crossSectionChartData");
     useWatchAndRerender(model, "chartDataElevation");
-    useWatchAndRerender(model, "crossSectionChartData.length");
     useWatchAndRerender(model, "crossSectionPanelVisible");
     useWatchAndRerender(model, "designPanelVisible");
     useWatchAndRerender(model, "costPanelVisible");
@@ -454,6 +606,7 @@ const DikeDesigner = (
     useWatchAndRerender(model, "selectingDwpLocation");
     useWatchAndRerender(model, "crossSectionLength");
     useWatchAndRerender(model, "loading");
+    useWatchAndRerender(model, "comparisonPanelVisible");
 
     // useWatchAndRerender(model, "meshSeriesData");
     // useWatchAndRerender(model, "meshSeriesData.length");
@@ -489,8 +642,17 @@ const DikeDesigner = (
     }
 
 
+    const handleSaveDesignName = (vak: string, alternatief: string) => {
+        const fullName = buildDesignName(vak, alternatief);
+        model.designName = fullName;
+        setDesignNameDialogOpen(false);
+        if (designNameDialogMode === "create") {
+            setValue(1);
+        }
+    };
+
     return (
-        <LayoutElement {...props} style={{ width: "100%", overflowY: "auto" }}>
+        <LayoutElement {...props} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: "auto" }}>
             {model.loading && (
                 <LinearProgress
                     sx={{
@@ -503,139 +665,381 @@ const DikeDesigner = (
                     }}
                 />
             )}
-            <Box
-                sx={{ width: '100%' }}
-            >
-                {/* Ontwerp naam - prominent bovenaan */}
-                <Stack spacing={1.5} sx={{
-                    padding: '16px',
-                    borderRadius: '8px',
+            <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                {/* Left Sidebar - Collapsible */}
+                {model.mapInitialized && (
+                <Box sx={{
+                    width: sidebarExpanded ? "220px" : "70px",
+                    backgroundColor: "#fafbfc",
+                    borderRight: "1px solid #e5e7eb",
+                    p: sidebarExpanded ? 2 : 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: sidebarExpanded ? 2 : 1,
+                    minHeight: "100%",
+                    transition: "all 0.3s ease",
+                    position: "relative",
                 }}>
-                    <FormLabel sx={{ 
-                        fontWeight: 'bold', 
-                        fontSize: '14px',
-                        color: isDesignNameConfirmed ? '#2e7d32' : '#000000ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        transition: 'color 0.3s ease'
-                    }}>
-                        {isDesignNameConfirmed ? (
-                            <CheckCircleIcon sx={{ fontSize: 18, color: '#2e7d32' }} />
-                        ) : (
-                            <EditIcon sx={{ fontSize: 18 }} />
-                        )}
-                        Ontwerp naam
-                    </FormLabel>
-                    
-                    <Input
-                        value={designName}
-                        onChange={handleDesignNameChange}
-                        onBlur={handleDesignNameBlur}
-                        onKeyPress={handleDesignNameKeyPress}
-                        placeholder="Voer een ontwerpnaam in..."
-                        size="medium"
-                        fullWidth
-                        error={showNameWarning}
+                    {/* Collapse/Expand Toggle Button - Middle Right */}
+                    <IconButton
+                        onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                        title={sidebarExpanded ? "Samenvouwen" : "Uitvouwen"}
                         sx={{
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            '& .MuiInputBase-input': {
-                                padding: '12px 14px',
-                                backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
-                                transition: 'background-color 0.3s ease'
-                            },
-                            backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
-                            borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
-                            transition: 'all 0.3s ease',
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: isDesignNameConfirmed ? '#e8f5e9' : 'white',
-                                '& fieldset': {
-                                    borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
-                                    borderWidth: isDesignNameConfirmed ? '2px' : '1px',
-                                    transition: 'all 0.3s ease'
-                                },
-                                '&:hover fieldset': {
-                                    borderColor: isDesignNameConfirmed ? '#2e7d32' : undefined,
-                                },
+                            position: "absolute",
+                            top: "50%",
+                            right: -12,
+                            transform: "translateY(-50%)",
+                            color: "#0078d4",
+                            width: "32px",
+                            height: "32px",
+                            backgroundColor: "#fff",
+                            border: "1px solid #e5e7eb",
+                            zIndex: 10,
+                            transition: "all 0.3s ease",
+                            "&:hover": {
+                                color: "#106ebe",
+                                backgroundColor: "#f5f7fa",
+                                borderColor: "#0078d4",
                             }
                         }}
-                    />
-
-                    {/* Alert onder de naam input */}
-                    {showNameWarning && (
-                        <Alert severity="warning" sx={{ marginTop: 1 }}>
-                            Vul een ontwerp naam in voordat u bestanden downloadt of opslaat.
-                        </Alert>
-                    )}
-                </Stack>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs
-                        value={value}
-                        onChange={handleChange}
-                        variant="scrollable"
-                        scrollButtons="auto"
-                        aria-label="scrollable auto tabs example"
                     >
-                        <Tab 
-                            icon={<ArchitectureIcon />} 
-                            label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
-                            {...a11yProps(0)}
-                        />
-                        <Tab 
-                            icon={<BuildIcon />} 
-                            label={(<span>Dimensioneer<br />constructie</span>) as any}
-                            {...a11yProps(1)}
-                        />
-                        <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(2)} />
-                        <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(3)} />
-                        <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(4)} />
-                    </Tabs>
-                </Box>
-                <CustomTabPanel value={value} index={0}>
-                    <DimensionsPanel
-                        model={model}
-                        isLayerListVisible={isLayerListVisible}
-                        setSelectedLineLayerId={setSelectedLineLayerId}
-                        handleUploadGeoJSON={handleUploadGeoJSON}
-                        handleSelectFromMap={handleSelectFromMap}
-                        handleFileChange={handleFileChange}
-                        handleClearGraphics={handleClearGraphics}
-                        handleGridChange={handleGridChange}
-                        handleExcelUpload={handleExcelUpload}
-                        handleClearExcel={handleClearExcel}
-                        handleOpenOverview={handleOpenOverview}
-                        handleCreateDesign={handleCreateDesign}
-                        handleExport3dDesign={handleExport3dDesign}
-                        handleExportInputLine={handleExportInputLine}
-                        handleExport2D={handleExport2D}
-                        handleExportRuimtebeslag={handleExportRuimtebeslag}
-                        handleClearDesign={handleClearDesign}
-                        handleCreateCrossSection={handleCreateCrossSection}
-                        handleSaveDesign={handleSaveDesign}
-                        setShowNameWarning={setShowNameWarning}
-                        selectedDownloads={selectedDownloads}
-                        setSelectedDownloads={setSelectedDownloads}
-                    />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={1}>
-                    <ConstructionPanel model={model} />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={2}>
-                    <EffectAnalysisPanel model={model} />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={3}>
-                    {/* TODO: Add Kosten panel content */}
-                    <CostCalculationPanel model={model} />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={4}>
-                    {/* TODO: Add Afwegen panel content */}
-                    <Box sx={{ p: 2 }}>
-                        Afwegen - Coming soon
-                    </Box>
-                </CustomTabPanel>
-            </Box>
+                        {sidebarExpanded ? <ChevronLeftIcon sx={{ fontSize: "18px" }} /> : <ChevronRightIcon sx={{ fontSize: "18px" }} />}
+                    </IconButton>
 
+                    {/* Sidebar Title */}
+                    {sidebarExpanded && (
+                        <Typography
+                            sx={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                color: "#666",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                mb: 1,
+                            }}
+                        >
+                            Dijkontwerper
+                        </Typography>
+                    )}
+
+                    {/* Sidebar Action Buttons */}
+                    <Stack spacing={sidebarExpanded ? 1.5 : 1}>
+                        {/* Load Button */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={!sidebarExpanded ? "Laden" : ""}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<UploadIcon />}
+                                onClick={handleFileMenuLoad}
+                                fullWidth={sidebarExpanded}
+                                size="small"
+                                sx={{
+                                    backgroundColor: "#fff",
+                                    color: "#0078d4",
+                                    textTransform: "none",
+                                    fontSize: sidebarExpanded ? "13px" : "0px",
+                                    fontWeight: 600,
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    borderColor: "#e5e7eb",
+                                    borderLeft: "3px solid #0078d4",
+                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                    minWidth: sidebarExpanded ? "auto" : "44px",
+                                    width: sidebarExpanded ? "100%" : "44px",
+                                    height: "44px",
+                                    "&:hover": {
+                                        backgroundColor: "#f5f7fa",
+                                        boxShadow: "none",
+                                        borderColor: "#0078d4",
+                                    }
+                                }}
+                            >
+                                {sidebarExpanded ? "Laden" : ""}
+                            </Button>
+                        </Box>
+
+                        {/* Save Button */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={!sidebarExpanded ? "Opslaan" : ""}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<SaveIcon />}
+                                onClick={handleFileMenuSave}
+                                disabled={!designName}
+                                fullWidth={sidebarExpanded}
+                                size="small"
+                                sx={{
+                                    backgroundColor: "#fff",
+                                    color: designName ? "#0078d4" : "#ccc",
+                                    textTransform: "none",
+                                    fontSize: sidebarExpanded ? "13px" : "0px",
+                                    fontWeight: 600,
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                    borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                    minWidth: sidebarExpanded ? "auto" : "44px",
+                                    width: sidebarExpanded ? "100%" : "44px",
+                                    height: "44px",
+                                    "&:hover": designName ? {
+                                        backgroundColor: "#f5f7fa",
+                                        boxShadow: "none",
+                                        borderColor: "#0078d4",
+                                    } : {},
+                                }}
+                            >
+                                {sidebarExpanded ? "Opslaan" : ""}
+                            </Button>
+                        </Box>
+
+                        {/* Change Title Button */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                            title={!sidebarExpanded ? "Titel wijzigen" : ""}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<EditIcon />}
+                                onClick={() => {
+                                    setDesignNameDialogMode("edit");
+                                    setDesignNameDialogOpen(true);
+                                }}
+                                disabled={!designName}
+                                fullWidth={sidebarExpanded}
+                                size="small"
+                                sx={{
+                                    backgroundColor: "#fff",
+                                    color: designName ? "#0078d4" : "#ccc",
+                                    textTransform: "none",
+                                    fontSize: sidebarExpanded ? "13px" : "0px",
+                                    fontWeight: 600,
+                                    boxShadow: "none",
+                                    transition: "all 0.2s ease",
+                                    borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                    borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                    minWidth: sidebarExpanded ? "auto" : "44px",
+                                    width: sidebarExpanded ? "100%" : "44px",
+                                    height: "44px",
+                                    "&:hover": designName ? {
+                                        backgroundColor: "#f5f7fa",
+                                        boxShadow: "none",
+                                        borderColor: "#0078d4",
+                                    } : {},
+                                }}
+                            >
+                                {sidebarExpanded ? "Titel wijzigen" : ""}
+                            </Button>
+                        </Box>
+                    </Stack>
+                </Box>
+                )}
+
+                {/* Main Content Area */}
+                <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto", width: 0 }}>
+                    {/* File menu button bar - kept for backward compatibility but hidden */}
+                    <Box sx={{ position: "relative", mb: 0, p: 0, backgroundColor: "#fafbfc", borderRadius: 0, display: "none" }}>
+                        <Button
+                            onClick={handleFileMenuOpen}
+                            endIcon={<ExpandMoreIcon />}
+                            variant="outlined"
+                            fullWidth
+                            sx={{
+                                backgroundColor: "#fff",
+                                color: "#0078d4",
+                                textTransform: "none",
+                                fontSize: "15px",
+                                fontWeight: 600,
+                                whiteSpace: "nowrap",
+                                boxShadow: "none",
+                                transition: "all 0.2s ease",
+                                justifyContent: "flex-start",
+                                paddingLeft: 3,
+                                paddingY: 1.5,
+                                borderRadius: 0,
+                                border: "1px solid #e5e7eb",
+                                borderLeft: "4px solid #0078d4",
+                                "&:hover": {
+                                    backgroundColor: "#f5f7fa",
+                                    boxShadow: "none",
+                                }
+                            }}
+                        >
+                            Mijn ontwerpen
+                        </Button>
+                        <Menu
+                            anchorEl={fileMenuAnchor}
+                            open={fileMenuOpen}
+                            onClose={handleFileMenuClose}
+                            PaperProps={{
+                                sx: {
+                                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                                    mt: 0.5,
+                                }
+                            }}
+                        >
+                            <MenuItem 
+                                onClick={handleFileMenuLoad}
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    py: 1.5,
+                                    px: 2,
+                                }}
+                            >
+                                <UploadIcon sx={{ fontSize: "20px", color: "#0078d4" }} />
+                                <Box>
+                                    <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Laden
+                                    </Typography>
+                                    <Typography sx={{ fontSize: "12px", color: "#666" }}>
+                                        Lokaal bestand laden
+                                    </Typography>
+                                </Box>
+                            </MenuItem>
+                            <MenuItem 
+                                onClick={handleFileMenuSave} 
+                                disabled={!designName}
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    py: 1.5,
+                                    px: 2,
+                                }}
+                            >
+                                <SaveIcon sx={{ fontSize: "20px", color: designName ? "#0078d4" : "#ccc" }} />
+                                <Box>
+                                    <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Opslaan
+                                    </Typography>
+                                    <Typography sx={{ fontSize: "12px", color: designName ? "#666" : "#999" }}>
+                                        Lokaal opslaan
+                                    </Typography>
+                                </Box>
+                            </MenuItem>
+                        </Menu>
+                    </Box>
+
+                    {/* Horizontal divider */}
+                    <Box sx={{ borderBottom: 1, borderColor: "#e5e7eb", mb: 2, mt: 0 }} />
+                    
+                    <Typography
+                        sx={{
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: designName ? "#323130" : "#a19f9d",
+                            opacity: designName ? 1 : 0.6,
+                            mb: 2,
+                            px: 2,
+                        }}
+                    >
+                        {designName ? `Ontwerp: ${designName}` : "Geen ontwerp gekozen"}
+                    </Typography>
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                        <Tabs
+                            value={value}
+                            onChange={handleChange}
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            aria-label="scrollable auto tabs example"
+                        >
+                            <Tab 
+                                icon={<HomeIcon />} 
+                                label="Home"
+                                {...a11yProps(0)}
+                                disabled={!model.mapInitialized}
+                            />
+                            <Tab 
+                                icon={<ArchitectureIcon />} 
+                                label={(<span>Dimensioneer<br />grondlichaam</span>) as any}
+                                {...a11yProps(1)}
+                                disabled={!designName}
+                            />
+                            <Tab 
+                                icon={<BuildIcon />} 
+                                label={(<span>Dimensioneer<br />constructie</span>) as any}
+                                {...a11yProps(2)}
+                                disabled={!designName}
+                            />
+                            <Tab icon={<AssessmentIcon />} label="Effecten" {...a11yProps(3)} disabled={!designName} />
+                            <Tab icon={<AttachMoneyIcon />} label="Kosten" {...a11yProps(4)} disabled={!designName} />
+                            <Tab icon={<SelectAllIcon />} label="Afwegen" {...a11yProps(5)} disabled={!designName} />
+                            </Tabs>
+                        </Box>
+                        <Box sx={{ flex: 1, overflow: "auto" }}>
+                            <CustomTabPanel value={value} index={0}>
+                            <HomePanel
+                                onCreateNewDesign={handleCreateNewDesign}
+                                onLoadDesign={handleLoadDesign}
+                                onLoadProjectLocal={handleLoadProjectLocal}
+                                onSaveProjectLocal={handleSaveProjectLocal}
+                                designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                                designName={designName}
+                                isLoading={!model.mapInitialized}
+                            />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={1}>
+                            <DimensionsPanel
+                                model={model}
+                                isLayerListVisible={isLayerListVisible}
+                                setSelectedLineLayerId={setSelectedLineLayerId}
+                                handleUploadGeoJSON={handleUploadGeoJSON}
+                                handleSelectFromMap={handleSelectFromMap}
+                                handleFileChange={handleFileChange}
+                                handleClearGraphics={handleClearGraphics}
+                                handleGridChange={handleGridChange}
+                                handleExcelUpload={handleExcelUpload}
+                                handleClearExcel={handleClearExcel}
+                                handleOpenOverview={handleOpenOverview}
+                                handleCreateDesign={handleCreateDesign}
+                                handleClearDesign={handleClearDesign}
+                                handleCreateCrossSection={handleCreateCrossSection}
+                                handleSaveWithDialog={handleSaveWithDialog}
+                                handleOpenDownloadDialog={handleOpenDownloadDialog}
+                                designName={designName}
+                            />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={2}>
+                            <ConstructionPanel model={model} />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={3}>
+                            <EffectAnalysisPanel model={model} />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={4}>
+                            {/* TODO: Add Kosten panel content */}
+                            <CostCalculationPanel model={model} />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={5}>
+                            <ComparisonChartAndTablePanel 
+                                model={model}
+                                onLoadDesign={() => setValue(1)}
+                            />
+                        </CustomTabPanel>
+                    </Box>
+                </Box>
+            </Box>
 
             {/* Paper for Chart and Table */}
             {model.designPanelVisible && (() => {
@@ -678,6 +1082,90 @@ const DikeDesigner = (
                     model={model}
                 />
             )}
+
+            {/* Paper for Comparison Table */}
+            {model.comparisonPanelVisible && (
+                <ComparisonDataPanel
+                    setPanelVisible={setComparisonPanelVisible}
+                    mapLeftBorder={mapLeftBorder}
+                    mapRightBorder={mapRightBorder}
+                    model={model}
+                />
+            )}
+
+            {/* Load Designs Dialog */}
+            <LoadDesignsDialog
+                open={loadDesignsDialogOpen}
+                onClose={() => setLoadDesignsDialogOpen(false)}
+                designFeatureLayer3dUrl={model.designFeatureLayer3dUrl}
+                model={model}
+                onLoadDesign={handleLoadDesignGeometries}
+            />
+
+            {/* Save Designs Dialog */}
+            <SaveDesignsDialog
+                open={saveDesignsDialogOpen}
+                onClose={() => setSaveDesignsDialogOpen(false)}
+                onSave={handleSaveDesignWithName}
+                initialDesignName={designName}
+            />
+
+            {/* Download Dialog */}
+            <DownloadDialog
+                open={downloadDialogOpen}
+                onClose={() => setDownloadDialogOpen(false)}
+                onDownload={handleDownload}
+                selectedDownloads={selectedDownloads}
+                setSelectedDownloads={setSelectedDownloads}
+                downloadOptions={downloadOptions}
+                initialDesignName={designName}
+            />
+
+            <DesignNameDialog
+                open={designNameDialogOpen}
+                onClose={() => setDesignNameDialogOpen(false)}
+                onSave={handleSaveDesignName}
+                initialVak={designNameDialogMode === "create" ? "" : designNameParts.vak}
+                initialAlternatief={designNameDialogMode === "create" ? "" : designNameParts.alternatief}
+                title={designNameDialogMode === "create" ? "Nieuw ontwerp maken" : "Ontwerp naam wijzigen"}
+            />
+
+            <Dialog open={effectAnalysisDialogOpen} onClose={() => setEffectAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+                <Box sx={{ p: 2, backgroundColor: '#f3f2f1', borderBottom: '1px solid #e1dfdd' }}>
+                    <DialogTitle sx={{ p: 0, fontSize: '18px', fontWeight: 600, color: '#323130' }}>
+                        Voer effectenanalyse uit?
+                    </DialogTitle>
+                </Box>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 2 }}>
+                        <Typography>
+                            Wil je ook de effectenanalyse uitvoeren na het aanmaken van het 3D-ontwerp?
+                        </Typography>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, gap: 1 }}>
+                    <Button onClick={() => handleEffectAnalysisChoice(false)} color="inherit" sx={{ fontSize: '14px', fontWeight: 500 }}>
+                        Nee
+                    </Button>
+                    <Button 
+                        onClick={() => handleEffectAnalysisChoice(true)} 
+                        variant="contained"
+                        sx={{ 
+                            fontSize: '14px', 
+                            fontWeight: 600,
+                            px: 3,
+                            py: 1.2,
+                            color: '#fff',
+                            backgroundColor: '#0078d4',
+                            '&:hover': {
+                                backgroundColor: '#005a9e',
+                            }
+                        }}
+                    >
+                        Ja
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </LayoutElement>
     );
 };
