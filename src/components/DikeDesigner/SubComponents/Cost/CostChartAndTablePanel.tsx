@@ -22,16 +22,51 @@ import React, { useState } from "react";
 
 import CostPieChart from "./CostPieChart";
 import CostRangeStackedBar from "./CostRangeStackedBar";
+import { CostItem } from "./CostModel";
 
 // Collapsible row for sub-items
-const SubRow: React.FC<{ label: string; value: number }> = ({ label, value }) => (
-  <TableRow sx={{ "&:last-child td": { borderBottom: "none" } }}>
-    <TableCell sx={{ fontSize: "10px", pl: 4, color: "#475569" }}>{label}</TableCell>
-    <TableCell sx={{ fontSize: "10px", color: "#0f172a" }} align="right">
-      {value.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
-    </TableCell>
-  </TableRow>
-);
+// const SubRow: React.FC<{ label: string; value: number }> = ({ label, value }) => (
+//   <TableRow sx={{ "&:last-child td": { borderBottom: "none" } }}>
+//     <TableCell sx={{ fontSize: "10px", pl: 4, color: "#475569" }}>{label}</TableCell>
+//     <TableCell sx={{ fontSize: "10px", color: "#0f172a" }} align="right">
+//       {value.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+//     </TableCell>
+//   </TableRow>
+// );
+
+interface SubRowProps {
+  label: string
+  // Either a full CostItem or just a number
+  item?: CostItem
+  value?: number
+}
+
+const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
+  const displayValue = item ? item.value : value ?? 0
+
+  return (
+    <TableRow sx={{ "&:last-child td": { borderBottom: "none" } }}>
+      <TableCell sx={{ fontSize: "10px", pl: 4, color: "#475569" }}>{label}</TableCell>
+
+      {/* Total value column */}
+      <TableCell sx={{ fontSize: "10px", color: "#0f172a" }} align="right">
+        {displayValue.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+      </TableCell>
+
+      {/* Unit cost & quantity only if item is present */}
+      {item && (
+        <>
+          <TableCell sx={{ fontSize: "10px", color: "#0f172a" }} align="right">
+            {item.unit_cost.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 2 })}
+          </TableCell>
+          <TableCell sx={{ fontSize: "10px", color: "#0f172a" }} align="right">
+            {item.quantity.toLocaleString("nl-NL", { maximumFractionDigits: 2 })} {item.unit}
+          </TableCell>
+        </>
+      )}
+    </TableRow>
+  )
+}
 
 interface CollapsibleSectionProps {
   title: string;
@@ -262,17 +297,17 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     title="Benoemde Directe BouwKosten - Grondwerk"
                     total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}
                   >
-                    <SubRow label="Voorbereiding" value={model.costModel.directCostGroundWork.preparationCost} />
-                    <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekledingCost} />
-                    <SubRow label="Afgraven kleilaag" value={model.costModel.directCostGroundWork.afgravenKleilaagCost} />
-                    <SubRow label="Herkeuren kleilaag" value={model.costModel.directCostGroundWork.herkeurenKleilaagCost} />
-                    <SubRow label="Aanvullen kern" value={model.costModel.directCostGroundWork.aanvullenKernCost} />
-                    <SubRow label="Profieleren dijkkern" value={model.costModel.directCostGroundWork.profielerenDijkkernCost} />
-                    <SubRow label="Aanbrengen nieuwe kleilaag" value={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaagCost} />
-                    <SubRow label="Profieleren van nieuwe kleilaag" value={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaagCost} />
-                    <SubRow label="Hergebruik teelaarde" value={model.costModel.directCostGroundWork.hergebruikTeelaardeCost} />
-                    <SubRow label="Aanvullen teelaarde" value={model.costModel.directCostGroundWork.aanvullenTeelaardeCost} />
-                    <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaagCost} />
+                    <SubRow label="Voorbereiding" item={model.costModel.directCostGroundWork.preparationCost} />
+                    <SubRow label="Afgraven grasbekleding" item={model.costModel.directCostGroundWork.afgravenGrasbekledingCost} />
+                    <SubRow label="Afgraven kleilaag" item={model.costModel.directCostGroundWork.afgravenKleilaagCost} />
+                    <SubRow label="Herkeuren kleilaag" item={model.costModel.directCostGroundWork.herkeurenKleilaagCost} />
+                    <SubRow label="Aanvullen kern" item={model.costModel.directCostGroundWork.aanvullenKernCost} />
+                    <SubRow label="Profieleren dijkkern" item={model.costModel.directCostGroundWork.profielerenDijkkernCost} />
+                    <SubRow label="Aanbrengen nieuwe kleilaag" item={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaagCost} />
+                    <SubRow label="Profieleren van nieuwe kleilaag" item={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaagCost} />
+                    <SubRow label="Hergebruik teelaarde" item={model.costModel.directCostGroundWork.hergebruikTeelaardeCost} />
+                    <SubRow label="Aanvullen teelaarde" item={model.costModel.directCostGroundWork.aanvullenTeelaardeCost} />
+                    <SubRow label="Profieleren nieuwe graslaag" item={model.costModel.directCostGroundWork.profielerenNieuweGraslaagCost} />
                   </CollapsibleSection>
 
                   {/* Directe kosten constructies */}
