@@ -8,8 +8,8 @@ import {
     ComponentModelBase,
     serializable,
 } from "@vertigis/web/models";
-import BaseElevationLayer from "esri/layers/BaseElevationLayer";
-import ElevationLayer from "esri/layers/ElevationLayer"
+import BaseElevationLayer from "@arcgis/core/layers/BaseElevationLayer";
+import ElevationLayer from "@arcgis/core/layers/ElevationLayer"
 
 
 export interface ElevationExaggeratorModelProperties extends ComponentModelProperties {
@@ -40,7 +40,8 @@ export default class ElevationExaggeratorModel extends ComponentModelBase<Elevat
                     this._elevation = new ElevationLayer({
                         url: "//elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer"
                     });
-                    await this.addResolvingPromise(this._elevation.load());
+                    await this._elevation.load();
+                    return this;
                 }
 
                 async fetchTile(level: number, row: number, col: number, options: any) {

@@ -4,20 +4,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 /* eslint-disable import/order */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable import/order */
 
-import * as am5 from "@amcharts/amcharts5";
-import * as am5xy from "@amcharts/amcharts5/xy";
-import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
-import { Features } from "@vertigis/web/messaging";
-import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
-import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
+
+import * as alphaShapeOperator from "@arcgis/core/geometry/operators/alphaShapeOperator";
+import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 
 // import earcut from 'earcut';
 
 import Graphic from "@arcgis/core/Graphic";
+import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
+import ExtrudeSymbol3DLayer from "@arcgis/core/symbols/ExtrudeSymbol3DLayer";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
 
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Polygon from "@arcgis/core/geometry/Polygon";
@@ -28,22 +30,34 @@ import Mesh from "@arcgis/core/geometry/Mesh";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils";
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
+import { calculate2dAreas, calculate3dAreas } from "./EffectFunctions";
+import { sin } from "@amcharts/amcharts5/.internal/core/util/Math";
+// Add type interfaces at the top
+interface OffsetGeometries {
+    [key: string]: __esri.Polyline;
+}
 
+interface CreatePolygonBetweenDistancesArgs {
+    model: any;
+    distanceA: string | number;
+    distanceB: string | number;
+    offsetGeometries: OffsetGeometries;
+    polygonName: string;
+}
 
 export async function createDesigns(model): Promise<void> {
     let basePath: Polyline | undefined = undefined;
     let chartData: any[] = [];
 
     if (model.selectedDijkvakField) {
-        console.log("do stuff here...")
 
         // Use Promise.all() for parallel processing
         const designPromises = model.graphicsLayerLine.graphics.items
-            .filter(graphic => graphic.attributes[model.selectedDijkvakField])
-            .map(graphic => {
+            .filter((graphic: __esri.Graphic) => graphic.attributes[model.selectedDijkvakField])
+            .map((graphic: __esri.Graphic) => {
                 const dijkvakValue = graphic.attributes[model.selectedDijkvakField];
                 return createDesign(model, graphic.geometry, model.allChartData[dijkvakValue], dijkvakValue);
             });
@@ -84,15 +98,35 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
 
     // Ensure projection module is loaded
-    await projection.load();
+    await projectOperator.load();
 
     // Use Promise.all() to process all chart data in parallel
     const offsetPromises = chartData.map(async (row) => {
         try {
-            const offsetDistance = row.afstand || 0;
+
+            let offsetDistance
+            if (row.afstand > 0) {
+                if (model.rivierzijde === 'rechts') {
+                    offsetDistance = -Math.abs(row.afstand || 0);
+                } else {
+                    offsetDistance = Math.abs(row.afstand || 0);
+                }
+            } if (row.afstand < 0) {
+                if (model.rivierzijde === 'rechts') {
+                    offsetDistance = Math.abs(row.afstand || 0);
+                } else {
+                    offsetDistance = -Math.abs(row.afstand || 0);
+                }
+            }
+
+            if (row.afstand === 0) {
+                offsetDistance = 0;
+            }
+
+            console.log(offsetDistance, "Offset distance for row:", row);
 
             // Project to RD New for accurate planar offset
-            const projectedLine = projection.project(basePath, rdNewSpatialRef) as Polyline;
+            const projectedLine = projectOperator.execute(basePath, rdNewSpatialRef) as Polyline;
 
             if (!projectedLine) {
                 console.warn(`Failed to project line for row:`, row);
@@ -108,7 +142,7 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
             }
 
             // Project back to Web Mercator
-            const offsetLine = projection.project(offsetLineRD, SpatialReference.WebMercator) as Polyline;
+            const offsetLine = projectOperator.execute(offsetLineRD, SpatialReference.WebMercator) as Polyline;
 
             if (offsetLine) {
                 const elevation = row.hoogte || 0;
@@ -126,15 +160,15 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
                         style: "solid",
                         color: "grey",
                         width: 1,
-                    } as __esri.SimpleLineSymbolProperties,
+                    } as any,
                 });
 
                 model.graphicsLayerTemp.add(offsetGraphic);
 
-                if (row.locatie) {
-                    return { locatie: row.locatie, geometry: offsetGraphic.geometry };
+                if (row.afstand !== undefined && row.afstand !== null) {
+                    return { afstand: row.afstand, geometry: offsetGraphic.geometry };
                 } else {
-                    console.log("Row name is missing in the data.", row);
+                    console.log("Row afstand is missing in the data.", row);
                     return null;
                 }
             }
@@ -150,12 +184,13 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 
     // Build offsetGeometries object from results, filtering out null values
     offsetResults.forEach(result => {
-        if (result?.locatie && result?.geometry) {
-            offsetGeometries[result.locatie] = result.geometry;
+        if (result?.afstand !== undefined && result?.afstand !== null && result?.geometry) {
+            offsetGeometries[result.afstand] = result.geometry;
         }
     });
 
-    console.log("Offset geometries created:", Object.keys(offsetGeometries));
+    // console.log("Offset geometries created:", Object.keys(offsetGeometries));
+    console.log("Offset geometries created:", offsetGeometries);
 
     // Only proceed if we have valid geometries
     if (Object.keys(offsetGeometries).length === 0) {
@@ -163,45 +198,119 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
         return;
     }
 
-    // Check and create polygons only if the required values exist
-    if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
-        createPolygonBetween(model, "buitenkruin", "binnenkruin", offsetGeometries);
+    // Sort chart data by distance (afstand) to ensure correct order
+    const sortedChartData = chartData
+        .filter(row => row.afstand !== undefined && row.afstand !== null && row.afstand !== "")
+        .sort((a, b) => parseFloat(a.afstand) - parseFloat(b.afstand));
+
+    console.log("Sorted chart data by distance:", sortedChartData);
+
+    // Create polygons between consecutive distance points
+    for (let i = 0; i < sortedChartData.length - 1; i++) {
+        const currentRow = sortedChartData[i];
+        const nextRow = sortedChartData[i + 1];
+
+        const currentGeometry = offsetGeometries[currentRow.afstand];
+        const nextGeometry = offsetGeometries[nextRow.afstand];
+
+        if (currentGeometry && nextGeometry) {
+            let polygonName;
+
+            if (currentRow.locatie && nextRow.locatie) {
+                polygonName = `${currentRow.locatie}_${nextRow.locatie}`;
+            } else {
+                polygonName = `${currentRow.afstand}m_${nextRow.afstand}m`;
+            }
+            console.log(`Creating polygon between ${currentRow.afstand}m and ${nextRow.afstand}m`);
+
+            createPolygonBetweenDistances({
+                model,
+                distanceA: currentRow.afstand,
+                distanceB: nextRow.afstand,
+                offsetGeometries: offsetGeometries as any,
+                polygonName
+            });
+        } else {
+            console.warn(`Missing geometry for distance range ${currentRow.afstand}m to ${nextRow.afstand}m`);
+        }
     }
 
-    const containsBerm = chartData.some((row) =>
-        row.locatie?.toLowerCase().includes("berm")
-    );
 
-    if (containsBerm) {
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
-            createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
-        }
-        if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
-            createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
-        }
-        if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
-            createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
-        }
-        if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
-            createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
-        }
-        if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
-            createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
-        }
-        if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
-            createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
-        }
-    } else {
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
-            createPolygonBetween(model, "buitenkruin", "binnenkruin", [128, 0, 0, 0.9]);
-        }
-        if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
-            createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
-        }
-        if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
-            createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
-        }
-    }
+
+    // // Check and create polygons only if the required values exist
+    // if (offsetGeometries["buitenkruin"] && offsetGeometries["binnenkruin"]) {
+    //     createPolygonBetween(model, "buitenkruin", "binnenkruin", offsetGeometries);
+    // }
+
+    // const containsBinnenBerm = chartData.some((row) =>
+    //     row.locatie?.toLowerCase().includes("binnenberm")
+    // );
+
+    // const containsBuitenBerm = chartData.some((row) =>
+    //     row.locatie?.toLowerCase().includes("buitenberm")
+    // );
+
+    // if (containsBinnenBerm && containsBuitenBerm) {
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
+    //         createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
+    //         createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
+    //     }
+    // }
+
+    // if (containsBinnenBerm && !containsBuitenBerm) {
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["bovenkant_binnenberm"]) {
+    //         createPolygonBetween(model, "binnenkruin", "bovenkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_binnenberm"] && offsetGeometries["onderkant_binnenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_binnenberm", "onderkant_binnenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_binnenberm"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "onderkant_binnenberm", "binnenteen", offsetGeometries);
+    //     }
+
+    // }
+    // if (!containsBinnenBerm && containsBuitenBerm) {
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["bovenkant_buitenberm"]) {
+    //         createPolygonBetween(model, "buitenkruin", "bovenkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["bovenkant_buitenberm"] && offsetGeometries["onderkant_buitenberm"]) {
+    //         createPolygonBetween(model, "bovenkant_buitenberm", "onderkant_buitenberm", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["onderkant_buitenberm"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "onderkant_buitenberm", "buitenteen", offsetGeometries);
+    //     }
+    // }
+
+
+
+    // if (!containsBinnenBerm && !containsBuitenBerm) {
+    //     if (offsetGeometries["buitenkruin"] && offsetGeometries["buitenteen"]) {
+    //         createPolygonBetween(model, "buitenkruin", "buitenteen", offsetGeometries);
+    //     }
+    //     if (offsetGeometries["binnenkruin"] && offsetGeometries["binnenteen"]) {
+    //         createPolygonBetween(model, "binnenkruin", "binnenteen", offsetGeometries);
+    //     }
+    // }
 
     // console.log(model.uniqueParts, "Unique parts");
 
@@ -209,10 +318,18 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
     // union polygons first?
     const mergedGraphic = new Graphic({
         geometry: merged,
-        symbol: {
-            type: "mesh-3d",
-            symbolLayers: [{ type: "fill" }],
-        } as __esri.Symbol3DLayerProperties,
+        symbol: new MeshSymbol3D({
+            symbolLayers: [
+                {
+                    type: "fill",
+                    material: {
+                        color: [85, 140, 75, 1],  // Green grass color for dike
+                        colorMixMode: "replace"
+                    },
+                    castShadows: true
+                }
+            ]
+        })
     });
     model.graphicsLayerMesh.add(mergedGraphic);
     model.mergedMesh = merged;
@@ -221,102 +338,244 @@ export async function createDesign(model, basePath, chartData, dijkvak): Promise
 
 export async function calculateVolume(model): Promise<void> {
 
-    const gridSize = model.gridSize;
+    model.graphicsLayerControlPoints.removeAll();
 
-    let elevationSampler = await meshUtils.createElevationSampler(
-        model.mergedMesh
-    );
+    try {
+        // Show loading state
+        console.log("Starting volume calculation via API...");
 
-    // elevationSampler.demResolution.max = 5; // Set the maximum resolution for the DEM
-    // elevationSampler.demResolution.min = 5; // Set the minimum resolution for the DEM
+        // Convert graphics to GeoJSON for API
+        const geojson = {
+            type: "FeatureCollection",
+            crs: {
+                type: "name",
+                properties: { name: "EPSG:4326" },
+            },
+            features: [],
+        };
 
-    // console.log("Elevation sampler created:", elevationSampler);
+        // Project polygons to WGS84 and add to GeoJSON
+        await projectOperator.load();
 
-    const extent = model.meshGraphic.geometry.extent;
+        model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
+            const geometry = graphic.geometry;
+            if (geometry) {
+                const projectedGeometry = projectOperator.execute(
+                    geometry,
+                    new SpatialReference({ wkid: 4326 })
+                );
 
-    const pointCoordsForVolume = [];
-    const groundPoints = [];
+                if (projectedGeometry && !Array.isArray(projectedGeometry)) {
+                    const polygonGeometry = projectedGeometry as __esri.Polygon;
 
-    for (let x = extent.xmin; x <= extent.xmax; x += gridSize) {
-        for (let y = extent.ymin; y <= extent.ymax; y += gridSize) {
-            // const point = new Point({
-            //     x: x as number,
-            //     y: y as number,
-            //     spatialReference: SpatialReference.WebMercator
-            // });
-
-
-
-
-            // Query the elevation at the point, maybe batch this?
-            const elevation = elevationSampler.elevationAt(x, y);
-            if (elevation) {
-
-                // Add the point to the volume calculation
-                pointCoordsForVolume.push([x, y, elevation]);
-
-                // Add the point to the ground elevation query
-                groundPoints.push([x, y]);
-
+                    const feature = {
+                        type: "Feature",
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: polygonGeometry.rings,
+                        },
+                        properties: graphic.attributes || {},
+                    };
+                    geojson.features.push(feature);
+                }
             }
+        });
+
+        console.log("Sending GeoJSON to API:", geojson);
+
+        // Call the backend API
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        
+        try {
+            const response = await fetch(`${model.apiUrl}calculate_designs`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-API-Key": model.apiKey,
+                },
+                body: JSON.stringify(geojson),
+                signal: controller.signal,
+                mode: 'cors',
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }));
+                throw new Error(errorData.detail || "API request failed");
+            }
+
+            const result = await response.json();
+            console.log("API calculation result:", result);
+
+            // Update model with API results
+            model.totalVolumeDifference = result.volume.total_volume.toFixed(2);
+            model.excavationVolume = result.volume.excavation_volume.toFixed(2);
+            model.fillVolume = result.volume.fill_volume.toFixed(2);
+
+            const spatialRefRd = new SpatialReference({ wkid: 28992 });
+
+            const multipointAboveGround = new Multipoint({
+                points: result.ruimtebeslag_2d_points,
+                spatialReference: spatialRefRd
+            });
+
+            const multiPointAboveGroundWebMerc = projectOperator.execute(multipointAboveGround, SpatialReference.WebMercator) as Multipoint;
+
+            // Store z-values mapped to Web Mercator coordinates (since alpha shape is in Web Mercator)
+            const zValueMap: { [key: string]: number } = {};
+            multiPointAboveGroundWebMerc.points.forEach((point: number[]) => {
+                const key = `${point[0].toFixed(1)},${point[1].toFixed(1)}`;
+                zValueMap[key] = point[2] ?? 0;
+            });
+
+            const alphaShapeAboveGround = alphaShapeOperator.execute(multiPointAboveGroundWebMerc, 5);
+
+            const singlePartAlphaShape = multiPartToSinglePartOperator.executeMany([alphaShapeAboveGround.alphaShape]);
+
+            if (singlePartAlphaShape) {
+
+                // iterate over singlePartAlphaShape parts and create graphics
+                singlePartAlphaShape.forEach(part => {
+                    // Remove z-coordinates to create 2D polygon
+                    const polygon2D = part.type === 'polygon' && 'rings' in part
+                        ? new Polygon({
+                            rings: (part as Polygon).rings.map(ring => 
+                                ring.map(coord => [coord[0], coord[1]])
+                            ),
+                            spatialReference: part.spatialReference
+                        })
+                        : part;
+                    
+                    const aboveGroundGraphic = new Graphic({
+                        geometry: polygon2D,
+                        attributes: {
+                            zValues: zValueMap,
+                            originalPoints: result.ruimtebeslag_2d_points,
+                            type: 'ruimtebeslag_above_ground'
+                        },
+                    });
+                    model.graphicsLayerRuimtebeslag.add(aboveGroundGraphic);
+                    
+                    // Create 3D version by directly mapping rings with z-lookup (fastest approach)
+                    if (part.type === 'polygon' && 'rings' in part) {
+                        const polygon2D = part as Polygon;
+                        const rings3D = polygon2D.rings.map(ring => 
+                            ring.map(coord => {
+                                const key = `${coord[0].toFixed(1)},${coord[1].toFixed(1)}`;
+                                return [coord[0], coord[1], zValueMap[key] ?? 0];
+                            })
+                        );
+                        
+                        // Create a 3D symbol for the dike with realistic appearance
+                        const dikeSymbol = new PolygonSymbol3D({
+                            symbolLayers: [
+                                new FillSymbol3DLayer({
+                                    material: {
+                                        color: [85, 140, 75, 1],  // Green grass color, no transparency
+                                    },
+                                    castShadows: true
+                                })
+                            ]
+                        });
+
+                        const aboveGroundGraphic3d = new Graphic({
+                            geometry: new Polygon({
+                                rings: rings3D,
+                                spatialReference: polygon2D.spatialReference,
+                                hasZ: true
+                            }),
+                            symbol: dikeSymbol,
+                            attributes: { type: 'ruimtebeslag_above_ground_3d' }
+                        });
+
+                        model.graphicsLayerRuimtebeslag3d.add(aboveGroundGraphic3d);
+                    }
+                    
+                    console.log("Added above ground ruimtebeslag graphic with z-values in attributes:", aboveGroundGraphic)
+                });
+            }
+
+            console.log("Volume calculation complete:");
+            console.log("Total volume difference:", result.volume.total_volume, "m³");
+            console.log("Total cut volume:", result.volume.excavation_volume, "m³");
+            console.log("Total fill volume:", result.volume.fill_volume, "m³");
+            console.log("Calculation time:", result.calculation_time, "s");
+
+            // Show success message
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Ontwerp berekening voltooid. \nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
+                title: "Volume Berekening Geslaagd",
+                disableTimeouts: true
+            });
+
+        } catch (fetchError: unknown) {
+            clearTimeout(timeoutId);
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+                throw new Error("API verzoek duurde te lang (timeout na 60s)");
+            }
+            throw fetchError;
         }
+
+    } catch (error) {
+        console.error("Volume calculation error:", error);
+        let errorMessage = "Unknown error occurred";
+
+        if (error instanceof TypeError && error.message === "Failed to fetch") {
+            errorMessage = "Kan de API niet bereiken. Controleer uw internetverbinding.";
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        model.messages.commands.ui.alert.execute({
+            message: `Fout bij volume berekening: ${errorMessage}`,
+            title: "API Fout",
+        });
+
+        // Set error state in model
+        model.excavationVolume = "-";
+        model.fillVolume = "-";
+        model.totalVolumeDifference = "-";
     }
+}
 
-
-
-    // console.log("All points processed:", pointCoordsForVolume);
-
-    if (pointCoordsForVolume.length === 0) {
-        console.warn("No points were processed. Ensure the mesh geometries and grid size are correct.");
+export async function calculateDesignValues(model): Promise<void> {
+    // Check if required data exists before calculating
+    if (!model.mergedMesh) {
+        console.warn("No merged mesh available for design calculations");
         return;
     }
 
-    // Query ground elevations for all points
-    const multipointForGround = new Multipoint({
-        points: groundPoints,
-        spatialReference: SpatialReference.WebMercator
-    });
+    const total2dArea = await calculate2dAreas(model);
+    model.total2dArea = total2dArea.toFixed(2);
 
+    const total3dArea = await calculate3dAreas(model);
+    model.total3dArea = total3dArea.toFixed(2);
 
-
-    const groundResult = await model.elevationLayer.queryElevation(multipointForGround, { returnSampleInfo: true });
-    console.log("Ground elevation query result:", groundResult);
-
-    let totalVolumeDifference = 0;
-    let excavationVolume = 0;
-    let fillVolume = 0;
-
-    groundResult.geometry.points.forEach(([x, y, zGround], index) => {
-        const z3D = pointCoordsForVolume[index][2]; // Z value from the mesh geometry
-        const volumeDifference = (z3D - zGround) * model.gridSize * model.gridSize; // Volume difference for this point
-
-        if (volumeDifference > 0) {
-            fillVolume += volumeDifference; // Fill volume (material to be added)
+    if (model.graphicsLayerLine?.graphics?.length > 0) {
+        console.log("Calculating line length...");
+        const firstGraphic = model.graphicsLayerLine.graphics.getItemAt(0);
+        if (firstGraphic?.geometry) {
+            console.log("Calculating line length...");
+            const length = geometryEngine.geodesicLength(firstGraphic.geometry, "meters");
+            console.log("Calculated line length:", length);
+            model.lineLength = length.toFixed(2);
         } else {
-            excavationVolume += Math.abs(volumeDifference); // Cut volume (material to be removed)
+            console.log("No geometry found in the first graphic of graphicsLayerLine.");
         }
-
-        totalVolumeDifference += volumeDifference;
-    });
-
-    model.excavationVolume = excavationVolume.toFixed(2);
-    model.fillVolume = fillVolume.toFixed(2);
-    model.totalVolumeDifference = totalVolumeDifference.toFixed(2);
-
-    console.log("Total volume difference:", totalVolumeDifference, "m³");
-    console.log("Total cut volume:", excavationVolume, "m³");
-    console.log("Total fill volume:", fillVolume, "m³");
-
-
+    }
 }
 
 
-function createMeshFromPolygon(model, polygon, textureUrl = null) {
+export function createMeshFromPolygon(model, polygon, textureUrl = null) {
 
     const mesh = Mesh.createFromPolygon(polygon, {
 
     });
     mesh.spatialReference = polygon.spatialReference
+
 
     // const symbol = {
     //     type: "mesh-3d",
@@ -328,75 +587,7 @@ function createMeshFromPolygon(model, polygon, textureUrl = null) {
     // graphicsLayerTemp.add(new Graphic({ geometry: mesh, symbol, attributes: { footprint: polygon } }));
 }
 
-
-// functions for debugging with earcut
-// function ringArea(ring) {
-//   let area = 0;
-//   for (let i = 0; i < ring.length; i++) {
-//     const [x1, y1] = ring[i];
-//     const [x2, y2] = ring[(i + 1) % ring.length];
-//     area += (x1 * y2 - x2 * y1);
-//   }
-//   return area / 2;
-// }
-// function createMeshFromPolygon(model, polygon, textureUrl = null) {
-//     const rings = polygon.rings;
-//     const vertices2D = [];
-//     const vertices3D = [];
-//     const holes = [];
-//     let vertexCount = 0;
-
-//     rings.forEach((ring, i) => {
-//         console.log(`Ring ${i}, raw coords:`, ring);
-
-//         const area = ringArea(ring);
-//         console.log(`Ring ${i} area:`, area);
-
-//         // Fix winding: outer CCW, holes CW
-//         const shouldReverse = (i === 0 && area < 0) || (i > 0 && area > 0);
-//         const correctedRing = shouldReverse ? [...ring].reverse() : ring;
-
-//         if (i > 0) {
-//             holes.push(vertexCount);
-//         }
-
-//         correctedRing.forEach(v => {
-//             vertices2D.push(v[0], v[1]);
-//             vertices3D.push(v[0], v[1], v[2] ?? 0);
-//             vertexCount++;
-//         });
-//     });
-
-//     console.log("Vertices2D:", vertices2D);
-//     console.log("Vertices3D:", vertices3D);
-//     console.log("Holes:", holes);
-
-//     const triangles = earcut(vertices2D);
-//     console.log("Earcut triangles:", triangles);
-
-//     // CREATE TRIANGLE GRAPHICS FOR VISUALIZATION
-//     createTriangleGraphics(model, polygon, { triangles, vertices2D, vertices3D });
-
-//     const mesh = new Mesh({
-//         spatialReference: polygon.spatialReference,
-//         vertexAttributes: { position: vertices3D },
-//         components: [{ faces: triangles }]
-//     });
-
-//     const symbol = {
-//         type: "mesh-3d",
-//         symbolLayers: [{
-//             type: "fill",
-//             material: textureUrl
-//                 ? { color: "white", texture: { url: textureUrl } }
-//                 : { color: "blue" }
-//         }]
-//     };
-
-//     model.meshes.push(mesh);
-// }
-
-function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
+export function createPolygonBetween(model: any, nameA: string, nameB: string, offsetGeometries: OffsetGeometries): void {
     const geomA = offsetGeometries[nameA];
     const geomB = offsetGeometries[nameB];
     if (!geomA || !geomB) {
@@ -434,13 +625,14 @@ function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
         attributes: { name: partName }
     });
 
-    model.graphicsLayerTemp.add(graphic3d);
+    model.graphicsLayer3dPolygon.add(graphic3d);
 
-    model.designLayer2D.applyEdits({
-        addFeatures: [graphics2D]
-    }).catch((error) => {
-        console.error("Error adding 2D polygon to design layer:", error);
-    });
+    // Add 2D polygon to graphics layer with styling
+    if (model.designLayer2DGetSymbol) {
+        const symbol = model.designLayer2DGetSymbol(partName);
+        graphics2D.symbol = symbol as any;
+    }
+    model.designLayer2D.add(graphics2D);
 
     // part for meshes, taking care of proper triangulation
     const pathAforMesh = geomA.paths[0];
@@ -467,464 +659,86 @@ function createPolygonBetween(model, nameA, nameB, offsetGeometries) {
             spatialReference: geomA.spatialReference
         });
 
-        // const partName = `${nameA}-${nameB}`;
-
-        // const graphic3d = new Graphic({
-        //     geometry: segmentPolygon,
-        //     attributes: { name: partName }
-        // });
-
-        // model.graphicsLayerTemp.add(graphic3d);
-
-        // // Create 2D version
-        // const ring2d = quad.map(point => [point[0], point[1]]);
-        // const polygon2d = new Polygon({
-        //     rings: [ring2d],
-        //     spatialReference: geomA.spatialReference
-        // });
-
-        // const graphics2D = new Graphic({
-        //     geometry: polygon2d,
-        //     attributes: { name: partName }
-        // });
-
-        // model.designLayer2D.applyEdits({
-        //     addFeatures: [graphics2D]
-        // }).catch((error) => {
-        //     console.error("Error adding 2D polygon to design layer:", error);
-        // });
-
-        // model.uniqueParts.push(partName);
-
         // Each quad will have simple, predictable triangulation
         createMeshFromPolygon(model, segmentPolygon, null);
     }
 }
 
-export function exportGraphicsLayerAsGeoJSON(model): void {
-    const geojson = {
-        type: "FeatureCollection",
-        crs: {
-            type: "name",
-            properties: { name: "EPSG:4326" }, // Set CRS to WGS84
-        },
-        features: [],
-    };
+export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistancesArgs): void {
+    const { model, distanceA, distanceB, offsetGeometries, polygonName } = args;
+    const geomA = offsetGeometries[distanceA];
+    const geomB = offsetGeometries[distanceB];
+    if (!geomA || !geomB) {
+        console.warn(`Could not find lines for distance ${distanceA} and/or ${distanceB}`);
+        return;
+    }
 
-    // Ensure the projection module is loaded
-    projection.load().then(() => {
-        model.graphicsLayerTemp.graphics.forEach((graphic) => {
-            const geometry = graphic.geometry;
+    // part for graphiclayers
+    const pathAtotal = geomA.paths[0];
+    const pathBtotal = geomB.paths[0].slice().reverse();
+    let ring = pathAtotal.concat(pathBtotal);
+    ring.push(pathAtotal[0]);
 
-            if (geometry) {
-                // Project the geometry to WGS84 (EPSG:4326)
-                const projectedGeometry = projection.project(
-                    geometry,
-                    new SpatialReference({ wkid: 4326 })
-                );
+    let ring2d = ring.map(point => [point[0], point[1]]);
 
-                if (projectedGeometry) {
-                    let feature: any = {
-                        type: "Feature",
-                        geometry: null,
-                        properties: graphic.attributes || {}, // Include graphic attributes as properties
-                    };
+    const polygon3d = new Polygon({
+        rings: [ring],
+        spatialReference: geomA.spatialReference
+    });
 
-                    // Handle different geometry types
-                    if (!Array.isArray(projectedGeometry) && projectedGeometry.type === "polygon") {
-                        feature.geometry = {
-                            type: "Polygon",
-                            coordinates: (projectedGeometry as __esri.Polygon).rings,
-                        };
-                        geojson.features.push(feature);
-                    }
+    const polygon2d = new Polygon({
+        rings: [ring2d],
+        spatialReference: geomA.spatialReference
+    });
 
-                    // geojson.features.push(feature);
-                }
-            }
+    const graphics2D = new Graphic({
+        geometry: polygon2d,
+        attributes: { name: polygonName }
+    });
+
+    const graphic3d = new Graphic({
+        geometry: polygon3d,
+        attributes: { name: polygonName }
+    });
+
+    model.graphicsLayer3dPolygon.add(graphic3d);
+
+    // Add 2D polygon to graphics layer with styling
+    if (model.designLayer2DGetSymbol) {
+        const symbol = model.designLayer2DGetSymbol(polygonName);
+        graphics2D.symbol = symbol as any;
+    }
+    model.designLayer2D.add(graphics2D);
+
+    // part for meshes, taking care of proper triangulation
+    const pathAforMesh = geomA.paths[0];
+    const pathBforMesh = geomB.paths[0];
+
+    // Make sure both paths have the same number of vertices
+    const minLength = Math.min(pathAforMesh.length, pathBforMesh.length);
+    const trimmedPathA = pathAforMesh.slice(0, minLength);
+    const trimmedPathB = pathBforMesh.slice(0, minLength);
+
+    // Create segments by connecting corresponding vertex pairs
+    for (let i = 0; i < minLength - 1; i++) {
+        // Create a quad (4-sided polygon) from two consecutive vertex pairs
+        const quad = [
+            trimmedPathA[i],       // Vertex i on line A
+            trimmedPathA[i + 1],   // Vertex i+1 on line A  
+            trimmedPathB[i + 1],   // Vertex i+1 on line B
+            trimmedPathB[i],       // Vertex i on line B
+            trimmedPathA[i]        // Close the polygon
+        ];
+
+        const segmentPolygon = new Polygon({
+            rings: [quad],
+            spatialReference: geomA.spatialReference
         });
 
-        // Create and download the GeoJSON file
-        const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "ontwerp_export.geojson";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    });
+        // Each quad will have simple, predictable triangulation
+        createMeshFromPolygon(model, segmentPolygon, null);
+    }
 }
-
-export function initializeChart(model, activeTab, chartContainerRef, seriesRef): () => void {
-    if (activeTab !== 0 || !model.chartData || !chartContainerRef.current) {
-        console.log(activeTab, model.chartData, chartContainerRef.current, "Chart not initialized");
-        return
-    }
-
-
-    model.chartRoot = am5.Root.new(chartContainerRef.current);
-    const root = model.chartRoot as am5.Root;
-    root.setThemes([am5themes_Animated.new(root)]);
-
-    const chart = root.container.children.push(
-        am5xy.XYChart.new(root, {
-            panX: true,
-            panY: true,
-            wheelX: "panX",
-            wheelY: "zoomX",
-            pinchZoomX: true,
-        })
-    );
-
-    try {
-        root._logo.dispose();
-    } catch {
-        // Handle error if logo is not present
-    }
-
-    const xAxis = chart.xAxes.push(
-        am5xy.ValueAxis.new(root, {
-            renderer: am5xy.AxisRendererX.new(root, {}),
-            tooltip: am5.Tooltip.new(root, {}),
-        })
-    );
-
-    const yAxis = chart.yAxes.push(
-        am5xy.ValueAxis.new(root, {
-            renderer: am5xy.AxisRendererY.new(root, {}),
-            tooltip: am5.Tooltip.new(root, {}),
-        })
-    );
-
-    const series = chart.series.push(
-        am5xy.LineSeries.new(root, {
-            name: "Hoogte vs Afstand",
-            xAxis: xAxis as any,
-            yAxis: yAxis as any,
-            valueYField: "hoogte",
-            valueXField: "afstand",
-            tooltip: am5.Tooltip.new(root, {
-                labelText: "{valueY}",
-            }),
-        })
-    );
-
-    series.data.setAll(model.chartData);
-    seriesRef.current = series
-
-    series.strokes.template.setAll({
-        strokeWidth: 2,
-    });
-
-    // Add draggable bullets with snapping logic
-    series.bullets.push((root, series, dataItem) => {
-        const circle = am5.Circle.new(root, {
-            radius: 5,
-            fill: root.interfaceColors.get("background"),
-            stroke: series.get("fill"),
-            strokeWidth: 2,
-            draggable: true,
-            interactive: true,
-            cursorOverStyle: "pointer",
-        });
-
-        // Snap the coordinates to the nearest 0.5 meter
-        const snapToGrid = (value: number, gridSize: number) => Math.round(value / gridSize) * gridSize;
-
-        circle.events.on("dragstop", () => {
-            // Calculate new positions
-            const newY = yAxis.positionToValue(
-                yAxis.coordinateToPosition(circle.y())
-            );
-            const newX = xAxis.positionToValue(
-                xAxis.coordinateToPosition(circle.x())
-            );
-
-            // Snap to nearest 0.5 meter grid
-            const snappedX = snapToGrid(newX, 0.5);
-            const snappedY = snapToGrid(newY, 0.5);
-
-            // Update chart
-            dataItem.set("valueY", snappedY);
-            dataItem.set("valueX", snappedX);
-
-            // Update model.chartData
-            const index = model.chartData.findIndex(
-                (d) => d.afstand === dataItem.dataContext["afstand"]
-            );
-
-            console.log(index)
-
-            if (index !== -1) {
-                model.chartData[index].hoogte = snappedY;
-                model.chartData[index].afstand = snappedX;
-
-
-                model.chartData = [...model.chartData]; // Force reactivity
-                model.allChartData[model.activeSheet] = [...model.chartData];
-            }
-        });
-
-        return am5.Bullet.new(root, {
-            sprite: circle,
-        });
-    });
-
-    chart.set("cursor", am5xy.XYCursor.new(root, {}));
-
-    return () => {
-        root.dispose();
-    };
-}
-export function initializeCrossSectionChart(model, crossSectionChartContainerRef, refs: { chartSeriesRef: any; meshSeriesRef: any; userSeriesRef: any }): () => void {
-    const { chartSeriesRef, meshSeriesRef, userSeriesRef } = refs;
-
-    if (!model.crossSectionChartData || !crossSectionChartContainerRef?.current) {
-        console.log(model.crossSectionChartData, crossSectionChartContainerRef?.current, "Chart not initialized");
-        return
-    }
-
-
-    model.crossSectionChartRoot = am5.Root.new(crossSectionChartContainerRef.current);
-    const root = model.crossSectionChartRoot as am5.Root;
-    root.setThemes([am5themes_Animated.new(root)]);
-
-    const chart = root.container.children.push(
-        am5xy.XYChart.new(root, {
-            panX: true,
-            panY: true,
-            wheelX: "panX",
-            wheelY: "zoomX",
-            pinchZoomX: true,
-        })
-    );
-
-    try {
-        root._logo.dispose();
-    } catch {
-        // Handle error if logo is not present
-    }
-
-    const xAxis = chart.xAxes.push(
-        am5xy.ValueAxis.new(root, {
-            renderer: am5xy.AxisRendererX.new(root, {}),
-            tooltip: am5.Tooltip.new(root, {}),
-        })
-    );
-
-    const yAxis = chart.yAxes.push(
-        am5xy.ValueAxis.new(root, {
-            renderer: am5xy.AxisRendererY.new(root, {}),
-            tooltip: am5.Tooltip.new(root, {}),
-        })
-    );
-
-    const elevationSeries = chart.series.push(
-        am5xy.LineSeries.new(root, {
-            name: "Hoogte vs Afstand",
-            xAxis: xAxis as any,
-            yAxis: yAxis as any,
-            valueYField: "hoogte",
-            valueXField: "afstand",
-            tooltip: am5.Tooltip.new(root, {
-                labelText: "Grond hoogte: {valueY}",
-            }),
-            stroke: am5.color(0xff9900),
-        })
-    );
-
-    elevationSeries.data.setAll(model.crossSectionChartData);
-    chartSeriesRef.current = elevationSeries
-
-    elevationSeries.strokes.template.setAll({
-        strokeWidth: 3,
-    });
-
-    const meshSeries = chart.series.push(
-        am5xy.LineSeries.new(root, {
-            name: "Mesh Hoogte vs Afstand",
-            xAxis: xAxis as any,
-            yAxis: yAxis as any,
-            valueYField: "hoogte",
-            valueXField: "afstand",
-            tooltip: am5.Tooltip.new(root, {
-                labelText: "Ontwerp hoogte: {valueY}",
-            }),
-            stroke: am5.color(0x888888)
-        })
-    );
-
-    if (model.meshSeriesData?.length) {
-        meshSeries.data.setAll(model.meshSeriesData);
-        console.log(model.meshSeriesData, "Mesh series data has been set");
-    }
-
-    meshSeriesRef.current = meshSeries;
-    meshSeries.strokes.template.setAll({
-        strokeWidth: 3,
-    });
-
-    const userSeries = chart.series.push(
-        am5xy.LineSeries.new(root, {
-            name: "User Drawn Line",
-            xAxis: xAxis as any,
-            yAxis: yAxis as any,
-            valueYField: "hoogte",
-            valueXField: "afstand",
-            stroke: am5.color(0x800080), // purple
-            tooltip: am5.Tooltip.new(root, {
-                labelText: "{valueY}",
-            }),
-        })
-    );
-
-    // Add bullets (markers) at each clicked point
-    userSeries.bullets.push((root, series, dataItem) => (
-        am5.Bullet.new(root, {
-            sprite: am5.Circle.new(root, {
-                radius: 6,
-                fill: am5.color(0x800080), // purple fill
-                stroke: am5.color(0xffffff),
-                strokeWidth: 2,
-            })
-        })
-    ));
-
-    userSeries.strokes.template.setAll({
-        stroke: am5.color(0x800080), // purple
-        strokeWidth: 2,
-    });
-
-    function updateSlopeLabels() {
-        // Clear old labels
-        model.slopeLabels.forEach(label => label.dispose());
-        model.slopeLabels = [];
-
-        const points = model.userLinePoints;
-        if (!points || points.length < 2) return;
-
-        for (let i = 1; i < points.length; i++) {
-            const p1 = points[i - 1];
-            const p2 = points[i];
-
-            const deltaX = p2.afstand - p1.afstand;
-            const deltaY = p2.hoogte - p1.hoogte;
-
-            let slopeRatio;
-            if (deltaY === 0) {
-                slopeRatio = "∞";
-            } else {
-                slopeRatio = (Math.abs(deltaX / deltaY)).toFixed(2);
-            }
-
-            const labelText = `1:${slopeRatio}`;
-
-            // Position label halfway between points
-            const midX = (p1.afstand + p2.afstand) / 2;
-            const midY = (p1.hoogte + p2.hoogte) / 2;
-
-            console.log(midX, midY, "Midpoint coordinates for slope label");
-
-            const label = chart.plotContainer.children.push(
-                am5.Label.new(root, {
-                    text: labelText,
-                    x: xAxis.get("renderer").positionToCoordinate(xAxis.valueToPosition(midX)),
-                    y: yAxis.get("renderer").positionToCoordinate(yAxis.valueToPosition(midY)),
-                    centerX: am5.p50,
-                    centerY: am5.p50,
-                    background: am5.Rectangle.new(root, {
-                        fill: am5.color(0xffffff),
-                        fillOpacity: 0.7
-                    }),
-                    paddingLeft: 2,
-                    paddingRight: 2,
-                    paddingTop: 1,
-                    paddingBottom: 1,
-                    fontSize: 14
-                })
-            );
-            console.log(label, "Slope label created: ", labelText)
-
-            model.slopeLabels.push(label);
-        }
-    }
-    chart.plotContainer.events.on("click", (ev) => {
-        // Convert pixel coordinates to axis values
-        const point = chart.plotContainer.toLocal(ev.point);
-        const afstand = xAxis.positionToValue(xAxis.coordinateToPosition(point.x));
-        const hoogte = yAxis.positionToValue(yAxis.coordinateToPosition(point.y));
-
-        // Add the new point to the array
-        model.userLinePoints.push({ afstand, hoogte });
-        // model.setUserLinePoints([...userLinePoints]); // For React state, or just update the array if not using React
-
-        // Update the series data
-        userSeries.data.setAll(model.userLinePoints);
-        updateSlopeLabels();
-    });
-
-    chart.events.on("boundschanged", () => {
-        updateSlopeLabels();
-    });
-
-    xAxis.on("start", () => {
-        console.log("X Axis end event triggered");
-        updateSlopeLabels();
-    });
-
-    yAxis.on("start", () => {
-        updateSlopeLabels();
-    });
-
-    userSeries.strokes.template.setAll({
-        stroke: am5.color(0x00cc00),
-        strokeWidth: 2,
-    });
-
-    const clearButton = chart.children.push(
-        am5.Button.new(root, {
-            label: am5.Label.new(root, { text: "Verwijder taludlijn", fontSize: 14 }),
-            x: 50,
-            y: 35,
-            centerX: am5.p0,
-            centerY: am5.p0,
-            // paddingLeft: 25,
-            // paddingRight: 25,
-            // paddingTop: 5,
-            // paddingBottom: 5,
-            // background: am5.RoundedRectangle.new(root, {
-            //     fill: am5.color(0xffcccc),
-            //     fillOpacity: 1,
-            //     cornerRadiusTL: 8,
-            //     cornerRadiusTR: 8,
-            //     cornerRadiusBL: 8,
-            //     cornerRadiusBR: 8,
-            // }),
-        })
-    );
-
-    clearButton.events.on("click", () => {
-        model.userLinePoints = [];
-        userSeries.data.setAll([]);
-        // Remove slope labels
-        if (model.slopeLabels) {
-            model.slopeLabels.forEach(label => label.dispose());
-            model.slopeLabels = [];
-        }
-    });
-
-
-
-
-    chart.set("cursor", am5xy.XYCursor.new(root, {}));
-
-    return () => {
-        root.dispose();
-    };
-}
-
 
 
 export async function getLineFeatureLayers(map): Promise<FeatureLayer[]> {
@@ -955,8 +769,8 @@ export function setInputLineFromFeatureLayer(model) {
             features.forEach((feature) => {
 
                 const lineGeometry = feature.geometry;
-                projection.load().then(() => {
-                    const projectedGeometry = projection.project(
+                projectOperator.load().then(() => {
+                    const projectedGeometry = projectOperator.execute(
                         lineGeometry,
                         new SpatialReference({ wkid: 3857 })
                     );
@@ -979,31 +793,39 @@ export function setInputLineFromFeatureLayer(model) {
 }
 
 export function cleanFeatureLayer(layer) {
-    layer.queryObjectIds().then((objectIds) => {
-        if (objectIds.length === 0) {
-            console.log("No features to delete.");
-            return;
-        }
-        const deletes = objectIds.map(id => ({
-            objectId: id
-        }));
+    // Handle both FeatureLayer and GraphicsLayer
+    if (layer.removeAll) {
+        // GraphicsLayer has removeAll method
+        layer.removeAll();
+        console.log("Graphics cleared from layer.");
+    } else if (layer.queryObjectIds) {
+        // FeatureLayer uses applyEdits
+        layer.queryObjectIds().then((objectIds) => {
+            if (objectIds.length === 0) {
+                console.log("No features to delete.");
+                return;
+            }
+            const deletes = objectIds.map(id => ({
+                objectId: id
+            }));
 
-        layer.applyEdits({
-            deleteFeatures: deletes
-        }).catch((error) => {
-            console.error("Error deleting features:", error);
+            layer.applyEdits({
+                deleteFeatures: deletes
+            }).catch((error) => {
+                console.error("Error deleting features:", error);
+            });
         });
-    });
+    }
 }
 
 
 export async function createCrossSection(model) {
     model.messages.commands.ui.displayNotification.execute({
+        message: `Teken de dwarsdoorsnede door op de kaart te klikken.`,
+        title: "Dwarsdoorsnede Tekenen",
+        disableTimeouts: true
+    });
 
-        title: "Cross Section",
-        message: "Klik op de kaart om een dwarsprofiel te tekenen. Deze tool is in ontwikkeling.",
-        type: "success",
-    })
     model.startDrawingLine(model.graphicsLayerCrossSection).then(() => { // set interval dynamically?
         getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
             console.log(offsetLocations, "Offset locations for cross section");
@@ -1011,6 +833,14 @@ export async function createCrossSection(model) {
             const promises = offsetLocations.map(loc =>
                 getPointAlongLine(model.graphicsLayerCrossSection.graphics.items[0].geometry.paths[0], loc, sRef)
             );
+
+            model.loading = true;
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Dwarsdoorsnede wordt geladen...`,
+                title: "Dwarsdoorsnede Laden",
+                disableTimeouts: true,
+                id: "crossSectionLoading"
+            });
 
             Promise.all(promises).then(async pointGraphics => {
                 console.log(pointGraphics, "Point graphics for cross section");
@@ -1023,14 +853,15 @@ export async function createCrossSection(model) {
                     }),
                     spatialReference: model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference
                 });
-                console.log(pointGraphics, "Point graphics for cross section");
-                console.log(multipoint, "Multipoint for cross section");
+
 
                 const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
 
                 model.crossSectionChartData = elevationResult.geometry.points.map((point, index) => ({
                     afstand: point[3], // m value
-                    hoogte: point[2]
+                    hoogte: point[2],
+                    x: point[0],
+                    y: point[1]
                 }));
 
 
@@ -1047,8 +878,6 @@ export async function createCrossSection(model) {
                     }
                     );
 
-
-
                     const meshElevationResult = elevationSampler.queryElevation(multipoint)
                     console.log("Mesh elevation result:", meshElevationResult);
                     if ("points" in meshElevationResult && Array.isArray(meshElevationResult.points)) {
@@ -1059,27 +888,109 @@ export async function createCrossSection(model) {
                                 hoogte: point[2]
                             }));
                         console.log("Mesh series data:", model.meshSeriesData);
+                    
                     } else {
                         model.meshSeriesData = [];
                         console.warn("meshElevationResult does not have a 'points' property or is not an array.", meshElevationResult);
                     }
 
+
                     console.log("Mesh elevation result:", meshElevationResult);
+                    model.loading = false;
+                    model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
 
-
+                } 
+                else{
+                    model.loading = false;
+                    model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
+                    console.log("No mesh available for elevation sampling.");
                 }
-
-                model.messages.commands.ui.displayNotification.execute({
-
-                    title: "Cross Section",
-                    message: "Dwarsprofiel punten opgehaald en hoogtes berekend, deze worden straks getoond in de grafiek. Deze tool is in ontwikkeling.",
-                    type: "success",
-                });
             });
 
             // model.crossSectionLocations = offsetLocations;
             // model.graphicsLayerTemp.removeAll();
         });
+    }).catch((error) => {
+        console.error("Error during cross section drawing:", error);
+    });
+}
+
+export async function getElevationData(model) {
+    getPointsOnLine(model.graphicsLayerCrossSection.graphics.items[0].geometry, 0.1).then((offsetLocations) => {
+        console.log(offsetLocations, "Offset locations for cross section");
+        const sRef = model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference;
+        const promises = offsetLocations.map(loc =>
+            getPointAlongLine(model.graphicsLayerCrossSection.graphics.items[0].geometry.paths[0], loc, sRef)
+        );
+
+        Promise.all(promises).then(async pointGraphics => {
+            console.log(pointGraphics, "Point graphics for cross section");
+            const multipoint = new Multipoint({
+                hasM: true,
+                points: pointGraphics.map(g => {
+                    const { x, y } = g.geometry as Point;
+                    const offset = g.attributes?.offset ?? 0;
+                    return [x, y, undefined, offset]; // [x, y, z, m]
+                }),
+                spatialReference: model.graphicsLayerCrossSection.graphics.items[0].geometry.spatialReference
+            });
+            console.log(pointGraphics, "Point graphics for cross section");
+            console.log(multipoint, "Multipoint for cross section");
+
+            const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
+            console.log(elevationResult, "Elevation result for cross section");
+
+            model.chartDataElevation = elevationResult.geometry.points.map((point, index) => ({
+                afstand: point[3], // m value
+                hoogte: point[2],
+                x: point[0],
+                y: point[1]
+            }));
+
+            // Find intersection of perpendicular line with the reference line
+            const perpendicularLine = model.graphicsLayerCrossSection.graphics.items[0].geometry as Polyline;
+            const referenceLine = model.graphicsLayerLine.graphics.items[0].geometry as Polyline;
+
+            const intersection = geometryEngine.intersectLinesToPoints(perpendicularLine, referenceLine);
+
+            if (intersection) {
+                // Find the geodesic distance along the perpendicular line to the intersection point
+                let intersectionDistance = 0;
+
+                // Calculate geodesic distance from start of perpendicular line to intersection point
+                const perpStart = new Point({
+                    x: perpendicularLine.paths[0][0][0],
+                    y: perpendicularLine.paths[0][0][1],
+                    spatialReference: perpendicularLine.spatialReference
+                });
+
+                const intersectionPoint = Array.isArray(intersection) ? intersection[0] : intersection;
+
+                // Create a line segment from start to intersection for geodesic measurement
+                const lineToIntersection = new Polyline({
+                    paths: [[[perpStart.x, perpStart.y], [intersectionPoint.x, intersectionPoint.y]]],
+                    spatialReference: perpendicularLine.spatialReference
+                });
+
+                intersectionDistance = geometryEngine.geodesicLength(lineToIntersection, "meters");
+
+                console.log("Geodesic intersection distance along perpendicular line:", intersectionDistance);
+
+                // Adjust all distances to be relative to the intersection point (0,0)
+                model.chartDataElevation = model.chartDataElevation.map(point => ({
+                    afstand: point.afstand - intersectionDistance, // Negative for one side, positive for the other
+                    hoogte: point.hoogte,
+                    x: point.x,
+                    y: point.y
+                }));
+
+                console.log("Adjusted elevation chart data with intersection at 0:", model.chartDataElevation);
+            } else {
+                console.warn("No intersection found between perpendicular line and reference line");
+            }
+
+        })
+
     });
 }
 
@@ -1202,7 +1113,7 @@ export function getPointAlongLine(
 
             const pointGraphic = new Graphic({
                 geometry: point,
-                symbol: defaultPointSymbol,
+                symbol: defaultPointSymbol as any,
                 attributes: {
                     offset: offsetLocation.offset,
                 },
@@ -1215,88 +1126,156 @@ export function getPointAlongLine(
     });
 }
 
-function createTriangleGraphics(model, polygon, triangulationData) {
-    const { triangles, vertices2D, vertices3D } = triangulationData;
-    
-    // Create graphics for each triangle
-    for (let i = 0; i < triangles.length; i += 3) {
-        const a = triangles[i];
-        const b = triangles[i + 1];
-        const c = triangles[i + 2];
+export async function locateDwpProfile(model) {
 
-        // Get 3D coordinates for triangle vertices
-        const vertex1 = [vertices3D[a * 3], vertices3D[a * 3 + 1], vertices3D[a * 3 + 2] || 0];
-        const vertex2 = [vertices3D[b * 3], vertices3D[b * 3 + 1], vertices3D[b * 3 + 2] || 0];
-        const vertex3 = [vertices3D[c * 3], vertices3D[c * 3 + 1], vertices3D[c * 3 + 2] || 0];
+    // notify user
+    model.messages.commands.ui.displayNotification.execute({
+        message: `Klik op de locatie waar het dwarsprofiel moet worden geplaatst.`,
+        title: "Dwarsprofiel Locatie",
+        disableTimeouts: true
+    });
 
-        // Create triangle polygon
-        const trianglePolygon = new Polygon({
-            rings: [[vertex1, vertex2, vertex3, vertex1]], // Close the ring
-            spatialReference: polygon.spatialReference
-        });
+    // clean up previous graphics
+    model.graphicsLayerPoint.removeAll();
+    model.graphicsLayerCrossSection.removeAll();
 
-        // Calculate triangle area to color code them
-        const area = Math.abs(geometryEngine.planarArea(trianglePolygon, "square-meters"));
+    // draw point on or near line
+    await model.startDrawingPoint(model.graphicsLayerPoint);
 
-        // Color based on area - red for very small triangles, green for normal ones
-        let fillColor = [0, 255, 0, 0.3]; // Green with transparency
-        let outlineColor = [0, 255, 0, 1];
+    // create line perpendicular to input line at that point (model.graphicsLayerLine)
+    const perpendicularLine = createPerpendicularLine(model.graphicsLayerLine.graphics.items[0].geometry, model.graphicsLayerPoint.graphics.items[0].geometry, model.crossSectionLength);
+    model.graphicsLayerCrossSection.add(new Graphic({
+        geometry: perpendicularLine,
+        symbol: model.lineLayerSymbolCrosssection,
+    }));
 
-        if (area < 1.0) { // Very small triangles in red
-            fillColor = [255, 0, 0, 0.5];
-            outlineColor = [255, 0, 0, 1];
-        } else if (area < 5.0) { // Small triangles in yellow
-            fillColor = [255, 255, 0, 0.4];
-            outlineColor = [255, 255, 0, 1];
+    // get elevation data on that line
+    getElevationData(model);
+
+}
+
+export function clearDwpProfile(model) {
+    model.graphicsLayerProfile.removeAll();
+    model.chartData = [];
+}
+
+function createPerpendicularLine(polyline, point, length = 50, centerAtPoint = true) {
+    const paths = polyline.paths[0];
+    let minDist = Infinity;
+    let closestSegment = null;
+    let closestPoint = null;
+
+    // 1. Find closest segment
+    for (let i = 0; i < paths.length - 1; i++) {
+        const p1 = paths[i];
+        const p2 = paths[i + 1];
+
+        const dx = p2[0] - p1[0];
+        const dy = p2[1] - p1[1];
+
+        // Projection of point onto segment
+        const t = ((point.x - p1[0]) * dx + (point.y - p1[1]) * dy) / (dx * dx + dy * dy);
+        const tClamped = Math.max(0, Math.min(1, t));
+
+        const projX = p1[0] + tClamped * dx;
+        const projY = p1[1] + tClamped * dy;
+
+        const dist2 = (point.x - projX) ** 2 + (point.y - projY) ** 2;
+
+        if (dist2 < minDist) {
+            minDist = dist2;
+            closestSegment = [p1, p2];
+            closestPoint = { x: projX, y: projY };
         }
+    }
 
-        const triangleGraphic = new Graphic({
-            geometry: trianglePolygon,
-            symbol: {
-                type: "simple-fill",
-                color: fillColor,
-                outline: {
-                    color: outlineColor,
-                    width: 1
-                }
-            } as __esri.SimpleFillSymbolProperties,
-            attributes: {
-                triangleIndex: Math.floor(i / 3),
-                area: area.toFixed(2),
-                vertices: `${a}, ${b}, ${c}`
+    // 2. Compute perpendicular vector
+    const [p1, p2] = closestSegment;
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+
+    // Normalize the direction vector
+    const segmentLength = Math.sqrt(dx * dx + dy * dy);
+    const normalizedDx = dx / segmentLength;
+    const normalizedDy = dy / segmentLength;
+
+    // Perpendicular vector (rotated 90 degrees)
+    const perpX = -normalizedDy;
+    const perpY = normalizedDx;
+
+    // 3. Construct perpendicular line with specified geodesic length in meters
+    // Create a test line to measure geodesic vs planar ratio
+    const testLine = new Polyline({
+        paths: [[[closestPoint.x, closestPoint.y], [closestPoint.x + perpX * 100, closestPoint.y + perpY * 100]]],
+        spatialReference: polyline.spatialReference
+    });
+
+    const planarLength = geometryEngine.planarLength(testLine, "meters");
+    const geodesicLength = geometryEngine.geodesicLength(testLine, "meters");
+    const geodesicToPlanarRatio = planarLength / geodesicLength;
+
+    // Calculate the coordinate offset needed for the desired geodesic length
+    const coordinateOffset = length * geodesicToPlanarRatio;
+    let start, end;
+    if (centerAtPoint) {
+        // Center the line at the point, extending in both directions
+        const halfOffset = coordinateOffset / 2;
+        start = [closestPoint.x - perpX * halfOffset, closestPoint.y - perpY * halfOffset];
+        end = [closestPoint.x + perpX * halfOffset, closestPoint.y + perpY * halfOffset];
+    } else {
+        start = [closestPoint.x, closestPoint.y];
+        end = [closestPoint.x + perpX * coordinateOffset, closestPoint.y + perpY * coordinateOffset];
+    }
+
+    return new Polyline({
+        paths: [[start, end]],
+        spatialReference: polyline.spatialReference
+    });
+}
+
+export function setDwpLocation(model) {
+    model.chartData[model.selectedPointIndex].locatie = model.selectedDwpLocation;
+    model.chartData = [...model.chartData]; // Force reactivity
+    model.allChartData[model.activeSheet] = [...model.chartData];
+}
+
+export function setMapDwpLocation(model, item) {
+
+    // replace point in graphics layer
+    const graphic = model.graphicsLayerProfile.graphics.items.find(g => g.attributes.oid === item.oid);
+
+    // fix x values properly
+    if (graphic) {
+        graphic.attributes.hoogte = item.hoogte;
+        graphic.attributes.afstand = item.afstand;
+        // Optionally update geometry if needed
+        let closestPoint = model.chartDataElevation[0];
+        let minDistance = Math.abs(closestPoint.afstand - item.afstand);
+        model.chartDataElevation.forEach(dataPoint => {
+            const distance = Math.abs(dataPoint.afstand - item.afstand);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPoint = dataPoint;
             }
         });
 
-        model.graphicsLayerTemp.add(triangleGraphic);
+        // Create the map point using the closest elevation data point
+        const cursorPoint = new Point({
+            x: closestPoint.x,
+            y: closestPoint.y,
+            spatialReference: new SpatialReference({
+                wkid: 3857
+            })
+        });
+        graphic.geometry = cursorPoint;
     }
 
-    // Add vertex markers to see the actual points
-    for (let i = 0; i < vertices3D.length; i += 3) {
-        const point = new Point({
-            x: vertices3D[i],
-            y: vertices3D[i + 1],
-            z: vertices3D[i + 2] || 0,
-            spatialReference: polygon.spatialReference
-        });
+}
 
-        const pointGraphic = new Graphic({
-            geometry: point,
-            symbol: {
-                type: "simple-marker",
-                color: [0, 0, 255, 0.8], // Blue points
-                size: 6,
-                outline: {
-                    color: [255, 255, 255, 1],
-                    width: 1
-                }
-            } as __esri.SimpleMarkerSymbolProperties,
-            attributes: {
-                vertexIndex: Math.floor(i / 3)
-            }
-        });
-
-        model.graphicsLayerTemp.add(pointGraphic);
+export function clearDwpLocation(model, item) {
+    // remove point in graphics layer
+    const graphic = model.graphicsLayerProfile.graphics.items.find(g => g.attributes.oid === item.oid);
+    if (graphic) {
+        model.graphicsLayerProfile.remove(graphic);
     }
-
-    console.log(`Created ${triangles.length / 3} triangle graphics and ${vertices3D.length / 3} vertex markers`);
 }

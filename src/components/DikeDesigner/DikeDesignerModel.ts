@@ -6,23 +6,30 @@
 /* eslint-disable import/order */
 import * as am5 from "@amcharts/amcharts5";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
+import { whenOnce } from "@vertigis/arcgis-extensions/support/observableUtils";
 import {
     ComponentModelBase,
     ComponentModelProperties,
     PropertyDefs,
     serializable,
-    // importModel,
 } from "@vertigis/web/models";
+
+import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
+import CostModel from "./SubComponents/Cost/CostModel";
 
 import * as XLSX from "xlsx";
 
 import { Features } from "@vertigis/web/messaging";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 
+import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import Graphic from "@arcgis/core/Graphic";
 
 import Polyline from "@arcgis/core/geometry/Polyline";
@@ -34,39 +41,85 @@ import Mesh from "@arcgis/core/geometry/Mesh";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils";
-import * as projection from "@arcgis/core/geometry/projection";
+import * as projectOperator from "@arcgis/core/geometry/operators/projectOperator";
+
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 
-import SketchViewModel from "@arcgis/core/widgets/Sketch";
+import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 
-import { initializeChart, getLineFeatureLayers } from "./Functions/DesignFunctions";
+import { getLineFeatureLayers } from "./Functions/DesignFunctions";
+import { initializeChart } from "./Functions/ChartFunctions";
+import { 
+    lineLayerSymbol, 
+    lineLayerSymbolCrosssection, 
+    polygonSymbol3D, 
+    cursorSymbol, 
+    dwpPointSymbol, 
+    controlPointSymbol, 
+    getDesignLayer2DSymbol 
+} from "./symbologyConfig";
 import { array } from "@amcharts/amcharts5";
+import { first } from "@amcharts/amcharts5/.internal/core/util/Array";
 export interface DikeDesignerModelProperties extends ComponentModelProperties {
     elevationLayerUrl?: string;
+    apiKey?: string;
+    apiUrl?: string;
+    designFeatureLayer3dUrl?: string;
+    designFeatureLayer3dWeergaveName?: string;
+    designFeatureLayer2dRuimtebeslagUrl?: string;
+    designFeatureLayer2dRuimtebeslagWeergaveName?: string;
+    percelenWaterschapLayerName?: string | null;
+    natuurbeheerplanLayerName?: string | null;
+    pandenBufferDistance?: number;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
 
+    designName: string = "";
+    constructionModel: ConstructionModel = new ConstructionModel();
+    costModel: CostModel = new CostModel();
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
+    costPanelVisible: boolean = false;
+    comparisonPanelVisible: boolean = false;
 
     loading: boolean = false;
+    mapInitialized: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
+    apiKey: DikeDesignerModelProperties["apiKey"];
+    apiUrl: DikeDesignerModelProperties["apiUrl"];
+    designFeatureLayer3dUrl: DikeDesignerModelProperties["designFeatureLayer3dUrl"];
+    designFeatureLayer3dWeergaveName: DikeDesignerModelProperties["designFeatureLayer3dWeergaveName"];
+    designFeatureLayer2dRuimtebeslagUrl: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagUrl"];
+    designFeatureLayer2dRuimtebeslagWeergaveName: DikeDesignerModelProperties["designFeatureLayer2dRuimtebeslagWeergaveName"];
+    natuurbeheerplanLayerName: DikeDesignerModelProperties["natuurbeheerplanLayerName"];
+    percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
+    pandenBufferDistance: DikeDesignerModelProperties["pandenBufferDistance"];
 
     graphicsLayerLine: GraphicsLayer;
+    cursorLocationLayer: GraphicsLayer;
+    graphicsLayerPoint: GraphicsLayer;
     graphicsLayerCrossSection: GraphicsLayer;
+    graphicsLayerProfile: GraphicsLayer;
     graphicsLayerTemp: GraphicsLayer;
     graphicsLayerMesh: GraphicsLayer;
+    graphicsLayer3dPolygon: GraphicsLayer;
+    graphicsLayerRuimtebeslag: GraphicsLayer;
+    graphicsLayerRuimtebeslag3d: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
-    designLayer2D: FeatureLayer | null = null;
+    graphicsLayerControlPoints: GraphicsLayer;
+
+    designLayer2D: FeatureLayer | GraphicsLayer | null = null;
+    designLayer2DGetSymbol: ((name: string) => any) | null = null;
     uniqueParts: string[] = [];
 
     map: any;
     view: any;
     mapElement: HTMLElement | null = null;
     sketchViewModel: SketchViewModel | undefined;
+    drawnPoint: any;
     drawnLine: any;
     offsetGeometries: any[] = [];
     meshes: Mesh[] = [];
@@ -76,6 +129,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     totalVolumeDifference: number = 0
     excavationVolume: number = 0
     fillVolume: number = 0
+    total2dArea: number = 0
+    total3dArea: number = 0
+    lineLength: number = 0
 
     chartData: any[] = []
     allChartData: Record<string, any[]> = {}
@@ -86,7 +142,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     chart: any = null
     chartSeries: any = null
 
-    crossSectionChartData: any[] = null
+    chartDataElevation: any[] = []
+
+    crossSectionChartData: any[] = []
     crossSectionChartRoot: any = null
     crossSectionChart: any = null
     meshSeriesData: any[] = null
@@ -94,6 +152,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     userLinePoints: any[] = []
     slopeLabels: am5.Label[] = []
 
+    isPlacingDwpProfile: boolean = false
+    rivierzijde: 'rechts' | 'links' = 'rechts';
+    referentieLocatie: string = 'binnenkruin';
 
     lineFeatureLayers: FeatureLayer[] = []
     selectedLineLayerId: string | null
@@ -101,16 +162,36 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     selectedDijkvakLayerFields: string[] = []
     selectedDijkvakField: string | null = null
 
-    lineLayerSymbol = {
-        type: "simple-line",
-        color: [255, 0, 255],
-        width: 4
-    };
+    selectedDwpLocation: string | null = null
+    selectedPointIndex: number | null = null
+    selectingDwpLocation: boolean = false
+    crossSectionLength: number = 100
+    
+    // Comparison panel snapshots - persists across tab switches
+    comparisonSnapshots: any[] = [];
 
+    lineLayerSymbol = lineLayerSymbol;
+    lineLayerSymbolCrosssection = lineLayerSymbolCrosssection;
+    polygonSymbol3D = polygonSymbol3D;
+    cursorSymbol = cursorSymbol;
+    dwpPointSymbol = dwpPointSymbol;
+    controlPointSymbol = controlPointSymbol;
     // data for analysis
     intersectingPanden: object[] = []
     intersectingBomen: object[] = []
     intersectingPercelen: object[] = []
+    intersectingPercelenArea: number = 0
+    intersectingWegdelen2dRuimtebeslag: number = 0
+    intersectingInritten2dRuimtebeslag: number = 0
+    intersectingInritten2dRuimtebeslagCount: object[] = []
+    intersectingNatura2000: number = 0
+    intersectingGNN: number = 0
+    intersectingBeheertypen: object[] = []
+    intersectingPandenArea: number = 0
+    intersectingPandenBuffer: object [] = []
+    intersectingPandenBufferArea: number = 0
+    intersectingErven: object[] = []
+    intersectingErvenArea: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",
@@ -175,7 +256,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 const inEPSG = extractEPSG(geojson.crs?.properties?.name || "");
                 console.log("Input EPSG:", inEPSG);
 
-                projection.load().then(() => {
+                projectOperator.load().then(() => {
                     geojson.features.forEach(feature => {
                         const { geometry, properties } = feature;
 
@@ -204,13 +285,13 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                             return;
                         }
 
-                        const projected = projection.project(esriGeometry, spatialRefOut);
+                        const projected = projectOperator.execute(esriGeometry, spatialRefOut);
 
 
                         const graphic = new Graphic({
                             geometry: projected as any,
                             attributes: properties,
-                            symbol: this.lineLayerSymbol,
+                            symbol: this.lineLayerSymbol as any,
                         });
 
                         this.graphicsLayerLine.add(graphic);
@@ -228,6 +309,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         reader.readAsText(file);
     }
     startDrawingLine(lineLayer: GraphicsLayer): Promise<__esri.Polyline> {
+
+        console.log("Starting line drawing...");
 
         if (lineLayer?.graphics?.length > 0) {
             // Clear existing graphics if any
@@ -255,78 +338,164 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             });
         });
     }
+    startDrawingPoint(pointLayer: GraphicsLayer): Promise<__esri.Point> {
+
+        console.log("Starting point drawing...");
+
+        if (pointLayer?.graphics?.length > 0) {
+            // Clear existing graphics if any
+            pointLayer.removeAll();
+        }
+        this.sketchViewModel.layer = pointLayer;
+        this.sketchViewModel.create("point");
+
+        return new Promise((resolve, reject) => {
+            const handler = this.sketchViewModel.on("create", (event: any) => {
+                if (event.state === "complete") {
+                    const drawnPoint = event.graphic.geometry;
+                    this.drawnPoint = drawnPoint;
+                    this.sketchViewModel.set("state", "update");
+                    this.sketchViewModel.update(event.graphic);
+
+
+                    handler.remove(); // Clean up the event listener
+                    resolve(drawnPoint);
+                }
+                // Optionally handle cancel/error states here
+                // else if (event.state === "cancel") {
+                //     handler.remove();
+                //     reject(new Error("Drawing cancelled"));
+                // }
+            });
+        });
+    }
 
     selectLineFromMap() {
     }
 
     initializeEmptyChartData(): void {
-    if (!this.allChartData || Object.keys(this.allChartData).length === 0) {
-        // Create a default empty sheet
-        const defaultSheetName = "vak 1";
-        const defaultData = [
-            {
-                locatie: "",
-                afstand: "",
-                hoogte: "",
-            }
-        ];
+        if (!this.allChartData || Object.keys(this.allChartData).length === 0) {
+            // Create a default empty sheet
+            const defaultSheetName = "vak 1";
+            const defaultData = [
+                // {
+                //     locatie: "",
+                //     afstand: "",
+                //     hoogte: "",
+                // }
+            ];
 
-        this.allChartData = {
-            [defaultSheetName]: defaultData
-        };
-        
-        this.chartData = [...defaultData];
-        this.activeSheet = defaultSheetName;
-        
-        console.log("Initialized empty chart data with default sheet");
+            this.allChartData = {
+                [defaultSheetName]: defaultData
+            };
+
+            this.chartData = [...defaultData];
+            this.activeSheet = defaultSheetName;
+
+            console.log("Initialized empty chart data with default sheet");
+        }
     }
-}
 
-    // here we need to make chartData contain all the sheets and forget about the excelsheets later
-    handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const fileInput = event.target; // Reference to the file input
+
+
+    handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>, model) => {
+        const fileInput = event.target;
         const file = fileInput.files?.[0];
+
         if (file) {
+            // Clear existing chart data
+            this.chartData = [];
+
             const reader = new FileReader();
+
             reader.onload = (e) => {
+                console.log("Reading Excel file...");
                 const data = new Uint8Array(e.target?.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { type: "array" });
 
-                // Extract all sheets
-                const sheets: Record<string, any[]> = {};
-                const allChartData: Record<string, any[]> = {};
-                workbook.SheetNames.forEach((sheetName) => {
-                    const sheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    sheets[sheetName] = jsonData;
-
-                    // Prepare chart data for each sheet
-                    if (jsonData.length > 1) {
-                        allChartData[sheetName] = jsonData
-                            .slice(1) // Skip the header row
-                            .map((row: any[]) => ({
-                                locatie: row[0], // Location name
-                                afstand: row[1], // X-axis value
-                                hoogte: row[2], // Y-axis value
-                            }))
-                            .sort((a, b) => a.afstand - b.afstand); // Sort by afstand
-                    }
-                });
-                this.allChartData = allChartData; // Store all chart data
-                console.log("All chart data:", this.allChartData);
-
-
-                // Set the first sheet as the default table data
+                // extract just the first sheet
                 const firstSheetName = workbook.SheetNames[0];
-                this.chartData = allChartData[firstSheetName];
-                this.activeSheet = firstSheetName;
+                const sheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                // sort data and set model.chartData
+                if (jsonData.length > 1) {
+                    this.chartData = jsonData
+                        .slice(1) // Skip the header row
+                        .map((row: any[], index) => ({
+                            oid: index + 1, // Add oid for proper row identification
+                            locatie: row[1] || "", // Location name
+                            afstand: row[2] || "", // X-axis value
+                            hoogte: row[3] || "", // Y-axis value
+                        }))
+                        .sort((a, b) => parseFloat(a.afstand) - parseFloat(b.afstand)); // Sort by afstand
+                }
+
+                console.log("Uploaded chart data for first sheet:", this.chartData);
+
+                // remove all graphics from the line layer
+                this.graphicsLayerProfile.removeAll();
+
+                // set all points from upload on the map
+                this.chartData.forEach((point) => {
+
+                    const afstand = parseFloat(point.afstand);
+                    const hoogte = parseFloat(point.hoogte);
+
+                    let closestPoint = model.chartDataElevation[0];
+                    let minDistance = Math.abs(closestPoint.afstand - afstand);
+                    model.chartDataElevation.forEach(dataPoint => {
+                        const distance = Math.abs(dataPoint.afstand - afstand);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestPoint = dataPoint;
+                        }
+                    });
+
+                    const cursorPoint = new Point({
+                        x: closestPoint.x,
+                        y: closestPoint.y,
+                        spatialReference: new SpatialReference({
+                            wkid: 3857
+                        })
+                    });
+
+                    // Create new graphic and add to graphics layer
+                    const graphic = new Graphic({
+                        geometry: cursorPoint,
+                        symbol: model.dwpPointSymbol,
+                        attributes: {
+                            afstand,
+                            hoogte,
+                            locatie: "",
+                            oid: point.oid
+                        }
+                    });
+
+                    // Add to the profile graphics layer
+                    if (model.graphicsLayerProfile) {
+                        model.graphicsLayerProfile.add(graphic);
+                        console.log("Added profile point graphic:", graphic);
+                    }
+
+                });
             };
+
             reader.readAsArrayBuffer(file);
         }
 
         // Reset the file input value to allow reuploading the same file
         fileInput.value = "";
-        this.overviewVisible = true;
+
+    };
+
+
+
+    handleExcelDownload = () => {
+        const ws = XLSX.utils.json_to_sheet(this.chartData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Designs");
+        XLSX.writeFile(wb, "designs.xlsx");
     };
 
     // New method to set the table data for a selected sheet
@@ -356,96 +525,133 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             elevationLayerUrl: {
                 serializeModes: ["initial"],
                 default: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
-            }
+            },
+            apiKey: {
+                serializeModes: ["initial"],
+                default: "",
+            },
+            apiUrl: {
+                serializeModes: ["initial"],
+                default: "",
+            },
+            designFeatureLayer3dUrl: {
+                serializeModes: ["initial"],
+                default: "https://portal.wsrl.nl/kaarten/rest/services/Hosted/zwo_ontwerpen_3d/FeatureServer/0",
+            },
+            designFeatureLayer3dWeergaveName: {
+                serializeModes: ["initial"],
+                default: "3D vlakken - test",
+            },
+            designFeatureLayer2dRuimtebeslagUrl: {
+                serializeModes: ["initial"],
+                default: "https://portal.wsrl.nl/kaarten/rest/services/Hosted/zwo_ruimtebeslag_2d/FeatureServer/0",
+            },
+            designFeatureLayer2dRuimtebeslagWeergaveName: {
+                serializeModes: ["initial"],
+                default: "2D ruimtebeslag - test",
+            },
+            percelenWaterschapLayerName: {
+                serializeModes: ["initial"],
+                default: null,
+            },
+            natuurbeheerplanLayerName: {
+                serializeModes: ["initial"],
+                default: null,
+            },
+            pandenBufferDistance: {
+                serializeModes: ["initial"],
+                default: 2,
+            },
         };
     }
 
     protected async _onInitialize(): Promise<void> {
         await super._onInitialize();
         console.log("DikeDesignerModel initialized");
+        console.log("ConstructionModel", this.constructionModel);
 
         this.messages.events.map.initialized.subscribe(async (map) => {
             console.log("Map initialized:", map);
             this.mapElement = document.querySelector(".gcx-map")
             this.map = map.maps.map;
             this.view = map.maps["view"];
+            
+            // Pass map to ConstructionModel
+            this.constructionModel.map = this.map;
+            this.constructionModel.view = this.view;
+            this.constructionModel.logMap();
 
-            this.designLayer2D = new FeatureLayer({
+            this.designLayer2D = new GraphicsLayer({
                 title: "Ontwerpdata - 2D",
                 listMode: "show",
-                geometryType: "polygon",
-                objectIdField: "ObjectID",
-                source: [],
-                fields: [
-                    {
-                        name: "ObjectID",
-                        alias: "ObjectID",
-                        type: "oid"
-                    },
-                    {
-                        name: "name",
-                        alias: "Name",
-                        type: "string"
-                    }
-                    // Add more fields if needed
-                ]
+                visible: false,
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                }
             });
-
-            // Your unique values (deduplicated)
-            const uniqueNames = [
-                "buitenkruin-binnenkruin",
-                "buitenkruin-bovenkant_buitenberm",
-                "binnenkruin-bovenkant_binnenberm",
-                "bovenkant_buitenberm-onderkant_buitenberm",
-                "onderkant_buitenberm-buitenteen",
-                "bovenkant_binnenberm-onderkant_binnenberm",
-                "onderkant_binnenberm-binnenteen"
-            ];
 
             // Helper to pick color based on rules
             function getSymbolForName(name: string) {
-                if (name.includes("berm")) {
-                    // Green for berms
-                    return {
-                        type: "simple-fill",
-                        color: [102, 204, 102, 0.9], // green
-                        outline: { color: [0, 100, 0, 1], width: 1 }
-                    };
-                }
-                if (name.includes("kruin")) {
-                    // Grey for kruin
-                    return {
-                        type: "simple-fill",
-                        color: [180, 180, 180, 0.9], // grey
-                        outline: { color: [80, 80, 80, 1], width: 1 }
-                    };
-                }
-                // Default color
-                return {
-                    type: "simple-fill",
-                    color: [200, 200, 255, 0.9], // light blue
-                    outline: { color: [100, 100, 200, 1], width: 1 }
-                };
+                return getDesignLayer2DSymbol(name);
             }
 
-            const uniqueValueInfos = uniqueNames.map(name => ({
-                value: name,
-                symbol: getSymbolForName(name)
-            }));
+            // Store the styling function in the model for later use when adding features
+            this.designLayer2DGetSymbol = getSymbolForName;
 
-
-
-            this.designLayer2D.renderer = new UniqueValueRenderer({
-                field: "name",
-                uniqueValueInfos,
-                defaultSymbol: {
-                    type: "simple-fill",
-                    color: [204, 255, 204, 0.7], // light green
-                    outline: { color: [0, 128, 0, 1], width: 1 }
-                } as any
+            this.graphicsLayerPoint = new GraphicsLayer({
+                title: "Point Layer",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
             });
 
+            this.graphicsLayerControlPoints = new GraphicsLayer({
+                title: "Control Points Layer",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
 
+            this.graphicsLayerRuimtebeslag = new GraphicsLayer({
+                title: "Ruimtebeslag 2D",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: false,
+            });
+            
+            this.graphicsLayerRuimtebeslag3d = new GraphicsLayer({
+                title: "Ruimtebeslag 3D",
+                elevationInfo: {
+                    mode: "absolute-height",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: false,
+            });
+
+            this.cursorLocationLayer = new GraphicsLayer({
+                title: "Cursor Location Layer",
+                elevationInfo: {
+                    mode: "relative-to-scene",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+
+            this.cursorLocationLayer.add(
+                new Graphic({
+                    geometry: new Point({ x: 0, y: 0 }),
+                    symbol: this.cursorSymbol,
+                })
+            )
 
             this.graphicsLayerLine = new GraphicsLayer({
                 title: "Temporary Layer",
@@ -465,8 +671,17 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "hide",
             });
 
+            this.graphicsLayerProfile = new GraphicsLayer({
+                title: "Profiel - tijdelijk",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+
             this.graphicsLayerTemp = new GraphicsLayer({
-                title: "Ontwerpdata - tijdelijk",
+                title: "Ontwerpdata - lijnen",
                 elevationInfo: {
                     mode: "absolute-height",
                     offset: 0
@@ -474,8 +689,19 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 listMode: "show",
                 visible: false,
             });
+
+            this.graphicsLayer3dPolygon = new GraphicsLayer({
+                title: "Ontwerpdata 3D",
+                elevationInfo: {    
+                    mode: "absolute-height",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: false
+            });
+            
             this.graphicsLayerMesh = new GraphicsLayer({
-                title: "Mesh layer - tijdelijk",
+                title: "Dijklichaam 3D",
                 elevationInfo: {
                     mode: "absolute-height",
                     offset: 0
@@ -487,29 +713,86 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.elevationLayer = new ElevationLayer({
                 url: this.elevationLayerUrl,
             });
-            this.map.add(this.graphicsLayerLine);
-            this.map.add(this.graphicsLayerCrossSection);
-            this.map.add(this.graphicsLayerTemp);
-            this.map.add(this.graphicsLayerMesh);
-            this.map.add(this.designLayer2D);
+            
+            // Initialize construction graphics layer
+            const graphicsLayerConstructionLine = new GraphicsLayer({
+                title: "Constructielijn - tijdelijk",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "hide",
+            });
+            
+            // Create group layers for better organization
+            const temporaryLayersGroup = new GroupLayer({
+                title: "Tijdelijke lagen",
+                visible: true,
+                listMode: "show",
+                visibilityMode: "independent",
+                layers: [
+                    this.graphicsLayerProfile,
+                    this.graphicsLayerCrossSection,
+                    this.graphicsLayerLine,
+                    this.graphicsLayerControlPoints,
+                    this.graphicsLayerPoint,
+                    this.cursorLocationLayer
+                ]
+            });
 
+            const designLayersGroup = new GroupLayer({
+                title: "Ontwerp lagen",
+                visible: true,
+                visibilityMode: "independent",
+                layers: [
+                    this.graphicsLayerMesh,
+                    this.graphicsLayer3dPolygon,
+                    graphicsLayerConstructionLine,
+                    this.graphicsLayerTemp,
+                    this.designLayer2D
+                ]
+            });
+
+            const ruimtebeslagGroup = new GroupLayer({
+                title: "Ruimtebeslag",
+                visible: true,
+                visibilityMode: "independent",
+                layers: [
+                    this.graphicsLayerRuimtebeslag3d,
+                    this.graphicsLayerRuimtebeslag
+                ]
+            });
+
+            // Add group layers to map
+            this.map.add(ruimtebeslagGroup);
+            this.map.add(designLayersGroup);
+            this.map.add(temporaryLayersGroup);
+            
+            // Pass construction layer to ConstructionModel
+            this.constructionModel.graphicsLayerConstructionLine = graphicsLayerConstructionLine;
 
             this.lineFeatureLayers = await getLineFeatureLayers(this.map);
-            console.log("Line feature layers:", this.lineFeatureLayers);
 
+            await whenOnce(this.view, "basemapView.baseLayerViews");
 
+            this.sketchViewModel = new SketchViewModel({
+                polylineSymbol: this.lineLayerSymbol as any,
+                view: this.view,
+                snappingOptions: {
+                    enabled: true,
+                    featureSources: [{
+                        layer: this.graphicsLayerLine,
+                        enabled: true
+                    }]
+                }
+            });
+            
+            // Pass sketchViewModel to ConstructionModel
+            this.constructionModel.sketchViewModel = this.sketchViewModel;
 
-            await reactiveUtils
-                .whenOnce(() => this.view)
-                .then(() => {
+            // Mark map as initialized, enabling UI
+            this.mapInitialized = true;
 
-                    console.log("Graphics layer added to the map.");
-
-                    this.sketchViewModel = new SketchViewModel({
-                        view: this.view,
-                        // layer: this.graphicsLayerLine,
-                    });
-                });
         });
     }
 }
