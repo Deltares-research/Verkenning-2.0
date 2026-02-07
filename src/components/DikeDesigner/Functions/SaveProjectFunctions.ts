@@ -61,6 +61,7 @@ export interface ProjectJSON {
         intersectingNatura2000: number | null;
         intersectingGNN: number | null;
         intersectingBeheertypen: object[];
+        intersectingBeheertypeArea: number | null;
         intersectingPandenArea: number | null;
         intersectingPandenBuffer: object[];
         intersectingPandenBufferArea: number | null;
@@ -205,6 +206,7 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             intersectingNatura2000: model.intersectingNatura2000 || null,
             intersectingGNN: model.intersectingGNN || null,
             intersectingBeheertypen: model.intersectingBeheertypen || [],
+            intersectingBeheertypeArea: model.intersectingBeheertypeArea || null,
             intersectingPandenArea: model.intersectingPandenArea || null,
             intersectingPandenBuffer: model.intersectingPandenBuffer || [],
             intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
@@ -345,6 +347,7 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
             model.intersectingNatura2000 = effects.intersectingNatura2000 || 0;
             model.intersectingGNN = effects.intersectingGNN || 0;
             model.intersectingBeheertypen = effects.intersectingBeheertypen || [];
+            model.intersectingBeheertypeArea = effects.intersectingBeheertypeArea || 0;
             model.intersectingPandenArea = effects.intersectingPandenArea || 0;
             model.intersectingPandenBuffer = effects.intersectingPandenBuffer || [];
             model.intersectingPandenBufferArea = effects.intersectingPandenBufferArea || 0;
@@ -537,6 +540,7 @@ export const recalculateAlternativeData = async (
         intersectingNatura2000: model.intersectingNatura2000,
         intersectingGNN: model.intersectingGNN,
         intersectingBeheertypen: [...model.intersectingBeheertypen],
+        intersectingBeheertypeArea: model.intersectingBeheertypeArea,
         intersectingPandenArea: model.intersectingPandenArea,
         intersectingPandenBuffer: [...model.intersectingPandenBuffer],
         intersectingPandenBufferArea: model.intersectingPandenBufferArea,
@@ -630,6 +634,7 @@ export const recalculateAlternativeData = async (
                 intersectingNatura2000: model.intersectingNatura2000 || null,
                 intersectingGNN: model.intersectingGNN || null,
                 intersectingBeheertypen: model.intersectingBeheertypen || [],
+                intersectingBeheertypeArea: model.intersectingBeheertypeArea || null,
                 intersectingPandenArea: model.intersectingPandenArea || null,
                 intersectingPandenBuffer: model.intersectingPandenBuffer || [],
                 intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
@@ -666,6 +671,7 @@ export const recalculateAlternativeData = async (
         model.intersectingNatura2000 = originalValues.intersectingNatura2000;
         model.intersectingGNN = originalValues.intersectingGNN;
         model.intersectingBeheertypen = originalValues.intersectingBeheertypen;
+        model.intersectingBeheertypeArea = originalValues.intersectingBeheertypeArea;
         model.intersectingPandenArea = originalValues.intersectingPandenArea;
         model.intersectingPandenBuffer = originalValues.intersectingPandenBuffer;
         model.intersectingPandenBufferArea = originalValues.intersectingPandenBufferArea;

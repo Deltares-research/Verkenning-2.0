@@ -40,6 +40,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingNatura2000")
     useWatchAndRerender(model, "intersectingGNN")
     useWatchAndRerender(model, "intersectingBeheertypen")
+    useWatchAndRerender(model, "intersectingBeheertypeArea")
     useWatchAndRerender(model, "intersectingPandenBuffer")
     useWatchAndRerender(model, "intersectingPandenBufferArea")
     useWatchAndRerender(model, "intersectingErven")
@@ -115,7 +116,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                         <TableHead>
                             <TableRow>
                                 <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>2. Natuur</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}></TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -128,7 +129,11 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingGNN?.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>Beheertypen</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }}>NBP beheertype [m²]</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBeheertypeArea?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Beheertypen [naam]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBeheertypen?.map((item) => item).join(", ")}</TableCell>
                             </TableRow>
                         </TableBody>

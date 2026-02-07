@@ -576,6 +576,7 @@ const DikeDesigner = (
         model.intersectingNatura2000 = 0;
         model.intersectingGNN = 0;
         model.intersectingBeheertypen = [];
+        model.intersectingBeheertypeArea = 0;
         model.intersectingWegdelen2dRuimtebeslag = 0;
         model.intersectingInritten2dRuimtebeslag = 0;
         model.intersectingInritten2dRuimtebeslagCount = [];

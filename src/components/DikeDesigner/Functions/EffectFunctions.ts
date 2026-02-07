@@ -528,6 +528,13 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting features:", error);
     });
 
+    await getIntersectingArea2dRuimtebeslag(model, model.natuurbeheerplanLayerName).then((result) => {
+        model.intersectingBeheertypeArea = result;
+        console.log("Total beheertype intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching beheertype intersecting area:", error);
+    });
+
     await getIntersectingFeatures(model, "BAG 2D", null, model.pandenBufferDistance).then((result) => {
         model.intersectingPandenBuffer = result;
         console.log("Intersecting panden:", result);
