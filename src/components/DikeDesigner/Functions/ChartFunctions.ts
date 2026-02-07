@@ -56,6 +56,15 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         })
     );
 
+    // Add adapter to ensure y-axis max is at least 1.5 meters above highest point in ground profile
+    yAxis.adapters.add("max", (max) => {
+        if (model.chartDataElevation && model.chartDataElevation.length > 0) {
+            const maxHeight = Math.max(...model.chartDataElevation.map(d => parseFloat(d.hoogte) || 0));
+            return Math.max(max, maxHeight + 1.5);
+        }
+        return max;
+    });
+
     const series = chart.series.push(
         am5xy.LineSeries.new(root, {
             name: "Hoogte vs Afstand",
@@ -546,6 +555,15 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
             tooltip: am5.Tooltip.new(root, {}),
         })
     );
+
+    // Add adapter to ensure y-axis max is at least 1.5 meters above highest point in ground profile
+    yAxis.adapters.add("max", (max) => {
+        if (model.crossSectionChartData && model.crossSectionChartData.length > 0) {
+            const maxHeight = Math.max(...model.crossSectionChartData.map(d => parseFloat(d.hoogte) || 0));
+            return Math.max(max, maxHeight + 1.5);
+        }
+        return max;
+    });
 
     const elevationSeries = chart.series.push(
         am5xy.LineSeries.new(root, {
