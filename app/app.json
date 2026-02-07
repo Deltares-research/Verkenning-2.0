@@ -51,7 +51,37 @@
             "natuurbeheerplanLayerName": "Natuurbeheerplan 2026 Gelderland",
             "percelenWaterschapLayerName": "BRK Kadaster eigendom WSRL",
             "pandenBufferDistance": 10,
-            "uitvoeringszoneBufferDistance": 10
+            "uitvoeringszoneBufferDistance": 10,
+            "effectLayerMappings": {
+                "bag_panden": {
+                    "query": "BAG 2D",
+                    "display": "BAG 3D"
+                },
+                "natura2000": {
+                    "query": "Natura 2000",
+                    "display": "Natura 2000"
+                },
+                "gnn": {
+                    "query": "Groene Ontwikkelingszone en Gelders NatuurNetwerk",
+                    "display": "Groene Ontwikkelingszone en Gelders NatuurNetwerk"
+                },
+                "nbp_beheertype": {
+                    "query": "Natuurbeheerplan 2026 Gelderland",
+                    "display": "Natuurbeheerplan 2026 Gelderland"
+                },
+                "bgt_wegdeel": {
+                    "query": "BGT - wegdeel",
+                    "display": "BGT - wegdeel"
+                },
+                "bgt_afritten": {
+                    "query": "BGT - wegdeel",
+                    "display": "BGT - wegdeel"
+                },
+                "kadastrale_percelen": {
+                    "query": "Kadastrale percelen",
+                    "display": "DKK - perceel"
+                }
+            }
         }
     ]
 }

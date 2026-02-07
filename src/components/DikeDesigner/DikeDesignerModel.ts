@@ -72,6 +72,7 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
     natuurbeheerplanLayerName?: string | null;
     pandenBufferDistance?: number;
     uitvoeringszoneBufferDistance?: number;
+    effectLayerMappings?: { [key: string]: string };
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -102,6 +103,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
     pandenBufferDistance: DikeDesignerModelProperties["pandenBufferDistance"];
     uitvoeringszoneBufferDistance: DikeDesignerModelProperties["uitvoeringszoneBufferDistance"];
+    effectLayerMappings: DikeDesignerModelProperties["effectLayerMappings"] = {};
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
