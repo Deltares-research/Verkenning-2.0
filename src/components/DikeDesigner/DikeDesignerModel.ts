@@ -71,6 +71,7 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
     percelenWaterschapLayerName?: string | null;
     natuurbeheerplanLayerName?: string | null;
     pandenBufferDistance?: number;
+    uitvoeringszoneBufferDistance?: number;
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -100,6 +101,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     natuurbeheerplanLayerName: DikeDesignerModelProperties["natuurbeheerplanLayerName"];
     percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
     pandenBufferDistance: DikeDesignerModelProperties["pandenBufferDistance"];
+    uitvoeringszoneBufferDistance: DikeDesignerModelProperties["uitvoeringszoneBufferDistance"];
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -111,6 +113,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayer3dPolygon: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
     graphicsLayerRuimtebeslag3d: GraphicsLayer;
+    graphicsLayerUitvoeringszone: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
     graphicsLayerControlPoints: GraphicsLayer;
@@ -197,6 +200,16 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingPandenBufferArea: number = 0
     intersectingErven: object[] = []
     intersectingErvenArea: number = 0
+
+    // Execution zone (uitvoeringszone) measurements
+    uitvoeringszoneWegoppervlak: number = 0
+    uitvoeringszonePanden: object[] = []
+    uitvoeringszonePandenArea: number = 0
+    uitvoeringszonePercelen: object[] = []
+    uitvoeringszonePercelenArea: number = 0
+    uitvoeringszoneNatura2000: number = 0
+    uitvoeringszoneGNN: number = 0
+    uitvoeringszoneBeheertypeArea: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",
@@ -642,6 +655,16 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 visible: false,
             });
 
+            this.graphicsLayerUitvoeringszone = new GraphicsLayer({
+                title: "Uitvoeringszone",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: true,
+            });
+
             this.cursorLocationLayer = new GraphicsLayer({
                 title: "Cursor Location Layer",
                 elevationInfo: {
@@ -763,6 +786,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 visible: true,
                 visibilityMode: "independent",
                 layers: [
+                    this.graphicsLayerUitvoeringszone,
                     this.graphicsLayerRuimtebeslag3d,
                     this.graphicsLayerRuimtebeslag
                 ]

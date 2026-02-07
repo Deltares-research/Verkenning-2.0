@@ -67,6 +67,15 @@ export interface ProjectJSON {
         intersectingPandenBufferArea: number | null;
         intersectingErven: object[];
         intersectingErvenArea: number | null;
+        // Execution zone (uitvoeringszone) properties
+        uitvoeringszoneWegoppervlak: number | null;
+        uitvoeringszonePanden: object[];
+        uitvoeringszonePandenArea: number | null;
+        uitvoeringszonePercelen: object[];
+        uitvoeringszonePercelenArea: number | null;
+        uitvoeringszoneNatura2000: number | null;
+        uitvoeringszoneGNN: number | null;
+        uitvoeringszoneBeheertypeArea: number | null;
     };
     constructions: {
         structureType: string;
@@ -212,6 +221,15 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
             intersectingErven: model.intersectingErven || [],
             intersectingErvenArea: model.intersectingErvenArea || null,
+            // Execution zone (uitvoeringszone)
+            uitvoeringszoneWegoppervlak: model.uitvoeringszoneWegoppervlak || null,
+            uitvoeringszonePanden: model.uitvoeringszonePanden || [],
+            uitvoeringszonePandenArea: model.uitvoeringszonePandenArea || null,
+            uitvoeringszonePercelen: model.uitvoeringszonePercelen || [],
+            uitvoeringszonePercelenArea: model.uitvoeringszonePercelenArea || null,
+            uitvoeringszoneNatura2000: model.uitvoeringszoneNatura2000 || null,
+            uitvoeringszoneGNN: model.uitvoeringszoneGNN || null,
+            uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea || null,
         },
         constructions: {
             structureType: model.constructionModel?.structureType || "Heavescherm",
@@ -353,6 +371,15 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
             model.intersectingPandenBufferArea = effects.intersectingPandenBufferArea || 0;
             model.intersectingErven = effects.intersectingErven || [];
             model.intersectingErvenArea = effects.intersectingErvenArea || 0;
+            // Execution zone (uitvoeringszone)
+            model.uitvoeringszoneWegoppervlak = effects.uitvoeringszoneWegoppervlak || 0;
+            model.uitvoeringszonePanden = effects.uitvoeringszonePanden || [];
+            model.uitvoeringszonePandenArea = effects.uitvoeringszonePandenArea || 0;
+            model.uitvoeringszonePercelen = effects.uitvoeringszonePercelen || [];
+            model.uitvoeringszonePercelenArea = effects.uitvoeringszonePercelenArea || 0;
+            model.uitvoeringszoneNatura2000 = effects.uitvoeringszoneNatura2000 || 0;
+            model.uitvoeringszoneGNN = effects.uitvoeringszoneGNN || 0;
+            model.uitvoeringszoneBeheertypeArea = effects.uitvoeringszoneBeheertypeArea || 0;
         }
 
         // Load costs
@@ -546,6 +573,15 @@ export const recalculateAlternativeData = async (
         intersectingPandenBufferArea: model.intersectingPandenBufferArea,
         intersectingErven: [...model.intersectingErven],
         intersectingErvenArea: model.intersectingErvenArea,
+        // Execution zone (uitvoeringszone)
+        uitvoeringszoneWegoppervlak: model.uitvoeringszoneWegoppervlak,
+        uitvoeringszonePanden: [...model.uitvoeringszonePanden],
+        uitvoeringszonePandenArea: model.uitvoeringszonePandenArea,
+        uitvoeringszonePercelen: [...model.uitvoeringszonePercelen],
+        uitvoeringszonePercelenArea: model.uitvoeringszonePercelenArea,
+        uitvoeringszoneNatura2000: model.uitvoeringszoneNatura2000,
+        uitvoeringszoneGNN: model.uitvoeringszoneGNN,
+        uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea,
     };
 
     const originalCosts = model.costModel ? {
@@ -640,6 +676,15 @@ export const recalculateAlternativeData = async (
                 intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
                 intersectingErven: model.intersectingErven || [],
                 intersectingErvenArea: model.intersectingErvenArea || null,
+                // Execution zone (uitvoeringszone)
+                uitvoeringszoneWegoppervlak: model.uitvoeringszoneWegoppervlak || null,
+                uitvoeringszonePanden: model.uitvoeringszonePanden || [],
+                uitvoeringszonePandenArea: model.uitvoeringszonePandenArea || null,
+                uitvoeringszonePercelen: model.uitvoeringszonePercelen || [],
+                uitvoeringszonePercelenArea: model.uitvoeringszonePercelenArea || null,
+                uitvoeringszoneNatura2000: model.uitvoeringszoneNatura2000 || null,
+                uitvoeringszoneGNN: model.uitvoeringszoneGNN || null,
+                uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea || null,
             },
         };
 
@@ -677,6 +722,16 @@ export const recalculateAlternativeData = async (
         model.intersectingPandenBufferArea = originalValues.intersectingPandenBufferArea;
         model.intersectingErven = originalValues.intersectingErven;
         model.intersectingErvenArea = originalValues.intersectingErvenArea;
+        
+        // Restore execution zone (uitvoeringszone) values
+        model.uitvoeringszoneWegoppervlak = originalValues.uitvoeringszoneWegoppervlak;
+        model.uitvoeringszonePanden = originalValues.uitvoeringszonePanden;
+        model.uitvoeringszonePandenArea = originalValues.uitvoeringszonePandenArea;
+        model.uitvoeringszonePercelen = originalValues.uitvoeringszonePercelen;
+        model.uitvoeringszonePercelenArea = originalValues.uitvoeringszonePercelenArea;
+        model.uitvoeringszoneNatura2000 = originalValues.uitvoeringszoneNatura2000;
+        model.uitvoeringszoneGNN = originalValues.uitvoeringszoneGNN;
+        model.uitvoeringszoneBeheertypeArea = originalValues.uitvoeringszoneBeheertypeArea;
 
         if (model.costModel && originalCosts) {
             model.costModel.complexity = originalCosts.complexity;

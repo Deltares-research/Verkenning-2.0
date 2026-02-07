@@ -49,7 +49,9 @@
             "apiKey": "GB0joLKaSshreEigJmUqYb9fdnF64RxC",
             "apiUrl": "https://deltares-api-demo-3dz9p.ondigitalocean.app/api/", 
             "natuurbeheerplanLayerName": "Natuurbeheerplan 2026 Gelderland",
-            "percelenWaterschapLayerName": "BRK Kadaster eigendom WSRL"
+            "percelenWaterschapLayerName": "BRK Kadaster eigendom WSRL",
+            "pandenBufferDistance": 10,
+            "uitvoeringszoneBufferDistance": 10
         }
     ]
 }

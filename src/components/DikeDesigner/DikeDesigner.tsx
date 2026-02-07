@@ -586,6 +586,16 @@ const DikeDesigner = (
         model.intersectingErven = [];
         model.intersectingErvenArea = 0;
         
+        // Execution zone resets
+        model.uitvoeringszoneWegoppervlak = 0;
+        model.uitvoeringszonePanden = [];
+        model.uitvoeringszonePandenArea = 0;
+        model.uitvoeringszonePercelen = [];
+        model.uitvoeringszonePercelenArea = 0;
+        model.uitvoeringszoneNatura2000 = 0;
+        model.uitvoeringszoneGNN = 0;
+        model.uitvoeringszoneBeheertypeArea = 0;
+        
         cleanFeatureLayer(model.designLayer2D);
 
     };

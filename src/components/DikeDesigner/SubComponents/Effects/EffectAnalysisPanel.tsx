@@ -46,6 +46,17 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "intersectingErven")
     useWatchAndRerender(model, "intersectingErvenArea")
     useWatchAndRerender(model, "loading");
+    
+    // Execution zone (uitvoeringszone) watches
+    useWatchAndRerender(model, "uitvoeringszoneWegoppervlak")
+    useWatchAndRerender(model, "uitvoeringszonePanden")
+    useWatchAndRerender(model, "uitvoeringszonePandenArea")
+    useWatchAndRerender(model, "uitvoeringszonePercelen")
+    useWatchAndRerender(model, "uitvoeringszonePercelenArea")
+    useWatchAndRerender(model, "uitvoeringszoneNatura2000")
+    useWatchAndRerender(model, "uitvoeringszoneGNN")
+    useWatchAndRerender(model, "uitvoeringszoneBeheertypeArea")
+
 
 
 
@@ -161,6 +172,51 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             <TableRow>
                                 <TableCell sx={{ fontSize: "11px" }}>BGT afritten [aantal]</TableCell>
                                 <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslagCount?.length}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                {/* Execution Zone (Uitvoeringszone) Table */}
+                <TableContainer component={Paper} sx={{}}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>4. Uitvoering (buffer: {model.uitvoeringszoneBufferDistance || 10}m)</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Aantal</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Wegoppervlak in uitvoeringszone</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneWegoppervlak?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Panden binnen invloedscontour</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePanden?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePandenArea?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Percelen binnen invloedscontour</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePercelen?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePercelenArea?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>Natura 2000 binnen invloedscontour</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneNatura2000?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>GNN binnen invloedscontour</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneGNN?.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell sx={{ fontSize: "11px" }}>NBP beheertype binnen invloedscontour</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneBeheertypeArea?.toFixed(2)}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>

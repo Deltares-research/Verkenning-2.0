@@ -263,55 +263,6 @@ const HomePanel: React.FC<HomePanelProps> = ({
                             Ontwerp laden (lokaal)
                         </Typography>
                     </Button>
-
-                    {/* Save Project Local Card */}
-                    <Button
-                        onClick={onSaveProjectLocal}
-                        disabled={!designName}
-                        fullWidth
-                        variant="outlined"
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "flex-start",
-                            gap: 2,
-                            p: 2,
-                            textTransform: "none",
-                            borderColor: "#0078d4",
-                            color: "#323130",
-                            "&:hover": {
-                                borderColor: "#0078d4",
-                                backgroundColor: "#f0f6ff",
-                            },
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                width: 40,
-                                height: 40,
-                                backgroundColor: "#0078d4",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <SaveIcon
-                                sx={{
-                                    fontSize: 24,
-                                    color: "white",
-                                }}
-                            />
-                        </Box>
-                        <Typography
-                            sx={{
-                                fontSize: "14px",
-                                fontWeight: 600,
-                                color: "#323130",
-                            }}
-                        >
-                            Ontwerp opslaan (lokaal)
-                        </Typography>
-                    </Button>
                     </Stack>
                 </Stack>
             )}
