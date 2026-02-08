@@ -88,14 +88,64 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
     setIsMaximized(!isMaximized);
   };
 
-  // Prepare PieChart data
+  // Prepare PieChart data - hierarchical structure for pie-in-pie chart
   const pieData = [
-    { category: "Voorbereiding", value: model.costModel.directCostGroundWork.preparationCost },
-    { category: "Grondlichaam", value: model.costModel.directCostGroundWork.groundworkCost },
-    { category: "Constructie", value: model.costModel.indirectConstructionCosts.totalCosts },
-    { category: "Engineering", value: model.costModel.engineeringCosts.totalEngineeringCosts },
-    { category: "Overige bijkomende kosten", value: model.costModel.otherCosts.totalGeneralCosts },
-    { category: "Vastgoedkosten", value: model.costModel.realEstateCosts.totalRealEstateCosts },
+    {
+      category: "Grondwerk",
+      value: model.costModel.directCostGroundWork.totaleBDBKGrondwerk,
+      children: [
+        { category: "Voorbereiding", value: model.costModel.directCostGroundWork.preparationCost },
+        { category: "Afgraven grasbekleding", value: model.costModel.directCostGroundWork.afgravenGrasbekledingCost },
+        { category: "Afgraven kleilaag", value: model.costModel.directCostGroundWork.afgravenKleilaagCost },
+        { category: "Herkeuren kleilaag", value: model.costModel.directCostGroundWork.herkeurenKleilaagCost },
+        { category: "Aanvullen kern", value: model.costModel.directCostGroundWork.aanvullenKernCost },
+        { category: "Profieleren dijkkern", value: model.costModel.directCostGroundWork.profielerenDijkkernCost },
+        { category: "Nieuwe kleilaag", value: model.costModel.directCostGroundWork.aanbrengenNieuweKleilaagCost },
+        { category: "Profieleren kleilaag", value: model.costModel.directCostGroundWork.profielerenVanNieuweKleilaagCost },
+        { category: "Hergebruik teelaarde", value: model.costModel.directCostGroundWork.hergebruikTeelaardeCost },
+        { category: "Aanvullen teelaarde", value: model.costModel.directCostGroundWork.aanvullenTeelaardeCost },
+        { category: "Profieleren graslaag", value: model.costModel.directCostGroundWork.profielerenNieuweGraslaagCost },
+      ].filter(d => d.value > 0)
+    },
+    {
+      category: "Constructie",
+      value: model.costModel.indirectConstructionCosts.totalCosts,
+      children: [
+        { category: "PM kosten", value: model.costModel.indirectConstructionCosts.pmCost },
+        { category: "Algemene kosten (C)", value: model.costModel.indirectConstructionCosts.generalCost },
+        { category: "Risico & winst (C)", value: model.costModel.indirectConstructionCosts.riskProfit },
+      ].filter(d => d.value > 0)
+    },
+    {
+      category: "Engineering",
+      value: model.costModel.engineeringCosts.totalEngineeringCosts,
+      children: [
+        { category: "EPK kosten", value: model.costModel.engineeringCosts.epkCost },
+        { category: "Ontwerp", value: model.costModel.engineeringCosts.designCost },
+        { category: "Onderzoeken", value: model.costModel.engineeringCosts.researchCost },
+        { category: "Algemene kosten (E)", value: model.costModel.engineeringCosts.generalCost },
+        { category: "Risico & winst (E)", value: model.costModel.engineeringCosts.riskProfit },
+      ].filter(d => d.value > 0)
+    },
+    {
+      category: "Overige kosten",
+      value: model.costModel.otherCosts.totalGeneralCosts,
+      children: [
+        { category: "Vergunningen", value: model.costModel.otherCosts.insurances },
+        { category: "Kabels & leidingen", value: model.costModel.otherCosts.cablesPipes },
+        { category: "Planschade", value: model.costModel.otherCosts.damages },
+        { category: "Algemene kosten (O)", value: model.costModel.otherCosts.generalCost },
+        { category: "Risico & winst (O)", value: model.costModel.otherCosts.riskProfit },
+      ].filter(d => d.value > 0)
+    },
+    {
+      category: "Vastgoed",
+      value: model.costModel.realEstateCosts.totalRealEstateCosts,
+      children: [
+        { category: "Wegen", value: model.costModel.realEstateCosts.roadCost },
+        { category: "Panden", value: model.costModel.realEstateCosts.houseCost },
+      ].filter(d => d.value > 0)
+    },
   ].filter(d => d.value > 0);
 
   return (
@@ -157,10 +207,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
           </Box>
         </Typography>
 
-        {/* Split Content Area - Left: Table, Right: Charts */}
+        {/* Split Content Area - Top: Table, Bottom: Charts */}
         <Box sx={{ 
           flexGrow: 1, 
           display: "flex", 
+          flexDirection: "column",
           overflow: "hidden",
           gap: 2,
           p: 2,
@@ -196,7 +247,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               </Typography>
             </Box>
           )}
-          {/* Left Panel - Table */}
+          {/* Top Panel - Table */}
           <Box sx={{ 
             flex: "1 1 50%", 
             display: "flex",
@@ -332,18 +383,18 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             </Box>
           </Box>
 
-          {/* Right Panel - Charts */}
+          {/* Bottom Panel - Charts */}
           <Box sx={{ 
             flex: "1 1 50%", 
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             overflow: "hidden",
             minWidth: 0,
             gap: 2
           }}>
-            {/* Top Chart Section */}
+            {/* Pie Chart Section - Takes 70% */}
             <Box sx={{
-              flex: "1 1 50%",
+              flex: "1 1 70%",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
@@ -365,7 +416,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               >
                 📈 Kostenverdeling
               </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 260, height: "100%", display: "flex" }}>
+              <Box sx={{ flexGrow: 1, minHeight: 200, height: "100%", display: "flex" }}>
                 <Paper sx={{ 
                   padding: 2,
                   height: "100%",
@@ -376,14 +427,14 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   justifyContent: "center",
                   overflow: "auto"
                 }}>
-                  <CostPieChart data={pieData.map(d => ({ ...d, value: Math.round(d.value) }))} />
+                  <CostPieChart data={pieData} />
                 </Paper>
               </Box>
             </Box>
 
-            {/* Bottom Chart Section */}
+            {/* Stacked Bar Chart Section - Takes 30% */}
             <Box sx={{
-              flex: "1 1 50%",
+              flex: "1 1 30%",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
@@ -405,7 +456,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               >
                 📊 Kostenbereik per categorie
               </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 260, display: "flex" }}>
+              <Box sx={{ flexGrow: 1, minHeight: 200, display: "flex" }}>
                 <Paper sx={{ 
                   padding: 2,
                   height: "100%",
