@@ -731,103 +731,66 @@ const DikeDesigner = (
                         zIndex: 9999,
                     }}
                 >
-                    <Stack 
-                        spacing={4} 
-                        sx={{ 
-                            alignItems: "center", 
+                    <Stack
+                        spacing={3}
+                        sx={{
+                            alignItems: "center",
                             textAlign: "center",
-                            animation: "smoothFadeIn 1s ease-out",
+                            animation: "smoothFadeIn 0.8s ease-out",
                             "@keyframes smoothFadeIn": {
                                 "0%": { opacity: 0, transform: "translateY(10px)" },
                                 "100%": { opacity: 1, transform: "translateY(0)" },
                             },
                         }}
                     >
-                        {/* Subtle Loading Circle */}
+                        {/* Spinner */}
                         <Box
                             sx={{
-                                position: "relative",
-                                width: "50px",
-                                height: "50px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                width: "44px",
+                                height: "44px",
+                                borderRadius: "50%",
+                                border: "3px solid rgba(0, 120, 212, 0.1)",
+                                borderTopColor: "#0078d4",
+                                animation: "spin 1s linear infinite",
+                                "@keyframes spin": {
+                                    to: { transform: "rotate(360deg)" },
+                                },
                             }}
-                        >
-                            <Box
-                                sx={{
-                                    width: "50px",
-                                    height: "50px",
-                                    borderRadius: "50%",
-                                    border: "2px solid rgba(0, 120, 212, 0.08)",
-                                    borderTopColor: "#0078d4",
-                                    animation: "subtleRotate 2.5s linear infinite",
-                                    "@keyframes subtleRotate": {
-                                        "0%": { transform: "rotate(0deg)" },
-                                        "100%": { transform: "rotate(360deg)" },
-                                    },
-                                }}
-                            />
-                        </Box>
+                        />
 
-                        {/* Text Content */}
-                        <Box sx={{ maxWidth: "320px" }}>
+                        {/* Title */}
+                        <Box>
                             <Typography
                                 sx={{
-                                    color: "#2d3748",
+                                    color: "#1a365d",
                                     fontSize: "18px",
-                                    fontWeight: 500,
+                                    fontWeight: 600,
                                     letterSpacing: "-0.2px",
                                     mb: 0.5,
                                 }}
                             >
-                                Dijkontwerper versie 1.0.0
+                                Dijkontwerper
                             </Typography>
                             <Typography
                                 sx={{
-                                    color: "#8b92a3",
-                                    fontSize: "13px",
+                                    color: "#a0aec0",
+                                    fontSize: "12px",
                                     fontWeight: 400,
                                 }}
                             >
-                                Even geduld...
+                                versie 1.0.0
                             </Typography>
                         </Box>
 
-                        {/* Smooth Loading Dots */}
-                        <Box
+                        <Typography
                             sx={{
-                                display: "flex",
-                                gap: 0.8,
-                                alignItems: "center",
-                                height: "10px",
+                                color: "#8b92a3",
+                                fontSize: "12px",
+                                fontWeight: 400,
                             }}
                         >
-                            {[0, 1, 2].map((i) => (
-                                <Box
-                                    key={i}
-                                    sx={{
-                                        width: "5px",
-                                        height: "5px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#0078d4",
-                                        animation: "dotPulse 1.5s ease-in-out infinite",
-                                        animationDelay: `${i * 0.2}s`,
-                                        opacity: 0.3,
-                                        "@keyframes dotPulse": {
-                                            "0%, 100%": { 
-                                                opacity: 0.2,
-                                                transform: "scale(0.85)",
-                                            },
-                                            "50%": { 
-                                                opacity: 0.7,
-                                                transform: "scale(1.1)",
-                                            },
-                                        },
-                                    }}
-                                />
-                            ))}
-                        </Box>
+                            Even geduld...
+                        </Typography>
                     </Stack>
                 </Box>
             )}

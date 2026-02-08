@@ -35,15 +35,16 @@ const HomePanel: React.FC<HomePanelProps> = ({
     return (
         <Box>
             {isLoading ? (
-                <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
-                    <CircularProgress size={60} />
+                <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center", py: 4 }}>
+                    <CircularProgress size={36} sx={{ color: "#0078d4" }} />
                     <Typography
                         sx={{
-                            color: "#323130",
+                            color: "#1a365d",
                             fontSize: "14px",
+                            fontWeight: 500,
                         }}
                     >
-                        Dijkontwerper wordt geladen...
+                        Kaart wordt geladen...
                     </Typography>
                 </Stack>
             ) : (

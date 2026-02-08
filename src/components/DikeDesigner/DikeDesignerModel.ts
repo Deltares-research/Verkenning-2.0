@@ -16,6 +16,7 @@ import {
 
 import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
 import CostModel from "./SubComponents/Cost/CostModel";
+import ComparisonModel from "./SubComponents/Comparison/ComparisonModel";
 
 import * as XLSX from "xlsx";
 
@@ -80,6 +81,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designName: string = "";
     constructionModel: ConstructionModel = new ConstructionModel();
     costModel: CostModel = new CostModel();
+    comparisonModel: ComparisonModel = new ComparisonModel();
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
     costPanelVisible: boolean = false;
