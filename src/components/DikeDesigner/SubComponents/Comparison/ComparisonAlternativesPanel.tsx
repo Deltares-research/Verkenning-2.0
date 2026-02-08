@@ -4,8 +4,9 @@ import Button from "@vertigis/web/ui/Button";
 import Paper from "@vertigis/web/ui/Paper";
 import Typography from "@vertigis/web/ui/Typography";
 import Box from "@vertigis/web/ui/Box";
+import Tooltip from "@mui/material/Tooltip";
 import { useWatchAndRerender } from "@vertigis/web/ui";
-import { Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon } from "@mui/icons-material";
+import { Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import type { ProjectJSON } from "../../Functions/SaveProjectFunctions";
 import LoadOptionDialog from "../Dimensions/LoadOptionDialog";
@@ -189,9 +190,22 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                 <Typography variant="subtitle1" style={{ fontWeight: 600, marginBottom: "4px" }}>
                                                     {snapshot.name}
                                                 </Typography>
-                                                <Typography variant="caption" style={{ color: "#888" }}>
-                                                    Berekend: {formatDateTime(snapshot.projectJSON.metadata?.lastModified || snapshot.projectJSON.metadata?.createdAt)}
-                                                </Typography>
+                                                <Box style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                    <Typography variant="caption" style={{ color: "#888", fontSize: "12px" }}>
+                                                        Berekend: {formatDateTime(snapshot.projectJSON.metadata?.lastModified || snapshot.projectJSON.metadata?.createdAt)}
+                                                    </Typography>
+                                                    {snapshot.recalculated && (
+                                                        <Tooltip title="Volledig herberekend in deze sessie" placement="top">
+                                                            <CheckCircleIcon 
+                                                                style={{ 
+                                                                    fontSize: "16px", 
+                                                                    color: "#10b981",
+                                                                    verticalAlign: "middle"
+                                                                }} 
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+                                                </Box>
                                             </Box>
                                             <Button
                                                 variant="outlined"

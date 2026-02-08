@@ -306,7 +306,7 @@ export const toggleSnapshotLayerVisibility = (
 export const addCurrentDesignSnapshot = (model: DikeDesignerModel): void => {
     try {
         const projectData = buildProjectJSON(model);
-        const snapshot = createSnapshot(projectData);
+        const snapshot = createSnapshot(projectData, true); // Current design is already calculated
 
         const newSnapshots = [...model.comparisonSnapshots, snapshot];
         model.comparisonSnapshots = newSnapshots;
@@ -329,7 +329,7 @@ export const addCurrentDesignSnapshot = (model: DikeDesignerModel): void => {
 };
 
 export const handleLoadFull = (model: DikeDesignerModel, pendingProjectData: ProjectJSON): void => {
-    const snapshot = createSnapshot(pendingProjectData);
+    const snapshot = createSnapshot(pendingProjectData, false); // Imported without recalculation
     const newSnapshots = [...model.comparisonSnapshots, snapshot];
     model.comparisonSnapshots = newSnapshots;
 
@@ -350,7 +350,7 @@ export const handleLoadAndRecalculate = async (model: DikeDesignerModel, pending
             lastModified: new Date().toISOString(),
         },
     };
-    const snapshot = createSnapshot(recalculatedWithTimestamp);
+    const snapshot = createSnapshot(recalculatedWithTimestamp, true); // Just recalculated
     const newSnapshots = [...model.comparisonSnapshots, snapshot];
     model.comparisonSnapshots = newSnapshots;
 
@@ -376,6 +376,7 @@ export const handleRecalculateSnapshot = async (model: DikeDesignerModel, snapsh
                 },
             },
             timestamp: new Date().toLocaleString("nl-NL"),
+            recalculated: true, // Mark as recalculated
         };
 
         model.comparisonSnapshots = model.comparisonSnapshots.map((s) =>
@@ -657,7 +658,7 @@ export const initializeComparison = (model: DikeDesignerModel): void => {
     if (snapshots.length === 0) {
         try {
             const projectData = buildProjectJSON(model);
-            const snapshot = createSnapshot(projectData);
+            const snapshot = createSnapshot(projectData, true); // Current design is already calculated
             model.comparisonSnapshots = [snapshot];
 
             // Turn on mesh by default for the first alternative

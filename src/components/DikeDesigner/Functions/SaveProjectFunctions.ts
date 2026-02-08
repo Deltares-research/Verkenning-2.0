@@ -279,6 +279,7 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         model.graphicsLayerTemp?.removeAll();
         model.graphicsLayer3dPolygon?.removeAll();
         model.designLayer2D.removeAll();
+        model.graphicsLayerUitvoeringszone?.removeAll();
         cleanFeatureLayer(model.designLayer2D);
         model.graphicsLayerRuimtebeslag?.removeAll();
         model.graphicsLayerRuimtebeslag3d?.removeAll();
@@ -596,6 +597,9 @@ export const recalculateAlternativeData = async (
         uitvoeringszoneNatura2000: model.uitvoeringszoneNatura2000,
         uitvoeringszoneGNN: model.uitvoeringszoneGNN,
         uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea,
+        // Calculation status flags
+        effectsCalculated: model.effectsCalculated,
+        costsCalculated: model.costsCalculated,
     };
 
     const originalCosts = model.costModel ? {
@@ -642,9 +646,15 @@ export const recalculateAlternativeData = async (
 
         await calculateVolume(model);
         await new Promise(resolve => setTimeout(resolve, 500));
+        
         await handleCostCalculation(model);
+        // Immediately restore cost flag to prevent UI changes
+        model.costsCalculated = originalValues.costsCalculated;
         await new Promise(resolve => setTimeout(resolve, 500));
+        
         await handleEffectAnalysis(model);
+        // Immediately restore effect flag to prevent UI changes
+        model.effectsCalculated = originalValues.effectsCalculated;
 
         // Build updated project JSON with recalculated geometries
         const updated: ProjectJSON = {
@@ -746,6 +756,10 @@ export const recalculateAlternativeData = async (
         model.uitvoeringszoneNatura2000 = originalValues.uitvoeringszoneNatura2000;
         model.uitvoeringszoneGNN = originalValues.uitvoeringszoneGNN;
         model.uitvoeringszoneBeheertypeArea = originalValues.uitvoeringszoneBeheertypeArea;
+
+        // Restore calculation status flags
+        model.effectsCalculated = originalValues.effectsCalculated;
+        model.costsCalculated = originalValues.costsCalculated;
 
         if (model.costModel && originalCosts) {
             model.costModel.complexity = originalCosts.complexity;
