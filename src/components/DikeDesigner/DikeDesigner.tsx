@@ -596,6 +596,17 @@ const DikeDesigner = (
         model.uitvoeringszoneGNN = 0;
         model.uitvoeringszoneBeheertypeArea = 0;
         
+        // Construction resets
+        model.constructionModel.graphicsLayerConstructionLine?.removeAll();
+        model.constructionModel.drawnConstructionLine = null;
+        model.constructionModel.selectedLine = null;
+        model.constructionModel.structures = [];
+        model.constructionModel.useOffset = false;
+        model.constructionModel.offsetDistance = 0;
+        model.constructionModel.offsetSide = 'right';
+        model.constructionModel.structureType = "Heavescherm";
+        model.constructionModel.depth = null;
+        
         cleanFeatureLayer(model.designLayer2D);
 
     };

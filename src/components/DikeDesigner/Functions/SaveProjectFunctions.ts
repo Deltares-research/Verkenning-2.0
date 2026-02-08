@@ -287,6 +287,18 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         model.graphicsLayerCrossSection?.removeAll();
         model.graphicsLayerProfile?.removeAll();
         model.constructionModel?.graphicsLayerConstructionLine?.removeAll();
+        
+        // Clear construction model properties
+        if (model.constructionModel) {
+            model.constructionModel.drawnConstructionLine = null;
+            model.constructionModel.selectedLine = null;
+            model.constructionModel.structures = [];
+            model.constructionModel.useOffset = false;
+            model.constructionModel.offsetDistance = 0;
+            model.constructionModel.offsetSide = 'right';
+            model.constructionModel.structureType = "Heavescherm";
+            model.constructionModel.depth = null;
+        }
 
         // Load geometries
         if (geometries.design3d?.length > 0) {
@@ -766,6 +778,18 @@ export const loadProjectForRecalculation = async (model: DikeDesignerModel, json
         model.graphicsLayerCrossSection?.removeAll();
         model.graphicsLayerProfile?.removeAll();
         model.constructionModel?.graphicsLayerConstructionLine?.removeAll();
+        
+        // Clear construction model properties
+        if (model.constructionModel) {
+            model.constructionModel.drawnConstructionLine = null;
+            model.constructionModel.selectedLine = null;
+            model.constructionModel.structures = [];
+            model.constructionModel.useOffset = false;
+            model.constructionModel.offsetDistance = 0;
+            model.constructionModel.offsetSide = 'right';
+            model.constructionModel.structureType = "Heavescherm";
+            model.constructionModel.depth = null;
+        }
 
         // Load 3D design geometry
         if (geometries.design3d?.length > 0) {
