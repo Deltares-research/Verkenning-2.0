@@ -4,6 +4,16 @@ import type { GetDesignerSettingsSchemaArgs } from "@vertigis/web/designer";
 import { signIn } from "./auth";
 import DikeDesigner, { DikeDesignerModel } from "./components/DikeDesigner";
 import { registerElevationExaggeratorComponent }  from "./components/ElevationExaggarator"
+
+// Suppress harmless ResizeObserver warnings
+const resizeObserverError = window.console.error;
+window.console.error = (...args: any[]) => {
+    if (args[0]?.toString().includes('ResizeObserver loop')) {
+        return;
+    }
+    resizeObserverError(...args);
+};
+
 const LAYOUT_NAMESPACE = "vertigis-wsrl";
 const isDevMode = window.location.hostname === "localhost";
 

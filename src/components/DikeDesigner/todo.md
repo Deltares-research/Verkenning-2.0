@@ -28,5 +28,4 @@
 
 
  --> afronden bij effecten
- --> check effect vinkjes bij alternatieven, niet huidig aanpassen
- --> 3d bomen
+ --> check clear before loading --> one function for all

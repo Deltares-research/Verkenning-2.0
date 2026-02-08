@@ -532,6 +532,10 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
             }
         }
 
+        // Reset calculation status flags - loaded data is not freshly calculated
+        model.effectsCalculated = false;
+        model.costsCalculated = false;
+
         model.messages.commands.ui.displayNotification.execute({
             title: "Ontwerp geladen",
             message: `Project '${metadata.vak}' succesvol geladen`,

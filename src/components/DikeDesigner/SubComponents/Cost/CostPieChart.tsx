@@ -60,7 +60,7 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
         series.labels.template.setAll({
             textType: "circular",
             radius: 4,
-            fontSize: 11
+            fontSize: 14
         });
         
         series.ticks.template.set("visible", false);
@@ -83,7 +83,7 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
         );
 
         subSeries.labels.template.setAll({
-            fontSize: 10
+            fontSize: 13
         });
 
         subSeries.slices.template.set("toggleKey", "none");
@@ -156,6 +156,10 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
         });
 
         function selectSlice(slice: any) {
+            if (!slice || !slice.dataItem) {
+                return;
+            }
+            
             selectedSlice = slice;
             const dataItem = slice.dataItem;
             const dataContext = dataItem.dataContext as any;
@@ -210,7 +214,10 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
 
         // Select first slice on load
         series.events.on("datavalidated", () => {
-            selectSlice(series.slices.getIndex(0));
+            const firstSlice = series.slices.getIndex(0);
+            if (firstSlice) {
+                selectSlice(firstSlice);
+            }
         });
 
         container.appear(1000, 10);

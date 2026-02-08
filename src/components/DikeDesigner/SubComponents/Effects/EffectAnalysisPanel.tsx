@@ -58,7 +58,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
     // Helper component to display layer label only
     const LayerLabel: React.FC<{ label: string }> = ({ label }) => {
-        return <span style={{ fontSize: "11px" }}>{label}</span>;
+        return <span style={{ fontSize: "12px" }}>{label}</span>;
     };
 
     // Helper component to display just the toggle button
@@ -137,58 +137,58 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                 )}
 
                 {/* Summary Table */}
-                <TableContainer component={Paper} sx={{}}>
-                    <Table >
+                <TableContainer component={Paper} sx={{ boxShadow: "none", backgroundColor: "#fafafa" }}>
+                    <Table>
                         <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>1. Wonen en leefomgeving</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Aantal</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold", width: "40px", textAlign: "center" }}></TableCell>
+                            <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap" }}>1. Wonen en leefomgeving</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap", width: "80px" }}>Aantal</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap", width: "120px" }}>Oppervlakte [m²]</TableCell>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, width: "40px", textAlign: "center", backgroundColor: "#fafafa", border: 0 }}></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="BAG panden" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPanden?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenArea.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPanden?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPandenArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label={`Invloedzone BAG panden (${model.pandenBufferDistance} m)`} />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBuffer?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPandenBufferArea.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPandenBuffer?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPandenBufferArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
                                 </TableCell>
                             </TableRow>
                             {/* <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>Bomen [aantal]</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBomen?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px" }}>Bomen [aantal]</TableCell>
+                                <TableCell sx={{ fontSize: "12px" }} align="right">{model.intersectingBomen?.length}</TableCell>
                             </TableRow> */}
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Percelen geen eigendom Waterschap [aantal]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelen?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingPercelenArea.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPercelen?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPercelenArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Erven [aantal]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingErven?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingErvenArea.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingErven?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingErvenArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle="BGT - onbegroeid terreindeel" />
                                 </TableCell>
                             </TableRow>
@@ -198,49 +198,49 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
 
                 
                 {/* Natuur Table */}
-                <TableContainer component={Paper} sx={{}}>
+                <TableContainer component={Paper} sx={{ boxShadow: "none", backgroundColor: "#fafafa" }}>
                     <Table>
                         <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>2. Natuur</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold", width: "40px", textAlign: "center" }}></TableCell>
+                            <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap" }}>2. Natuur</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap", width: "120px" }}>Oppervlakte [m²]</TableCell>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, width: "40px", textAlign: "center", backgroundColor: "#fafafa", border: 0 }}></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Natura 2000 [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingNatura2000?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingNatura2000?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="GNN [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingGNN?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingGNN?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="NBP beheertype [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBeheertypeArea?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingBeheertypeArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Beheertypen [naam]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingBeheertypen?.map((item) => item).join(", ")}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingBeheertypen?.map((item) => item).join(", ")}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
                                 </TableCell>
                             </TableRow>
@@ -249,40 +249,40 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                 </TableContainer>
 
                 {/* Verkeer Table */}
-                <TableContainer component={Paper} sx={{}}>
+                <TableContainer component={Paper} sx={{ boxShadow: "none", backgroundColor: "#fafafa" }}>
                     <Table>
                         <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>3. Verkeer</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold", width: "40px", textAlign: "center" }}></TableCell>
+                            <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap" }}>3. Verkeer</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap", width: "120px" }}>Oppervlakte [m²]</TableCell>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, width: "40px", textAlign: "center", backgroundColor: "#fafafa", border: 0 }}></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="BGT wegdelen [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingWegdelen2dRuimtebeslag?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingWegdelen2dRuimtebeslag?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="BGT afritten [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslag?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingInritten2dRuimtebeslag?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="BGT afritten [aantal]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.intersectingInritten2dRuimtebeslagCount?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingInritten2dRuimtebeslagCount?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
@@ -291,74 +291,74 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                 </TableContainer>
 
                 {/* Execution Zone (Uitvoeringszone) Table */}
-                <TableContainer component={Paper} sx={{}}>
+                <TableContainer component={Paper} sx={{ boxShadow: "none", backgroundColor: "#fafafa" }}>
                     <Table>
                         <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>4. Uitvoering (buffer: {model.uitvoeringszoneBufferDistance || 10}m)</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Aantal</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Oppervlakte [m²]</TableCell>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold", width: "40px", textAlign: "center" }}></TableCell>
+                            <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap" }}>4. Uitvoering (buffer: {model.uitvoeringszoneBufferDistance || 10}m)</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap", width: "80px" }}>Aantal</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0, whiteSpace: "nowrap", width: "120px" }}>Oppervlakte [m²]</TableCell>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, width: "40px", textAlign: "center", backgroundColor: "#fafafa", border: 0 }}></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Wegoppervlak in uitvoeringszone" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneWegoppervlak?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneWegoppervlak?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Panden binnen invloedscontour" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePanden?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePandenArea?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePanden?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePandenArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Percelen binnen invloedscontour" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePercelen?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszonePercelenArea?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelen?.length}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelenArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Natura 2000 binnen invloedscontour" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneNatura2000?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneNatura2000?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="GNN binnen invloedscontour" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneGNN?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneGNN?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} />
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }}>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="NBP beheertype binnen invloedscontour" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">{model.uitvoeringszoneBeheertypeArea?.toFixed(2)}</TableCell>
-                                <TableCell sx={{ fontSize: "11px", textAlign: "center" }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneBeheertypeArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
                                     <LayerToggleButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
                                 </TableCell>
                             </TableRow>

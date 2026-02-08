@@ -220,7 +220,20 @@ const DikeDesigner = (
         fileInput.click();
     };
 
-    const handleSaveProjectLocal = () => {
+    const handleSaveProjectLocal = async () => {
+        // Check if calculations are missing
+        const missing = model.getMissingCalculations();
+        if (missing.length > 0) {
+            const confirmed = await model.messages.operations.ui.confirm.execute({
+                message: `De volgende berekeningen ontbreken: ${missing.join(" en ")}. Wilt u toch doorgaan met opslaan?`,
+                title: "Berekeningen ontbreken",
+            });
+            
+            if (!confirmed) {
+                return;
+            }
+        }
+        
         saveProjectAsJSON(model);
     };
 
@@ -237,8 +250,8 @@ const DikeDesigner = (
         handleFileMenuClose();
     };
 
-    const handleFileMenuSave = () => {
-        handleSaveProjectLocal();
+    const handleFileMenuSave = async () => {
+        await handleSaveProjectLocal();
         handleFileMenuClose();
     };
 

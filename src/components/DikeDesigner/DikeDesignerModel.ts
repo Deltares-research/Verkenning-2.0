@@ -828,4 +828,22 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
         });
     }
+
+    /**
+     * Checks if effects and costs are calculated
+     * @returns array of missing calculations (empty if all calculated)
+     */
+    getMissingCalculations(): string[] {
+        const missingCalculations: string[] = [];
+        
+        if (!this.effectsCalculated) {
+            missingCalculations.push("Effecten");
+        }
+        
+        if (!this.costsCalculated) {
+            missingCalculations.push("Kosten");
+        }
+        
+        return missingCalculations;
+    }
 }
