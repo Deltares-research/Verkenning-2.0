@@ -122,7 +122,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     graphicsLayerControlPoints: GraphicsLayer;
 
-    designLayer2D: FeatureLayer | GraphicsLayer | null = null;
+    designLayer2D: GraphicsLayer | null = null;
     designLayer2DGetSymbol: ((name: string) => any) | null = null;
     uniqueParts: string[] = [];
 
