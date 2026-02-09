@@ -34,6 +34,7 @@ import IconButton from "@vertigis/web/ui/IconButton";
 import Box from "@vertigis/web/ui/Box";
 
 import React, { useState, useRef, useEffect } from "react";
+import Tooltip from "@mui/material/Tooltip";
 
 import { stackStyle } from "../../../styles";
 import { useWatchAndRerender } from "@vertigis/web/ui";
@@ -106,39 +107,42 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
             <Stack spacing={1.5} sx={stackStyle}>
                 <FormLabel>Stap 1: referentielijn bepalen (kies een van de drie)</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
-                    <Button
-                        disabled={!model.sketchViewModel}
-                        color="primary"
-                        onClick={handleCreateLine}
-                        startIcon={<EditIcon />}
-                        variant="contained"
-                        size="medium"
-                        sx={{ flex: 1 }}
-                    >
-                        Teken lijn
-                    </Button>
-                    <Button
-                        color="primary"
-                        onClick={handleUploadGeoJSON}
-                        startIcon={<UploadFileIcon />}
-                        variant="contained"
-                        disabled={!model.map}
-                        size="medium"
-                        sx={{ flex: 1 }}
-                    >
-                        Upload
-                    </Button>
-                    <Button
-                        color="primary"
-                        onClick={handleSelectFromMap}
-                        startIcon={<MapIcon />}
-                        variant="contained"
-                        disabled={!model.map}
-                        size="medium"
-                        sx={{ flex: 1 }}
-                    >
-                        Kies uit kaart
-                    </Button>
+                    <Tooltip title="Teken lijn" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                        <Button
+                            disabled={!model.sketchViewModel}
+                            color="primary"
+                            onClick={handleCreateLine}
+                            variant="contained"
+                            size="large"
+                            sx={{ flex: 1, height: '56px' }}
+                        >
+                            <EditIcon sx={{ fontSize: '28px' }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Upload GeoJSON" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                        <Button
+                            color="primary"
+                            onClick={handleUploadGeoJSON}
+                            variant="contained"
+                            disabled={!model.map}
+                            size="large"
+                            sx={{ flex: 1, height: '56px' }}
+                        >
+                            <UploadFileIcon sx={{ fontSize: '28px' }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Selecteer uit kaart" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                        <Button
+                            color="primary"
+                            onClick={handleSelectFromMap}
+                            variant="contained"
+                            disabled={!model.map}
+                            size="large"
+                            sx={{ flex: 1, height: '56px' }}
+                        >
+                            <MapIcon sx={{ fontSize: '28px' }} />
+                        </Button>
+                    </Tooltip>
                 </Stack>
                 
                 {isLayerListVisible && (
@@ -295,60 +299,60 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                 }}
             >
                 <FormLabel>Ontwerp overzicht</FormLabel>
-                <TableContainer component={Paper} sx={{ marginTop: 0, opacity: model.loading ? 0.5 : 1 }}>
+                <TableContainer component={Paper} sx={{ boxShadow: "none", backgroundColor: "#fafafa", opacity: model.loading ? 0.5 : 1 }}>
                     <Table>
                         <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px", fontWeight: "bold" }}>Ontwerp element</TableCell>
-                                <TableCell align="right" sx={{ fontSize: "11px", fontWeight: "bold" }}>Waarde</TableCell>
+                            <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0 }}>Ontwerp element</TableCell>
+                                <TableCell align="right" sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0 }}>Waarde</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="left">
                                     Lengte traject [m]
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
                                     {model.lineLength ?? "-"}
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="left">
                                     Verschil [m³]
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px"}} align="right">
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
                                     {model.totalVolumeDifference ?? "-"}
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="left">
                                     Uitgraven [m³]
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
                                     {model.excavationVolume ?? "-"}
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="left">
                                     Opvullen [m³]
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
                                     {model.fillVolume ?? "-"}
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="left">
                                     2D Oppervlakte [m²]
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
                                     {model.total2dArea ?? "-"}
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell sx={{ fontSize: "11px" }} align="left">
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="left">
                                     3D Oppervlakte [m²]
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "11px" }} align="right">
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
                                     {model.total3dArea ?? "-"}
                                 </TableCell>
                             </TableRow>

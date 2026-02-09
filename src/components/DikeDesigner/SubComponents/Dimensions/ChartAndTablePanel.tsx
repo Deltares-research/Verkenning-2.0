@@ -240,6 +240,7 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
     </>
   );
 };

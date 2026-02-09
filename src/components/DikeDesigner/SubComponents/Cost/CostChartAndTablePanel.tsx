@@ -210,7 +210,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
           <Tabs value={currentTab} onChange={handleTabChange} aria-label="cost view tabs">
             <Tab label="Overzicht" sx={{ fontSize: '12px' }} />
             <Tab label="Tabel" sx={{ fontSize: '12px' }} />
-            <Tab label="Grafieken" sx={{ fontSize: '12px' }} />
+            <Tab label="Kostenverdeling" sx={{ fontSize: '12px' }} />
+            <Tab label="Kostenbereik" sx={{ fontSize: '12px' }} />
           </Tabs>
         </Box>
 
@@ -628,19 +629,18 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             </Box>
           )}
 
-          {/* Tab 2: Charts Only */}
+          {/* Tab 2: Kostenverdeling (Pie Chart) */}
           {currentTab === 2 && (
             <Box sx={{
               flex: "1",
               display: "flex",
-              flexDirection: "row",
+              flexDirection: "column",
               overflow: "hidden",
-              minWidth: 0,
-              gap: 2
+              minWidth: 0
             }}>
-              {/* Pie Chart Section - Takes 70% */}
+              {/* Pie Chart Section */}
               <Box sx={{
-                flex: "1 1 70%",
+                flex: "1 1 100%",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
@@ -677,10 +677,21 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   </Paper>
                 </Box>
               </Box>
+            </Box>
+          )}
 
-              {/* Stacked Bar Chart Section - Takes 30% */}
+          {/* Tab 3: Kostenbereik (Bar Chart) */}
+          {currentTab === 3 && (
+            <Box sx={{ 
+              flex: "1", 
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              minWidth: 0
+            }}>
+              {/* Stacked Bar Chart Section */}
               <Box sx={{
-                flex: "1 1 30%",
+                flex: "1 1 100%",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
