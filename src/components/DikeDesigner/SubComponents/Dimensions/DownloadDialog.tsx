@@ -126,6 +126,7 @@ const DownloadDialog: React.FC<DownloadDialogProps> = ({
                         px: 3,
                         py: 1.2,
                         backgroundColor: '#0078d4',
+                        color: '#ffffff',
                         '&:hover': {
                             backgroundColor: '#005a9e',
                         }

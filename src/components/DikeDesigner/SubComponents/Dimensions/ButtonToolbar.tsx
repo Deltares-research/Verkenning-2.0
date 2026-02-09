@@ -15,7 +15,7 @@ import MenuItem from "@vertigis/web/ui/MenuItem";
 
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile, setDwpLocation } from "../../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, setDwpLocation, createCrossSection } from "../../Functions/DesignFunctions";
 
 interface ButtonToolbarProps {
   model: any;
@@ -33,6 +33,10 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   
   const [rivierzijdeAnchorEl, setRivierzijdeAnchorEl] = useState<null | HTMLElement>(null);
   const rivierzijdeOpen = Boolean(rivierzijdeAnchorEl);
+
+  // Add state for trek dwarsprofiel menu
+  const [trekDwpAnchorEl, setTrekDwpAnchorEl] = useState<null | HTMLElement>(null);
+  const trekDwpOpen = Boolean(trekDwpAnchorEl);
 
   // Add new state for options menu
   const [optionsAnchorEl, setOptionsAnchorEl] = useState<null | HTMLElement>(null);
@@ -53,6 +57,30 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
 
   const handleDwpLocationMenuClose = () => {
     setDwpLocationAnchorEl(null);
+  };
+
+  const handleTrekDwpMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setTrekDwpAnchorEl(event.currentTarget);
+  };
+
+  const handleTrekDwpMenuClose = () => {
+    setTrekDwpAnchorEl(null);
+  };
+
+  const handleTrekDwpSelect = (option: 'teken' | 'vrije_lijn' | 'lengte_aanpassen') => {
+    if (option === 'teken') {
+      locateDwpProfile(model);
+    } else if (option === 'vrije_lijn') {
+      // Clean up previous graphics
+      model.graphicsLayerPoint.removeAll();
+      model.graphicsLayerCrossSection.removeAll();
+      
+      // Start drawing a free cross section line
+      createCrossSection(model);
+    } else if (option === 'lengte_aanpassen') {
+      handleToggleLengthSlider();
+    }
+    handleTrekDwpMenuClose();
   };
 
   const handleDwpLocationSelect = (location: string) => {
@@ -94,7 +122,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
     setOptionsAnchorEl(null);
   };
 
-  const handleOptionSelect = (option: 'taludlijn' | 'dwp_length' | 'clear_taludlijn') => {
+  const handleOptionSelect = (option: 'taludlijn' | 'clear_taludlijn') => {
     // Reset all drawing modes
     model.isDrawingTaludlijn = false;
     
@@ -109,8 +137,6 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         type: "info",
         disableTimetouts: true
       });
-    } else if (option === 'dwp_length') {
-      handleToggleLengthSlider();
     } else if (option === 'clear_taludlijn') {
       model.userLinePoints = [];
       // Update the series data if available
@@ -184,7 +210,7 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           <Button
             variant="contained"
             size="large"
-            onClick={() => locateDwpProfile(model)}
+            onClick={handleTrekDwpMenuClick}
             disabled={model.graphicsLayerLine?.graphics?.length === 0}
             sx={{ height: '40px' }}
           >
@@ -289,6 +315,27 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         ))}
       </Menu>
 
+      {/* Trek Dwarsprofiel Menu */}
+      <Menu
+        anchorEl={trekDwpAnchorEl}
+        open={trekDwpOpen}
+        onClose={handleTrekDwpMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        PaperProps={{
+          sx: { minWidth: trekDwpAnchorEl?.offsetWidth || 'auto' }
+        }}
+      >
+        <MenuItem onClick={() => handleTrekDwpSelect('teken')}>
+          Teken dwarsprofiel (loodrecht)
+        </MenuItem>
+        <MenuItem onClick={() => handleTrekDwpSelect('lengte_aanpassen')}>
+          Dwarsprofiel lengte aanpassen
+        </MenuItem>
+        <MenuItem onClick={() => handleTrekDwpSelect('vrije_lijn')}>
+          Teken vrije lijn
+        </MenuItem>
+      </Menu>
+
       {/* Rivierzijde Menu */}
       <Menu
         anchorEl={rivierzijdeAnchorEl}
@@ -334,9 +381,6 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           sx: { minWidth: optionsAnchorEl?.offsetWidth || 'auto' }
         }}
       >
-        <MenuItem onClick={() => handleOptionSelect('dwp_length')}>
-          DWP lengte aanpassen
-        </MenuItem>
         <MenuItem onClick={() => handleOptionSelect('taludlijn')}>
           Teken taludlijn
         </MenuItem>

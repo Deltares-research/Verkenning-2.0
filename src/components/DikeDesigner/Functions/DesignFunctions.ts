@@ -857,15 +857,12 @@ export async function createCrossSection(model) {
 
                 const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
 
-                model.crossSectionChartData = elevationResult.geometry.points.map((point, index) => ({
+                model.chartDataElevation = elevationResult.geometry.points.map((point, index) => ({
                     afstand: point[3], // m value
                     hoogte: point[2],
                     x: point[0],
                     y: point[1]
                 }));
-
-
-                model.crossSectionPanelVisible = true;
 
 
                 console.log("Elevation query result:", elevationResult);

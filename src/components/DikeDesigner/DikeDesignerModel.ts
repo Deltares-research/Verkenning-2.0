@@ -163,6 +163,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     userLinePoints: any[] = []
     slopeLabels: am5.Label[] = []
 
+    isDrawingTaludlijn: boolean = false
     isPlacingDwpProfile: boolean = false
     rivierzijde: 'rechts' | 'links' = 'rechts';
     referentieLocatie: string = 'binnenkruin';
@@ -346,10 +347,13 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 if (event.state === "complete") {
                     const drawnLine = event.graphic.geometry;
                     this.drawnLine = drawnLine;
-                    this.sketchViewModel.set("state", "update");
-                    this.sketchViewModel.update(event.graphic);
 
                     handler.remove(); // Clean up the event listener
+                    
+                    // Reset sketch view model to prevent dragging
+                    this.sketchViewModel.cancel();
+                    this.sketchViewModel.layer = null as any;
+                    
                     resolve(drawnLine);
                 }
                 // Optionally handle cancel/error states here
@@ -376,11 +380,13 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 if (event.state === "complete") {
                     const drawnPoint = event.graphic.geometry;
                     this.drawnPoint = drawnPoint;
-                    this.sketchViewModel.set("state", "update");
-                    this.sketchViewModel.update(event.graphic);
-
 
                     handler.remove(); // Clean up the event listener
+                    
+                    // Reset sketch view model to prevent dragging
+                    this.sketchViewModel.cancel();
+                    this.sketchViewModel.layer = null as any;
+                    
                     resolve(drawnPoint);
                 }
                 // Optionally handle cancel/error states here

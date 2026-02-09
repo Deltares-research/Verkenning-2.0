@@ -2,6 +2,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
 import EditIcon from "@mui/icons-material/Edit";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import Tooltip from "@mui/material/Tooltip";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -22,9 +23,10 @@ import { useWatchAndRerender } from "@vertigis/web/ui";
 interface ConstructionPanelProps {
     model: any;
     onCreateConstruction?: () => void;
+    onClearConstruction?: () => void;
 }
 
-const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateConstruction }) => {
+const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateConstruction, onClearConstruction }) => {
     
     useWatchAndRerender(model, "constructionModel");
     useWatchAndRerender(model.constructionModel, "drawnConstructionLine");
@@ -96,6 +98,10 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
 
     const handleClearLine = () => {
         model.constructionModel.clearLine();
+        // Call callback to update chart
+        if (onClearConstruction) {
+            onClearConstruction();
+        }
     };
 
     const hasConstructionLine = model.constructionModel.drawnConstructionLine != null;
@@ -104,41 +110,44 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
     return (
         <Stack spacing={1}>
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Stap 1: Constructielijn bepalen (kies een van de drie)</FormLabel>
+                <FormLabel>Stap 1: constructielijn bepalen (kies een van de drie)</FormLabel>
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
-                    <Button
-                        disabled={!model.sketchViewModel}
-                        color="primary"
-                        onClick={handleDrawLine}
-                        startIcon={<EditIcon />}
-                        variant="contained"
-                        size="medium"
-                        sx={{ flex: 1 }}
-                    >
-                        Teken lijn
-                    </Button>
-                    <Button
-                        color="primary"
-                        onClick={() => document.getElementById('construction-geojson-upload')?.click()}
-                        startIcon={<UploadFileIcon />}
-                        variant="contained"
-                        disabled={!model.map}
-                        size="medium"
-                        sx={{ flex: 1 }}
-                    >
-                        Upload
-                    </Button>
-                    <Button
-                        color="primary"
-                        onClick={handleSelectLine}
-                        startIcon={<TouchAppIcon />}
-                        variant="contained"
-                        disabled={!model.map}
-                        size="medium"
-                        sx={{ flex: 1 }}
-                    >
-                        Kies uit kaart
-                    </Button>
+                    <Tooltip title="Teken lijn" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                        <Button
+                            disabled={!model.sketchViewModel}
+                            color="primary"
+                            onClick={handleDrawLine}
+                            variant="contained"
+                            size="large"
+                            sx={{ flex: 1, height: '56px' }}
+                        >
+                            <EditIcon sx={{ fontSize: '28px' }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Upload GeoJSON" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                        <Button
+                            color="primary"
+                            onClick={() => document.getElementById('construction-geojson-upload')?.click()}
+                            variant="contained"
+                            disabled={!model.map}
+                            size="large"
+                            sx={{ flex: 1, height: '56px' }}
+                        >
+                            <UploadFileIcon sx={{ fontSize: '28px' }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Selecteer uit kaart" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                        <Button
+                            color="primary"
+                            onClick={handleSelectLine}
+                            variant="contained"
+                            disabled={!model.map}
+                            size="large"
+                            sx={{ flex: 1, height: '56px' }}
+                        >
+                            <TouchAppIcon sx={{ fontSize: '28px' }} />
+                        </Button>
+                    </Tooltip>
                 </Stack>
                 <input
                     id="construction-geojson-upload"
@@ -152,7 +161,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
             <Divider sx={{ my: 2 }} />
 
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Stap 2: Constructie parameters</FormLabel>
+                <FormLabel>Stap 2: constructie parameters</FormLabel>
                 
                 <FormControl fullWidth>
                     <FormLabel>Type constructie</FormLabel>
@@ -234,7 +243,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
             <Divider sx={{ my: 2 }} />
 
             <Stack spacing={1.5} sx={stackStyle}>
-                <FormLabel>Stap 3: Maak constructie</FormLabel>
+                <FormLabel>Stap 3: maak constructie</FormLabel>
                 
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
@@ -256,7 +265,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                         size="medium"
                         sx={{ flex: 1 }}
                     >
-                        Wis lijn
+                        Verwijder constructie
                     </Button>
                 </Stack>
             </Stack>

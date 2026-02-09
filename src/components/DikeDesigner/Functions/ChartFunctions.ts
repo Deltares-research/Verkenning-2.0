@@ -28,11 +28,19 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         })
     );
 
-    // Prevent default browser context menu on the chart container
+    // Show custom context menu on the chart container
     if (refs.chartContainerRef.current) {
         refs.chartContainerRef.current.addEventListener('contextmenu', (e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Show context menu with taludlijn options
+            if (model.showChartContextMenu) {
+                model.showChartContextMenu({
+                    x: e.clientX,
+                    y: e.clientY
+                });
+            }
         });
     }
 
