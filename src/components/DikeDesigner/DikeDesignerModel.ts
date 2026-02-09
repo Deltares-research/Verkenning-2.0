@@ -16,6 +16,7 @@ import {
 
 import ConstructionModel from "./SubComponents/Construction/ConstructionModel";
 import CostModel from "./SubComponents/Cost/CostModel";
+import ComparisonModel from "./SubComponents/Comparison/ComparisonModel";
 
 import * as XLSX from "xlsx";
 
@@ -71,6 +72,8 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
     percelenWaterschapLayerName?: string | null;
     natuurbeheerplanLayerName?: string | null;
     pandenBufferDistance?: number;
+    uitvoeringszoneBufferDistance?: number;
+    effectLayerMappings?: { [key: string]: string };
 }
 @serializable
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
@@ -78,6 +81,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     designName: string = "";
     constructionModel: ConstructionModel = new ConstructionModel();
     costModel: CostModel = new CostModel();
+    comparisonModel: ComparisonModel = new ComparisonModel();
     designPanelVisible: boolean = false;
     crossSectionPanelVisible: boolean = false;
     costPanelVisible: boolean = false;
@@ -85,6 +89,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     loading: boolean = false;
     mapInitialized: boolean = false;
+    
+    // Tracking calculation status for effects and costs
+    effectsCalculated: boolean = false;
+    costsCalculated: boolean = false;
 
     elevationLayerUrl: DikeDesignerModelProperties["elevationLayerUrl"];
     apiKey: DikeDesignerModelProperties["apiKey"];
@@ -96,6 +104,8 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     natuurbeheerplanLayerName: DikeDesignerModelProperties["natuurbeheerplanLayerName"];
     percelenWaterschapLayerName: DikeDesignerModelProperties["percelenWaterschapLayerName"];
     pandenBufferDistance: DikeDesignerModelProperties["pandenBufferDistance"];
+    uitvoeringszoneBufferDistance: DikeDesignerModelProperties["uitvoeringszoneBufferDistance"];
+    effectLayerMappings: DikeDesignerModelProperties["effectLayerMappings"] = {};
 
     graphicsLayerLine: GraphicsLayer;
     cursorLocationLayer: GraphicsLayer;
@@ -107,11 +117,12 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayer3dPolygon: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
     graphicsLayerRuimtebeslag3d: GraphicsLayer;
+    graphicsLayerUitvoeringszone: GraphicsLayer;
     elevationLayer: ElevationLayer;
 
     graphicsLayerControlPoints: GraphicsLayer;
 
-    designLayer2D: FeatureLayer | GraphicsLayer | null = null;
+    designLayer2D: GraphicsLayer | null = null;
     designLayer2DGetSymbol: ((name: string) => any) | null = null;
     uniqueParts: string[] = [];
 
@@ -187,11 +198,22 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     intersectingNatura2000: number = 0
     intersectingGNN: number = 0
     intersectingBeheertypen: object[] = []
+    intersectingBeheertypeArea: number = 0
     intersectingPandenArea: number = 0
     intersectingPandenBuffer: object [] = []
     intersectingPandenBufferArea: number = 0
     intersectingErven: object[] = []
     intersectingErvenArea: number = 0
+
+    // Execution zone (uitvoeringszone) measurements
+    uitvoeringszoneWegoppervlak: number = 0
+    uitvoeringszonePanden: object[] = []
+    uitvoeringszonePandenArea: number = 0
+    uitvoeringszonePercelen: object[] = []
+    uitvoeringszonePercelenArea: number = 0
+    uitvoeringszoneNatura2000: number = 0
+    uitvoeringszoneGNN: number = 0
+    uitvoeringszoneBeheertypeArea: number = 0
 
     dwpLocations: string[] = [
         "buitenteen",
@@ -637,6 +659,16 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 visible: false,
             });
 
+            this.graphicsLayerUitvoeringszone = new GraphicsLayer({
+                title: "Uitvoeringszone",
+                elevationInfo: {
+                    mode: "on-the-ground",
+                    offset: 0
+                },
+                listMode: "show",
+                visible: true,
+            });
+
             this.cursorLocationLayer = new GraphicsLayer({
                 title: "Cursor Location Layer",
                 elevationInfo: {
@@ -758,6 +790,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 visible: true,
                 visibilityMode: "independent",
                 layers: [
+                    this.graphicsLayerUitvoeringszone,
                     this.graphicsLayerRuimtebeslag3d,
                     this.graphicsLayerRuimtebeslag
                 ]
@@ -794,5 +827,23 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
             this.mapInitialized = true;
 
         });
+    }
+
+    /**
+     * Checks if effects and costs are calculated
+     * @returns array of missing calculations (empty if all calculated)
+     */
+    getMissingCalculations(): string[] {
+        const missingCalculations: string[] = [];
+        
+        if (!this.effectsCalculated) {
+            missingCalculations.push("Effecten");
+        }
+        
+        if (!this.costsCalculated) {
+            missingCalculations.push("Kosten");
+        }
+        
+        return missingCalculations;
     }
 }

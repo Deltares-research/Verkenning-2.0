@@ -26,7 +26,7 @@ interface LoadDesignsDialogProps {
     onClose: () => void;
     designFeatureLayer3dUrl?: string;
     model?: any;
-    onLoadDesign?: (objectId: number) => Promise<void>;
+    onLoadDesign?: (objectId: number, designName?: string) => Promise<void>;
 }
 
 const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
@@ -60,11 +60,12 @@ const LoadDesignsDialog: React.FC<LoadDesignsDialogProps> = ({
         const selectedDesign = savedDesignsModel.getSelectedDesign();
         if (selectedDesign) {
             try {
-                // Get the ObjectID from the selected design
+                // Get the ObjectID and name from the selected design
                 const objectId = selectedDesign.OBJECTID || selectedDesign.objectid;
+                const designName = selectedDesign.name || selectedDesign.NAME;
                 if (objectId) {
                     if (onLoadDesign) {
-                        await onLoadDesign(objectId);
+                        await onLoadDesign(objectId, designName);
                     }
                     handleClose();
                 } else {

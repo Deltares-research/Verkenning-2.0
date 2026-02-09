@@ -254,4 +254,66 @@ export default class CostModel extends ModelBase {
             "Vastgoedkosten": this.realEstateCosts.toDict(),
         }
     }
+
+    // Prepare hierarchical pie chart data structure
+    getPieChartData() {
+        return [
+            {
+                category: "Grondwerk",
+                value: this.directCostGroundWork.totaleBDBKGrondwerk,
+                children: [
+                    { category: "Voorbereiding", value: this.directCostGroundWork.preparationCost },
+                    { category: "Afgraven grasbekleding", value: this.directCostGroundWork.afgravenGrasbekledingCost },
+                    { category: "Afgraven kleilaag", value: this.directCostGroundWork.afgravenKleilaagCost },
+                    { category: "Herkeuren kleilaag", value: this.directCostGroundWork.herkeurenKleilaagCost },
+                    { category: "Aanvullen kern", value: this.directCostGroundWork.aanvullenKernCost },
+                    { category: "Profieleren dijkkern", value: this.directCostGroundWork.profielerenDijkkernCost },
+                    { category: "Nieuwe kleilaag", value: this.directCostGroundWork.aanbrengenNieuweKleilaagCost },
+                    { category: "Profieleren kleilaag", value: this.directCostGroundWork.profielerenVanNieuweKleilaagCost },
+                    { category: "Hergebruik teelaarde", value: this.directCostGroundWork.hergebruikTeelaardeCost },
+                    { category: "Aanvullen teelaarde", value: this.directCostGroundWork.aanvullenTeelaardeCost },
+                    { category: "Profieleren graslaag", value: this.directCostGroundWork.profielerenNieuweGraslaagCost },
+                ].filter(d => d.value > 0)
+            },
+            {
+                category: "Constructie",
+                value: this.indirectConstructionCosts.totalCosts,
+                children: [
+                    { category: "PM kosten", value: this.indirectConstructionCosts.pmCost },
+                    { category: "Algemene kosten (C)", value: this.indirectConstructionCosts.generalCost },
+                    { category: "Risico & winst (C)", value: this.indirectConstructionCosts.riskProfit },
+                ].filter(d => d.value > 0)
+            },
+            {
+                category: "Engineering",
+                value: this.engineeringCosts.totalEngineeringCosts,
+                children: [
+                    { category: "EPK kosten", value: this.engineeringCosts.epkCost },
+                    { category: "Ontwerp", value: this.engineeringCosts.designCost },
+                    { category: "Onderzoeken", value: this.engineeringCosts.researchCost },
+                    { category: "Algemene kosten (E)", value: this.engineeringCosts.generalCost },
+                    { category: "Risico & winst (E)", value: this.engineeringCosts.riskProfit },
+                ].filter(d => d.value > 0)
+            },
+            {
+                category: "Overige kosten",
+                value: this.otherCosts.totalGeneralCosts,
+                children: [
+                    { category: "Vergunningen", value: this.otherCosts.insurances },
+                    { category: "Kabels & leidingen", value: this.otherCosts.cablesPipes },
+                    { category: "Planschade", value: this.otherCosts.damages },
+                    { category: "Algemene kosten (O)", value: this.otherCosts.generalCost },
+                    { category: "Risico & winst (O)", value: this.otherCosts.riskProfit },
+                ].filter(d => d.value > 0)
+            },
+            {
+                category: "Vastgoed",
+                value: this.realEstateCosts.totalRealEstateCosts,
+                children: [
+                    { category: "Wegen", value: this.realEstateCosts.roadCost },
+                    { category: "Panden", value: this.realEstateCosts.houseCost },
+                ].filter(d => d.value > 0)
+            },
+        ].filter(d => d.value > 0);
+    }
 }

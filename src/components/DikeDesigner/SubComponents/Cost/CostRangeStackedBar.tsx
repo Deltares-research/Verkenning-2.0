@@ -41,6 +41,8 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
 
         const yAxis = chart.yAxes.push(
             am5xy.ValueAxis.new(root, {
+                min: 0,
+                strictMinMax: true,
                 renderer: am5xy.AxisRendererY.new(root, {}),
             })
         );
@@ -118,7 +120,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
         return () => root.dispose();
     }, [bouwKosten, engineering, overigeBijkomende, vastgoed]);
 
-    return <div ref={chartRef} style={{ width: "100%", height: "300px" }} />;
+    return <div ref={chartRef} style={{ width: "100%", height: "100%" }} />;
 };
 
 export default CostRangeStackedBar;

@@ -1,9 +1,11 @@
 import AdsClickIcon from '@mui/icons-material/AdsClick';
-import ControlPointIcon from '@mui/icons-material/ControlPoint';
+import ChartLineIcon from "@vertigis/react-ui/icons/ChartLine";
+import EditIcon from '@mui/icons-material/Edit';
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import TuneIcon from '@mui/icons-material/Tune';
 import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
+import Tooltip from "@mui/material/Tooltip";
 
 
 import Box from "@vertigis/web/ui/Box";
@@ -35,6 +37,10 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   // Add new state for options menu
   const [optionsAnchorEl, setOptionsAnchorEl] = useState<null | HTMLElement>(null);
   const optionsOpen = Boolean(optionsAnchorEl);
+
+  // Add state for profile points menu
+  const [profielpuntenAnchorEl, setProfielpuntenAnchorEl] = useState<null | HTMLElement>(null);
+  const profielpuntenOpen = Boolean(profielpuntenAnchorEl);
 
   // Force re-render state
   const [, forceUpdate] = useState({});
@@ -126,10 +132,23 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
     handleOptionsMenuClose();
   };
 
-  const handleTekenProfielpunten = () => {
-    model.isPlacingDwpProfile = !model.isPlacingDwpProfile;
-    
+  const handleProfielpuntenMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // If placing profile is active, toggle it off instead of opening menu
     if (model.isPlacingDwpProfile) {
+      model.isPlacingDwpProfile = false;
+      forceUpdate({}); // Force re-render to immediately update button state
+    } else {
+      setProfielpuntenAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleProfielpuntenMenuClose = () => {
+    setProfielpuntenAnchorEl(null);
+  };
+
+  const handleProfielpuntenSelect = (option: 'teken' | 'verwijder') => {
+    if (option === 'teken') {
+      model.isPlacingDwpProfile = true;
       model.isDrawingTaludlijn = false; // Deactivate tekenen taludlijn
       model.messages.commands.ui.displayNotification.execute({
         title: "Teken profielpunten",
@@ -137,7 +156,11 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
         type: "info",
         disableTimetouts: true
       });
+    } else if (option === 'verwijder') {
+      clearDwpProfile(model);
     }
+    
+    handleProfielpuntenMenuClose();
   };
 
   return (
@@ -157,93 +180,96 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       }}
     >
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", flex: 1 }}>
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<AdsClickIcon />}
-          color="primary"
-          onClick={() => locateDwpProfile(model)}
-          disabled={model.graphicsLayerLine?.graphics?.length === 0}
-        >
-          1 Trek dwarsprofiel
-        </Button>
+        <Tooltip title="Trek dwarsprofiel" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => locateDwpProfile(model)}
+            disabled={model.graphicsLayerLine?.graphics?.length === 0}
+            sx={{ height: '40px' }}
+          >
+            <ChartLineIcon />
+          </Button>
+        </Tooltip>
+
+        <Tooltip title={model.isPlacingDwpProfile ? "Profiel punten plaatsen..." : "Profielpunten"} placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+          <Button
+            variant={model.isPlacingDwpProfile ? "contained" : "outlined"}
+            size="large"
+            onClick={handleProfielpuntenMenuClick}
+            color={model.isPlacingDwpProfile ? "secondary" : "primary"}
+            disabled={model.graphicsLayerLine?.graphics?.length === 0}
+            sx={{
+              height: '40px',
+              ...(model.isPlacingDwpProfile ? {
+                fontWeight: 'bold',
+                boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+                }
+              } : {})
+            }}
+          >
+            <EditIcon />
+          </Button>
+        </Tooltip>
+
+        <Tooltip title="Benoem locatie" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleDwpLocationMenuClick}
+            color={model.selectingDwpLocation ? "secondary" : "primary"}
+            disabled={!model.selectingDwpLocation}
+            sx={{
+              height: '40px',
+              ...(model.selectingDwpLocation ? {
+                fontWeight: 'bold',
+                boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+                }
+              } : {})
+            }}
+          >
+            <LocationOnIcon />
+          </Button>
+        </Tooltip>
 
         <Button
           variant="contained"
-          size="medium"
-          startIcon={<ControlPointIcon />}
-          color={model.isPlacingDwpProfile ? "secondary" : "primary"}
-          onClick={handleTekenProfielpunten}
-          disabled={model.graphicsLayerLine?.graphics?.length === 0}
-          sx={model.isPlacingDwpProfile ? {
-            fontWeight: 'bold',
-            boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
-            '&:hover': {
-              boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
-            }
-          } : {}}
-        >
-          2a Teken profielpunten
-        </Button>
-
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<RemoveCircleOutlineIcon />}
-          color="primary"
-          onClick={() => clearDwpProfile(model)}
-          disabled={model.chartData?.length === 0}
-        >
-          2b Verwijder profielpunten
-        </Button>
-
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<LocationOnIcon />}
-          onClick={handleDwpLocationMenuClick}
-          color={model.selectingDwpLocation ? "secondary" : "primary"}
-          disabled={!model.selectingDwpLocation}
-          sx={model.selectingDwpLocation ? {
-            fontWeight: 'bold',
-            boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
-            '&:hover': {
-              boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
-            }
-          } : {}}
-        >
-          3 Benoem locatie: {model.selectedDwpLocation ? model.selectedDwpLocation.replace(/_/g, ' ') : 'Selecteer...'}
-        </Button>
-
-        <Button
-          variant="contained"
-          size="medium"
+          size="large"
           startIcon={<PlayCircleFilledWhiteIcon />}
           color="primary"
           onClick={handleCreateDesign}
           disabled={!hasReferenceLine || !model.chartData?.length}
+          sx={{ height: '40px' }}
         >
-          4 Opbouwen in 3D
+          Opbouwen in 3D
         </Button>
       </Box>
 
       <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-        <Button
-          variant={model.isDrawingTaludlijn ? "contained" : "outlined"}
-          size="medium"
-          startIcon={<TuneIcon />}
-          onClick={handleOptionsMenuClick}
-          color={model.isDrawingTaludlijn ? "secondary" : "primary"}
-          sx={model.isDrawingTaludlijn ? {
-            fontWeight: 'bold',
-            boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
-            '&:hover': {
-              boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
-            }
-          } : {}}
-        >
-          {model.isDrawingTaludlijn ? "Tekenen taludlijn" : "Teken opties"}
-        </Button>
+        <Tooltip title={model.isDrawingTaludlijn ? "Tekenen taludlijn actief" : "Teken opties"} placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+          <Button
+            variant={model.isDrawingTaludlijn ? "contained" : "outlined"}
+            size="large"
+            onClick={handleOptionsMenuClick}
+            color={model.isDrawingTaludlijn ? "secondary" : "primary"}
+            sx={{
+              height: '40px',
+              ...(model.isDrawingTaludlijn ? {
+                fontWeight: 'bold',
+                boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+                }
+              } : {})
+            }}
+          >
+            <TuneIcon />
+          </Button>
+        </Tooltip>
       </Box>
 
       {/* DWP Location Menu */}
@@ -275,6 +301,27 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       >
         <MenuItem onClick={() => handleRivierzijdeSelect('rechts')}>Rechts</MenuItem>
         <MenuItem onClick={() => handleRivierzijdeSelect('links')}>Links</MenuItem>
+      </Menu>
+
+      {/* Profile Points Menu */}
+      <Menu
+        anchorEl={profielpuntenAnchorEl}
+        open={profielpuntenOpen}
+        onClose={handleProfielpuntenMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        PaperProps={{
+          sx: { minWidth: profielpuntenAnchorEl?.offsetWidth || 'auto' }
+        }}
+      >
+        <MenuItem onClick={() => handleProfielpuntenSelect('teken')}>
+          Teken profielpunten
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleProfielpuntenSelect('verwijder')}
+          disabled={model.chartData?.length === 0}
+        >
+          Verwijder profielpunten
+        </MenuItem>
       </Menu>
 
       {/* Options Menu */}

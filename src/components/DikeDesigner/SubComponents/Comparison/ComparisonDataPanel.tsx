@@ -3,6 +3,12 @@ import Box from "@vertigis/web/ui/Box";
 import Typography from "@vertigis/web/ui/Typography";
 import Paper from "@vertigis/web/ui/Paper";
 import IconButton from "@vertigis/web/ui/IconButton";
+import Table from "@vertigis/web/ui/Table";
+import TableBody from "@vertigis/web/ui/TableBody";
+import TableCell from "@vertigis/web/ui/TableCell";
+import TableContainer from "@vertigis/web/ui/TableContainer";
+import TableHead from "@vertigis/web/ui/TableHead";
+import TableRow from "@vertigis/web/ui/TableRow";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
@@ -152,235 +158,230 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
 
             {/* Content */}
             <Box sx={{ padding: "20px", overflow: "auto", flex: 1 }}>
-                <Box style={{ overflowX: "auto" }}>
-                <table
-                    style={{
-                        width: "100%",
-                        borderCollapse: "collapse",
-                        border: "1px solid #ddd",
-                    }}
-                >
-                    <thead>
-                        <tr style={{ backgroundColor: "#f5f5f5" }}>
-                            <th style={{ padding: "12px", textAlign: "left", borderBottom: "2px solid #ddd", fontWeight: "bold" }}>
+                <TableContainer component={Paper} sx={{ boxShadow: "none", backgroundColor: "#fafafa" }}>
+                <Table>
+                    <TableHead>
+                        <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                            <TableCell sx={{ fontSize: "12px", fontWeight: 500, backgroundColor: "#fafafa", border: 0 }}>
                                 Criterium
-                            </th>
+                            </TableCell>
                             {snapshots.map((snapshot) => (
-                                <th
+                                <TableCell
                                     key={snapshot.id}
-                                    style={{
-                                        padding: "12px",
-                                        textAlign: "right",
-                                        borderBottom: "2px solid #ddd",
-                                        fontWeight: "bold",
+                                    align="right"
+                                    sx={{
+                                        fontSize: "12px",
+                                        fontWeight: 500,
+                                        backgroundColor: "#fafafa",
+                                        border: 0
                                     }}
                                 >
                                     {snapshot.name}
-                                </th>
+                                </TableCell>
                             ))}
-                        </tr>
-                    </thead>
-                    <tbody>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
                         {/* Design Values */}
-                        <tr style={{ backgroundColor: "#fafafa" }}>
-                            <td colSpan={snapshots.length + 1} style={{ padding: "8px", fontWeight: "bold" }}>
+                        <TableRow>
+                            <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                 Ontwerpwaarden
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Trajectlengte (m)</td>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Trajectlengte (m)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.designValues.trajectLength)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Volumeverschil (m³)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Volumeverschil (m³)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.designValues.volumeDifference)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Uitgravingsvolume (m³)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Uitgravingsvolume (m³)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.designValues.excavationVolume)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Opvulvolume (m³)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Opvulvolume (m³)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.designValues.fillVolume)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>2D Oppervlakte (m²)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>2D Oppervlakte (m²)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.designValues.area2d)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>3D Oppervlakte (m²)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>3D Oppervlakte (m²)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.designValues.area3d)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
+                        </TableRow>
 
                         {/* Cost Data */}
-                        <tr style={{ backgroundColor: "#fafafa" }}>
-                            <td colSpan={snapshots.length + 1} style={{ padding: "8px", fontWeight: "bold" }}>
+                        <TableRow>
+                            <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                 Kosten
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Complexiteit</td>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Complexiteit</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {s.projectJSON.costs.complexity || "-"}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Diepte (m)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Diepte (m)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.costs.depth)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Totale Directe Kosten (€)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Totale Directe Kosten (€)</TableCell>
                             {snapshots.map((s) => {
                                 const directTotal = (Object.values(s.projectJSON.costs.directCostGroundWork || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.directCostStructures || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
                                 return (
-                                    <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                    <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                         {formatNumber(directTotal)}
-                                    </td>
+                                    </TableCell>
                                 );
                             })}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Totale Indirecte Kosten (€)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Totale Indirecte Kosten (€)</TableCell>
                             {snapshots.map((s) => {
                                 const indirectTotal = (Object.values(s.projectJSON.costs.indirectConstructionCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.engineeringCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.otherCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
                                 return (
-                                    <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                    <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                         {formatNumber(indirectTotal)}
-                                    </td>
+                                    </TableCell>
                                 );
                             })}
-                        </tr>
-                        <tr style={{ fontWeight: "bold", backgroundColor: "#f9f9f9" }}>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Totale Kosten (€)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9', backgroundColor: "#f9f9f9" }}>
+                            <TableCell sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>Totale Kosten (€)</TableCell>
                             {snapshots.map((s) => {
                                 const directTotal = (Object.values(s.projectJSON.costs.directCostGroundWork || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.directCostStructures || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
                                 const indirectTotal = (Object.values(s.projectJSON.costs.indirectConstructionCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.engineeringCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.otherCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
                                 return (
-                                    <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                    <TableCell key={s.id} align="right" sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>
                                         {formatNumber(directTotal + indirectTotal)}
-                                    </td>
+                                    </TableCell>
                                 );
                             })}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Risicoreservering (%)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Risicoreservering (%)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.costs.risicoreservering)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
+                        </TableRow>
 
                         {/* Effects */}
-                        <tr style={{ backgroundColor: "#fafafa" }}>
-                            <td colSpan={snapshots.length + 1} style={{ padding: "8px", fontWeight: "bold" }}>
+                        <TableRow>
+                            <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                 Effecten
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Panden</td>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Panden</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {s.projectJSON.effects.intersectingPanden.length}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Bomen</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Bomen</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {s.projectJSON.effects.intersectingBomen.length}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Percelen</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Percelen</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {s.projectJSON.effects.intersectingPercelen.length}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Percelen Oppervlakte (m²)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Percelen Oppervlakte (m²)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.effects.intersectingPercelenArea)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>Natura 2000 (m²)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>Natura 2000 (m²)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.effects.intersectingNatura2000)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>GNN (m²)</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>GNN (m²)</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {formatNumber(s.projectJSON.effects.intersectingGNN)}
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
+                        </TableRow>
 
                         {/* Geometry */}
-                        <tr style={{ backgroundColor: "#fafafa" }}>
-                            <td colSpan={snapshots.length + 1} style={{ padding: "8px", fontWeight: "bold" }}>
+                        <TableRow>
+                            <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                 Geometrie
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>2D Ruimtebeslag Punten</td>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>2D Ruimtebeslag Punten</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee", fontSize: "12px" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {s.projectJSON.geometries?.ruimtebeslag2d?.length || 0} geom(s)
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                        <tr>
-                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>3D Ontwerp Punten</td>
+                        </TableRow>
+                        <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <TableCell sx={{ fontSize: "12px", border: 0 }}>3D Ontwerp Punten</TableCell>
                             {snapshots.map((s) => (
-                                <td key={s.id} style={{ padding: "8px", textAlign: "right", borderBottom: "1px solid #eee", fontSize: "12px" }}>
+                                <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
                                     {s.projectJSON.geometries?.design3d?.length || 0} geom(s)
-                                </td>
+                                </TableCell>
                             ))}
-                        </tr>
-                    </tbody>
-                </table>
-                </Box>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+                </TableContainer>
             </Box>
         </Paper>
     );

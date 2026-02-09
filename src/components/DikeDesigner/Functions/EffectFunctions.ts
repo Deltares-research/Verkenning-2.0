@@ -2,12 +2,23 @@ import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import type FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import Polyline from "@arcgis/core/geometry/Polyline";
+import Graphic from "@arcgis/core/Graphic";
+import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 
 import * as intersectionOperator from "@arcgis/core/geometry/operators/intersectionOperator";
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 // import Query from "@arcgis/core/rest/support/Query";
+
+// Helper function to get query layer from mapping
+function getQueryLayer(model: any, mappingKey: string, fallback: string): string {
+    const mapping = (model.effectLayerMappings as any)?.[mappingKey];
+    if (typeof mapping === 'object' && mapping?.query) {
+        return mapping.query;
+    }
+    return fallback;
+}
 
 
 export async function getIntersectingFeatures(model, layerTitle, whereClause = null, bufferDistance = 0): Promise<object[]> {
@@ -385,14 +396,14 @@ export function getLineLength(profileLine: any): number {
 
 export async function handleEffectAnalysis(model) {
     model.loading = true;
-    await getIntersectingFeatures(model, "BAG 2D").then((result) => {
+    await getIntersectingFeatures(model, getQueryLayer(model, "bag_panden", "BAG 2D")).then((result) => {
         model.intersectingPanden = result;
         console.log("Intersecting panden:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingArea2dRuimtebeslag(model, "BAG 2D").then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "bag_panden", "BAG 2D")).then((result) => {
         model.intersectingPandenArea = result;
         console.log("Total BAG intersecting area:", result);
     }).catch((error) => {
@@ -410,7 +421,6 @@ export async function handleEffectAnalysis(model) {
     const percelenIntersectPromise = getIntersectingFeatures(model, "DKK - perceel");
     // Get all waterschap percelen that intersect with ruimtebeslag
     const percelenWaterschapIntersectPromise = getIntersectingFeatures(model, model.percelenWaterschapLayerName);
-    console.log(model.percelenWaterschapLayerName, "percelenWaterschapLayerName");
 
     Promise.all([percelenIntersectPromise, percelenWaterschapIntersectPromise])
         .then(([percelenIntersect, percelenWaterschapIntersect]) => {
@@ -459,35 +469,34 @@ export async function handleEffectAnalysis(model) {
             console.error("Error fetching intersecting features:", error);
         });
 
-    await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel").then((result) => {
-        model.intersectingWegdelen2dRuimtebeslag = result;
+    await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "bgt_wegdeel", "BGT - wegdeel")).then((result) => {
         console.log("Total 2D intersecting area:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
 
-    await getIntersectingArea2dRuimtebeslag(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "bgt_wegdeel", "BGT - wegdeel"), "functie='inrit'").then((result) => {
         model.intersectingInritten2dRuimtebeslag = result;
         console.log("Total 2D intersecting area:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
 
-    await getIntersectingFeatures(model, "BGT - wegdeel", "functie='inrit'").then((result) => {
+    await getIntersectingFeatures(model, getQueryLayer(model, "bgt_wegdeel", "BGT - wegdeel"), "functie='inrit'").then((result) => {
         model.intersectingInritten2dRuimtebeslagCount = result;
         console.log("Intersecting inritten:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingArea2dRuimtebeslag(model, "Natura 2000").then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "natura2000", "Natura 2000")).then((result) => {
         model.intersectingNatura2000 = result;
         console.log("Total Natura 2000 intersecting area:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });
 
-    await getIntersectingArea2dRuimtebeslag(model, "Groene Ontwikkelingszone en Gelders NatuurNetwerk", "objectnaam = 'Gelders natuurnetwerk'").then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk"), "objectnaam = 'Gelders natuurnetwerk'").then((result) => {
         model.intersectingGNN = result;
         console.log("Total GNN intersecting area:", result);
     }).catch((error) => {
@@ -528,14 +537,21 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingFeatures(model, "BAG 2D", null, model.pandenBufferDistance).then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, model.natuurbeheerplanLayerName).then((result) => {
+        model.intersectingBeheertypeArea = result;
+        console.log("Total beheertype intersecting area:", result);
+    }).catch((error) => {
+        console.error("Error fetching beheertype intersecting area:", error);
+    });
+
+    await getIntersectingFeatures(model, getQueryLayer(model, "bag_panden", "BAG 2D"), null, model.pandenBufferDistance).then((result) => {
         model.intersectingPandenBuffer = result;
         console.log("Intersecting panden:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting features:", error);
     });
 
-    await getIntersectingArea2dRuimtebeslag(model, "BAG 2D", null, model.pandenBufferDistance).then((result) => {
+    await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "bag_panden", "BAG 2D"), null, model.pandenBufferDistance).then((result) => {
         model.intersectingPandenBufferArea = result;
         console.log("Total BAG intersecting area:", result);
     }).catch((error) => {
@@ -556,9 +572,215 @@ export async function handleEffectAnalysis(model) {
         console.error("Error fetching intersecting area:", error);
     });
 
+    // ===== EXECUTION ZONE (UITVOERINGSZONE) ANALYSIS =====
+    console.log("Starting execution zone analysis with buffer:", model.uitvoeringszoneBufferDistance || 10, "meters");
+
+    // Create and visualize the execution zone buffer geometry
+    const bufferDistance = model.uitvoeringszoneBufferDistance || 10;
+    const geometries = model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry);
+    
+    if (geometries.length > 0) {
+        const unionGeometry = geometries.length > 1
+            ? geometryEngine.union(geometries as any[])
+            : geometries[0];
+
+        if (unionGeometry) {
+            // Create execution zone by buffering the union geometry
+            const executionZone = geometryEngine.buffer(unionGeometry, bufferDistance, "meters");
+            const executionZoneGeometry = Array.isArray(executionZone) ? executionZone[0] : executionZone;
+
+            // Clear existing graphics and add the execution zone to the map
+            model.graphicsLayerUitvoeringszone.graphics.removeAll();
+            
+            const executionZoneGraphic = new Graphic({
+                geometry: executionZoneGeometry,
+                symbol: new SimpleFillSymbol({
+                    color: [0, 255, 0, 0.15], // Green with 15% opacity
+                    outline: {
+                        color: [0, 255, 0, 0.8], // Green outline with 80% opacity
+                        width: 2
+                    }
+                })
+            });
+
+            model.graphicsLayerUitvoeringszone.graphics.add(executionZoneGraphic);
+            console.log("Execution zone visualization added to map");
+        }
+    }
+
+    // Wegoppervlak in uitvoeringszone
+    await getIntersectingAreaInExecutionZone(model, getQueryLayer(model, "bgt_wegdeel", "BGT - wegdeel")).then((result) => {
+        model.uitvoeringszoneWegoppervlak = result;
+        console.log("Execution zone - wegoppervlak:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone wegoppervlak:", error);
+    });
+
+    // Panden in uitvoeringszone
+    await getIntersectingFeaturesInExecutionZone(model, getQueryLayer(model, "bag_panden", "BAG 2D")).then((result) => {
+        model.uitvoeringszonePanden = result;
+        console.log("Execution zone - panden:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone panden:", error);
+    });
+
+    await getIntersectingAreaInExecutionZone(model, getQueryLayer(model, "bag_panden", "BAG 2D")).then((result) => {
+        model.uitvoeringszonePandenArea = result;
+        console.log("Execution zone - panden area:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone panden area:", error);
+    });
+
+    // Percelen in uitvoeringszone (niet Waterschap)
+    await getIntersectingFeaturesInExecutionZone(model, getQueryLayer(model, "kadastrale_percelen", "Kadastrale percelen"), "eigenaar <> 'Waterschap Rivierenland'").then((result) => {
+        model.uitvoeringszonePercelen = result;
+        console.log("Execution zone - percelen (not Waterschap):", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone percelen:", error);
+    });
+
+    await getIntersectingAreaInExecutionZone(model, getQueryLayer(model, "kadastrale_percelen", "Kadastrale percelen"), "eigenaar <> 'Waterschap Rivierenland'").then((result) => {
+        model.uitvoeringszonePercelenArea = result;
+        console.log("Execution zone - percelen area:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone percelen area:", error);
+    });
+
+    // Natura 2000 in uitvoeringszone
+    await getIntersectingAreaInExecutionZone(model, getQueryLayer(model, "natura2000", "Natura 2000")).then((result) => {
+        model.uitvoeringszoneNatura2000 = result;
+        console.log("Execution zone - Natura 2000 area:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone Natura 2000:", error);
+    });
+
+    // GNN in uitvoeringszone
+    await getIntersectingAreaInExecutionZone(model, getQueryLayer(model, "gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk"), "objectnaam = 'Gelders natuurnetwerk'").then((result) => {
+        model.uitvoeringszoneGNN = result;
+        console.log("Execution zone - GNN area:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone GNN:", error);
+    });
+
+    // Beheertypen in uitvoeringszone
+    await getIntersectingAreaInExecutionZone(model, model.natuurbeheerplanLayerName).then((result) => {
+        model.uitvoeringszoneBeheertypeArea = result;
+        console.log("Execution zone - beheertype area:", result);
+    }).catch((error) => {
+        console.error("Error fetching execution zone beheertype area:", error);
+    });
+
     model.loading = false;
-
-
-
+    model.effectsCalculated = true;
 
 }
+
+// Helper functions for execution zone (uitvoeringszone) analysis with buffer
+export async function getIntersectingFeaturesInExecutionZone(model, layerTitle, whereClause = null): Promise<object[]> {
+    const bufferDistance = model.uitvoeringszoneBufferDistance || 10; // Default 10 meters
+    
+    const layerToQuery = model.map.allLayers.items.find(
+        (layer) => layer.title === layerTitle
+    ) as FeatureLayer;
+
+    if (!layerToQuery) {
+        console.warn(`${layerTitle} layer not found!`);
+        return [];
+    }
+
+    // Get union of all 2d ruimtebeslag polygons and buffer it
+    const geometries = model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry);
+    const unionGeometry = geometries.length > 1
+        ? geometryEngine.union(geometries as any[])
+        : geometries[0];
+
+    if (!unionGeometry) {
+        console.warn("No geometry to create execution zone with.");
+        return [];
+    }
+
+    // Create execution zone by buffering the union geometry
+    const executionZone = geometryEngine.buffer(unionGeometry, bufferDistance, "meters");
+    const executionZoneGeometry = Array.isArray(executionZone) ? executionZone[0] : executionZone;
+
+    const query = layerToQuery.createQuery();
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    query.geometry = executionZoneGeometry;
+    query.spatialRelationship = "intersects";
+    if (whereClause) {
+        query.where = whereClause;
+    }
+
+    try {
+        const result = await layerToQuery.queryFeatures(query);
+        console.log(`Execution zone - Intersecting features in ${layerTitle}:`, result);
+        return result.features;
+    } catch (error) {
+        console.error("Error querying features in execution zone:", error);
+        return [];
+    }
+}
+
+export async function getIntersectingAreaInExecutionZone(model, layerTitle, whereClause = null): Promise<number> {
+    const bufferDistance = model.uitvoeringszoneBufferDistance || 10; // Default 10 meters
+    
+    const layerToQuery = model.map.allLayers.items.find(
+        (layer) => layer.title === layerTitle
+    ) as FeatureLayer;
+
+    if (!layerToQuery) {
+        console.warn(`Layer ${layerTitle} not found!`);
+        return 0;
+    }
+
+    // Get union of all 2d ruimtebeslag polygons and buffer it
+    const geometries = model.graphicsLayerRuimtebeslag.graphics.items.map(g => g.geometry);
+    const unionGeometry = geometries.length > 1
+        ? geometryEngine.union(geometries as any[])
+        : geometries[0];
+
+    if (!unionGeometry) {
+        console.warn("No geometry to create execution zone with.");
+        return 0;
+    }
+
+    // Create execution zone by buffering the union geometry
+    const executionZone = geometryEngine.buffer(unionGeometry, bufferDistance, "meters");
+    const executionZoneGeometry = Array.isArray(executionZone) ? executionZone[0] : executionZone;
+
+    const query = layerToQuery.createQuery();
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    query.geometry = executionZoneGeometry;
+    query.spatialRelationship = "intersects";
+    if (whereClause) {
+        query.where = whereClause;
+    }
+
+    try {
+        const result = await layerToQuery.queryFeatures(query);
+        console.log(`Execution zone - Found ${result.features.length} intersecting features in ${layerTitle}`);
+
+        let totalOverlapArea = 0;
+
+        result.features.forEach((feature) => {
+            const intersection = geometryEngine.intersect(
+                feature.geometry,
+                executionZoneGeometry
+            );
+
+            if (intersection) {
+                const area = geometryEngine.geodesicArea(intersection as Polygon, "square-meters");
+                totalOverlapArea += area;
+            }
+        });
+
+        console.log(`Total execution zone intersection area in ${layerTitle}: ${totalOverlapArea.toFixed(2)} m²`);
+        return totalOverlapArea;
+    } catch (error) {
+        console.error("Error calculating intersection area in execution zone:", error);
+        return 0;
+    }
+}
+

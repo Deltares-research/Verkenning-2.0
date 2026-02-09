@@ -23,7 +23,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             panX: false,
             panY: false,
             wheelX: "panX",
-            wheelY: "zoomX",
+            wheelY: "zoomXY",
             pinchZoomX: false,
         })
     );
@@ -55,6 +55,15 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             tooltip: am5.Tooltip.new(root, {}),
         })
     );
+
+    // Add adapter to ensure y-axis max is at least 1.5 meters above highest point in ground profile
+    yAxis.adapters.add("max", (max) => {
+        if (model.chartDataElevation && model.chartDataElevation.length > 0) {
+            const maxHeight = Math.max(...model.chartDataElevation.map(d => parseFloat(d.hoogte) || 0));
+            return Math.max(max, maxHeight + 1.5);
+        }
+        return max;
+    });
 
     const series = chart.series.push(
         am5xy.LineSeries.new(root, {
@@ -440,6 +449,18 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
     let cursor = chart.get("cursor");
 
+    // Add X-axis scrollbar
+    chart.set("scrollbarX", am5xy.XYChartScrollbar.new(root, {
+        orientation: "horizontal",
+        height: 20
+    }));
+
+    // Add Y-axis scrollbar
+    chart.set("scrollbarY", am5xy.XYChartScrollbar.new(root, {
+        orientation: "vertical",
+        width: 20
+    }));
+
     cursor.events.on("cursormoved", (ev) => {
         if (elevationSeries.data.length) {
             const positionX = ev.target.getPrivate("positionX");
@@ -534,6 +555,15 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
             tooltip: am5.Tooltip.new(root, {}),
         })
     );
+
+    // Add adapter to ensure y-axis max is at least 1.5 meters above highest point in ground profile
+    yAxis.adapters.add("max", (max) => {
+        if (model.crossSectionChartData && model.crossSectionChartData.length > 0) {
+            const maxHeight = Math.max(...model.crossSectionChartData.map(d => parseFloat(d.hoogte) || 0));
+            return Math.max(max, maxHeight + 1.5);
+        }
+        return max;
+    });
 
     const elevationSeries = chart.series.push(
         am5xy.LineSeries.new(root, {
@@ -657,6 +687,19 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
     chart.set("cursor", am5xy.XYCursor.new(root, {}));
     let cursor = chart.get("cursor");
+
+    // Add X-axis scrollbar
+    chart.set("scrollbarX", am5xy.XYChartScrollbar.new(root, {
+        orientation: "horizontal",
+        height: 20
+    }));
+
+    // Add Y-axis scrollbar
+    chart.set("scrollbarY", am5xy.XYChartScrollbar.new(root, {
+        orientation: "vertical",
+        width: 20
+    }));
+
     cursor.events.on("cursormoved", (ev) => {
         if (elevationSeries.data.length) {
             const positionX = ev.target.getPrivate("positionX");
@@ -755,18 +798,8 @@ function addConstructionVisualization(args: {
     // Find intersection points using 2D geometries
     const aPath = constructionLine2D.paths?.[0];
     const bPath = profileLine2D.paths?.[0];
-    const useFallbackOnly = !!aPath && !!bPath && aPath.length === 2 && bPath.length === 2;
-    const intersections = useFallbackOnly
-        ? null
-        : geometryEngine.intersect(constructionLine2D, profileLine2D);
-
-    const tryFallbackIntersection = () => {
-        if (!aPath || !bPath || aPath.length < 2 || bPath.length < 2) {
-            return null;
-        }
-
-        const [a1, a2] = aPath;
-        const [b1, b2] = bPath;
+    
+    const tryFallbackIntersection = (a1: number[], a2: number[], b1: number[], b2: number[]) => {
         const x1 = a1[0];
         const y1 = a1[1];
         const x2 = a2[0];
@@ -791,15 +824,39 @@ function addConstructionVisualization(args: {
         return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
     };
 
-    let resolvedIntersections = intersections;
-    if (!resolvedIntersections) {
-        const fallbackPoint = tryFallbackIntersection();
-        if (fallbackPoint) {
-            resolvedIntersections = new Point({
-                x: fallbackPoint[0],
-                y: fallbackPoint[1],
-                spatialReference: profileLine2D.spatialReference
-            }) as any;
+    // Try geometryEngine.intersect first, then fall back to segment-by-segment intersection
+    let resolvedIntersections = geometryEngine.intersect(constructionLine2D, profileLine2D);
+    
+    // If no intersection found, try manual segment-by-segment intersection for multi-segment lines
+    if (!resolvedIntersections && aPath && bPath && aPath.length >= 2 && bPath.length >= 2) {
+        const allIntersectionPoints: number[][] = [];
+        const [b1, b2] = bPath;
+        
+        // Iterate through each segment of the construction line
+        for (let i = 0; i < aPath.length - 1; i++) {
+            const a1 = aPath[i];
+            const a2 = aPath[i + 1];
+            const fallbackPoint = tryFallbackIntersection(a1, a2, b1, b2);
+            if (fallbackPoint) {
+                allIntersectionPoints.push(fallbackPoint);
+            }
+        }
+        
+        if (allIntersectionPoints.length > 0) {
+            // Convert to multipoint if multiple intersections
+            if (allIntersectionPoints.length === 1) {
+                resolvedIntersections = new Point({
+                    x: allIntersectionPoints[0][0],
+                    y: allIntersectionPoints[0][1],
+                    spatialReference: profileLine2D.spatialReference
+                }) as any;
+            } else {
+                resolvedIntersections = {
+                    type: "multipoint",
+                    points: allIntersectionPoints,
+                    spatialReference: profileLine2D.spatialReference
+                } as any;
+            }
         }
     }
 

@@ -26,11 +26,6 @@
 
 
 
- --> check exact terugladen berekende waardes
- --> move compare functions to own model
 
- --> constructie weergeven in in dwarsprofiel + controle
- --> stoplicht functie bij NEE!
- --> zoomfunctie x-as ontwerpen
- --> knopjes om effect-laag aan te zetten bij alternatieven als bij effecten
  --> afronden bij effecten
+ --> check clear before loading --> one function for all
