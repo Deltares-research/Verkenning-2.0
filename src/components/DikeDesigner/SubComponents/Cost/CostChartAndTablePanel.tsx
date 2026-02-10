@@ -93,7 +93,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       <TableRow>
         <TableCell colSpan={3} sx={{ p: 0, borderBottom: 0 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ m: 1 }}>
+            <Box sx={{ width: "100%" }}>
               <Table size="small">
                 {/* Detail column headers */}
                 {showDetailHeader && (
@@ -466,6 +466,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         title="Directe Bouwkosten (DBK)"
                         total={0}
                         level={1}
+                        showDetailHeader
+                        
                       >
                         <SubHeaderRow label="Grondversterking" total={0}/>
                         <SubRow label="Opruimen terrein" value={model.costModel.directCostGroundWork.opruimenTerrein.value}/>
@@ -488,7 +490,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         <SubRow label="Opbreken regionale weg" value={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg.value}/>
                         <SubRow label="Leveren en aanbrengen regionale weg" value={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg.value}/>
 
-                        {/* <SubHeaderRow label="Nader te detailleren bouwkosten" total={model.costModel.directConstructionCost.NTDBK} /> */}
+                        <SubHeaderRow label="Nader te detailleren bouwkosten" total={model.costModel.directConstructionCost.NTDBK} />
                         
                           
                       </CollapsibleSection>

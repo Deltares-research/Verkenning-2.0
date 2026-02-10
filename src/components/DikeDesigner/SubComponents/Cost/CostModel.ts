@@ -274,6 +274,7 @@ export default class CostModel extends ModelBase {
     directCostGroundWork: DirectCostGroundWork = new DirectCostGroundWork()
     directCostStructures: DirectCostStructures = new DirectCostStructures();
     directCostInfrastructure: DirectCostInfrastructure = new DirectCostInfrastructure();
+    directConstructionCost: DirectConstructionCost = new DirectConstructionCost();
     indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
     engineeringCosts: EngineeringCost = new EngineeringCost();
     otherCosts: OtherCosts = new OtherCosts();
