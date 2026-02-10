@@ -459,7 +459,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Bouwkosten (BK) */}
                     <CollapsibleSection
                       title="Bouwkosten (BK)"
-                      total={model.costModel.bouwkostenTotal}
+                      total={model.costModel.constructionCost.totalConstructionCost}
                     >
                       {/* Directe Bouwkosten (DBK) */}
                       <CollapsibleSection
@@ -538,27 +538,27 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Overige bijkomende kosten */}
                     <CollapsibleSection
                       title="Overige bijkomende kosten"
-                      total={0}
+                      total={model.costModel.otherCosts.totalGeneralCosts}
                     >
                       {/* Directe overige bijkomende kosten */}
                       <CollapsibleSection
                         title="Directe overige bijkomende kosten"
-                        total={0}
+                        total={model.costModel.otherCosts.directOtherCosts.totalDirectOtherCosts}
                         level={1}
                       >
-                        <SubRow label="Vergunningen, heffingen en verzekering" value={0} />
-                        <SubRow label="Kabels & leidingen" value={0} />
-                        <SubRow label="Planschade & inpassingsmaatregelen" value={0} />
+                        <SubRow label="Vergunningen, heffingen en verzekering" value={model.costModel.otherCosts.directOtherCosts.insurances} />
+                        <SubRow label="Kabels & leidingen" value={model.costModel.otherCosts.directOtherCosts.cablesPipes} />
+                        <SubRow label="Planschade & inpassingsmaatregelen" value={model.costModel.otherCosts.directOtherCosts.damages} />
                       </CollapsibleSection>
                       
                       {/* Indirecte overige bijkomende kosten */}
                       <CollapsibleSection
                         title="Indirecte overige bijkomende kosten"
-                        total={0}
+                        total={model.costModel.otherCosts.indirectOtherCosts.totalIndirectOtherCosts}
                         level={1}
                       >
-                        <SubRow label="Algemene kosten (AK)" value={0} />
-                        <SubRow label="Risico & winst (WR)" value={0} />
+                        <SubRow label="Algemene kosten (AK)" value={model.costModel.otherCosts.indirectOtherCosts.generalCost} />
+                        <SubRow label="Risico & winst (WR)" value={model.costModel.otherCosts.indirectOtherCosts.riskProfit} />
 
                       </CollapsibleSection>
                     </CollapsibleSection>

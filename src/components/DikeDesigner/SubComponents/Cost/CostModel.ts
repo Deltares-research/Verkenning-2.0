@@ -189,17 +189,17 @@ export class DirectEngineeringCost {
 export class IndirectEngineeringCosts {
     generalCost: number = 0;
     riskProfit: number = 0
-    indirectEngineeringCosts: number = 0;
+    totalIndirectEngineeringCosts: number = 0;
     fromApi(api: Record<string, number>) {
         this.generalCost = api.general_cost as number ?? 0;
         this.riskProfit = api.risk_profit as number ?? 0;
-        this.indirectEngineeringCosts = api.indirect_engineering_costs as number ?? 0;
+        this.totalIndirectEngineeringCosts = api.indirect_engineering_costs as number ?? 0;
     }
     toDict(): Record<string, any> {
         return {
             generalCost: this.generalCost,
             riskProfit: this.riskProfit,
-            indirectEngineeringCosts: this.indirectEngineeringCosts,
+            totalIndirectEngineeringCosts: this.totalIndirectEngineeringCosts,
         };
     }   
 }
@@ -226,39 +226,65 @@ export class EngineeringCost {
 }
 
 
+
+export class DirectOtherCosts {
+    insurances: number = 0;
+    cablesPipes: number = 0;
+    damages: number = 0;    
+    totalDirectOtherCosts: number = 0;
+
+    fromApi(api: Record<string, number>) {
+        this.insurances = api.insurances as number ?? 0;
+        this.cablesPipes = api.cables_pipes as number ?? 0;
+        this.damages = api.damages as number ?? 0;
+        this.totalDirectOtherCosts = api.total_direct_other_costs as number ?? 0;
+    }
+    toDict(): Record<string, number> {
+        return {
+            insurances: this.insurances,
+            cablesPipes: this.cablesPipes,
+            damages: this.damages,
+            totalDirectOtherCosts: this.totalDirectOtherCosts,
+        };
+    }
+}
+
+export class IndirectOtherCosts {
+    generalCost: number = 0;
+    riskProfit: number = 0
+    totalIndirectOtherCosts: number = 0;
+    fromApi(api: Record<string, number>) {
+        this.generalCost = api.general_cost as number ?? 0;
+        this.riskProfit = api.risk_profit as number ?? 0;
+        this.totalIndirectOtherCosts = api.indirect_general_costs as number ?? 0;
+    }
+    toDict(): Record<string, any> {
+        return {
+            generalCost: this.generalCost,
+            riskProfit: this.riskProfit,
+            totalIndirectOtherCosts: this.totalIndirectOtherCosts,
+        };
+    }   
+}
+
 export class OtherCosts {
-  insurances: number = 0;
-  cablesPipes: number = 0;
-  damages: number = 0;
-  directGeneralCosts: number = 0;
-  generalCost: number = 0;
-  riskProfit: number = 0;
-  indirectGeneralCosts: number = 0;
-  totalGeneralCosts: number = 0;
+    directOtherCosts: DirectOtherCosts = new DirectOtherCosts();
+    indirectOtherCosts: IndirectOtherCosts = new IndirectOtherCosts();
+    totalGeneralCosts: number = 0;
 
-  fromApi(api: Record<string, number>) {
-    this.insurances = api.insurances || 0;
-    this.cablesPipes = api.cables_pipes || 0;
-    this.damages = api.damages || 0;
-    this.directGeneralCosts = api.direct_general_costs || 0;
-    this.generalCost = api.general_cost || 0;
-    this.riskProfit = api.risk_profit || 0;
-    this.indirectGeneralCosts = api.indirect_general_costs || 0;
-    this.totalGeneralCosts = api.total_general_costs || 0;
-  }
+    fromApi(api: Record<string, any>) {
+        this.directOtherCosts.fromApi(api['Directe overige kosten'] || {});
+        this.indirectOtherCosts.fromApi(api['Indirecte overige kosten'] || {});
+        this.totalGeneralCosts = api.total_general_costs as number ?? 0;
+    }
 
-  toDict(): Record<string, number> {
-    return {
-      insurances: this.insurances,
-      cablesPipes: this.cablesPipes,
-      damages: this.damages,
-      directGeneralCosts: this.directGeneralCosts,
-      generalCost: this.generalCost,
-      riskProfit: this.riskProfit,
-      indirectGeneralCosts: this.indirectGeneralCosts,
-      totalGeneralCosts: this.totalGeneralCosts,
-    };
-  }
+    toDict(): Record<string, any> {
+        return {
+            directOtherCosts: this.directOtherCosts.toDict(),
+            indirectOtherCosts: this.indirectOtherCosts.toDict(),
+            totalGeneralCosts: this.totalGeneralCosts,
+        };
+    }
 }
 
 export class RealEstateCosts {
@@ -368,11 +394,11 @@ export default class CostModel extends ModelBase {
                 category: "Overige kosten",
                 value: this.otherCosts.totalGeneralCosts,
                 children: [
-                    { category: "Vergunningen", value: this.otherCosts.insurances },
-                    { category: "Kabels & leidingen", value: this.otherCosts.cablesPipes },
-                    { category: "Planschade", value: this.otherCosts.damages },
-                    { category: "Algemene kosten (O)", value: this.otherCosts.generalCost },
-                    { category: "Risico & winst (O)", value: this.otherCosts.riskProfit },
+                    { category: "Vergunningen", value: this.otherCosts.directOtherCosts.insurances },
+                    { category: "Kabels & leidingen", value: this.otherCosts.directOtherCosts.cablesPipes },
+                    { category: "Planschade", value: this.otherCosts.directOtherCosts.damages },
+                    { category: "Algemene kosten (O)", value: this.otherCosts.indirectOtherCosts.generalCost },
+                    { category: "Risico & winst (O)", value: this.otherCosts.indirectOtherCosts.riskProfit },
                 ].filter(d => d.value > 0)
             },
             {
