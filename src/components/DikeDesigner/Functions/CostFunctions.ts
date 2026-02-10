@@ -10,7 +10,7 @@ import * as intersectionOperator from "@arcgis/core/geometry/operators/intersect
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
-import { ConstructionCost, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
+import { IndirectConstructionCosts, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -144,6 +144,8 @@ export const handleCostCalculation = async (
 
             model.costModel.directCostGroundWork.fromApi(result['breakdown']["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(result['breakdown']["Directe kosten constructies"]);
+            // model.costModel.directCostInfra.fromApi(result['breakdown']["Directe kosten infra"]);
+            // model.costModel.directConstructionCost.fromApi(result['breakdown']["Directe bouwkosten"]);
             model.costModel.indirectConstructionCosts.fromApi(result['breakdown']["Indirecte bouwkosten"]);
             model.costModel.engineeringCosts.fromApi(result['breakdown']["Engineeringkosten"]);
             model.costModel.otherCosts.fromApi(result['breakdown']["Overige bijkomende kosten"]);

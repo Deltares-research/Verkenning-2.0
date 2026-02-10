@@ -14,60 +14,64 @@ export interface CostItem {
 
 export class DirectCostGroundWork {
     opruimenTerrein: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    afgravenGrasbekledingCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    afgravenKleilaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    herkeurenKleilaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    aanvullenKernCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    profielerenDijkkernCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    aanbrengenNieuweKleilaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    profielerenVanNieuweKleilaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    hergebruikTeelaardeCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    aanvullenTeelaardeCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    profielerenNieuweGraslaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    maaienTerreinen: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    afgravenGrasbekleding: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    afgravenKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    herkeurenKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    aanvullenKern: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    profielerenDijkkern: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    aanbrengenNieuweKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    profielerenVanNieuweKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    hergebruikTeelaarde: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    aanvullenTeelaarde: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    profielerenNieuweGraslaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
     totaleBDBKGrondwerk: number = 0
 
     // map API response to class properties
     fromApi(api: Record<string, CostItem | number>) {
         this.opruimenTerrein = api.opruimen_terrein as CostItem ?? this.opruimenTerrein
-        this.afgravenGrasbekledingCost = api.afgraven_grasbekleding_cost as CostItem ?? this.afgravenGrasbekledingCost
-        this.afgravenKleilaagCost = api.afgraven_kleilaag_cost as CostItem ?? this.afgravenKleilaagCost
-        this.herkeurenKleilaagCost = api.herkeuren_kleilaag_cost as CostItem ?? this.herkeurenKleilaagCost
-        this.aanvullenKernCost = api.aanvullen_kern_cost as CostItem ?? this.aanvullenKernCost
-        this.profielerenDijkkernCost = api.profieleren_dijkkern_cost as CostItem ?? this.profielerenDijkkernCost
-        this.aanbrengenNieuweKleilaagCost = api.aanbregen_nieuwe_kleilaag_cost as CostItem ?? this.aanbrengenNieuweKleilaagCost
-        this.profielerenVanNieuweKleilaagCost = api.profieleren_vannieuwe_kleilaag_cost as CostItem ?? this.profielerenVanNieuweKleilaagCost
-        this.hergebruikTeelaardeCost = api.hergebruik_teelaarde_cost as CostItem ?? this.hergebruikTeelaardeCost
-        this.aanvullenTeelaardeCost = api.aanvullen_teelaarde_cost as CostItem ?? this.aanvullenTeelaardeCost
-        this.profielerenNieuweGraslaagCost = api.profieleren_nieuwe_graslaag_cost as CostItem ?? this.profielerenNieuweGraslaagCost
+        this.maaienTerreinen = api.maaien_terreinen as CostItem ?? this.maaienTerreinen
+        this.afgravenGrasbekleding = api.afgraven_grasbekleding as CostItem ?? this.afgravenGrasbekleding
+        this.afgravenKleilaag = api.afgraven_kleilaag as CostItem ?? this.afgravenKleilaag
+        this.herkeurenKleilaag = api.herkeuren_kleilaag as CostItem ?? this.herkeurenKleilaag
+        this.aanvullenKern = api.aanvullen_kern as CostItem ?? this.aanvullenKern
+        this.profielerenDijkkern = api.profieleren_dijkkern as CostItem ?? this.profielerenDijkkern
+        this.aanbrengenNieuweKleilaag = api.aanbregen_nieuwe_kleilaag as CostItem ?? this.aanbrengenNieuweKleilaag
+        this.profielerenVanNieuweKleilaag = api.profieleren_vannieuwe_kleilaag as CostItem ?? this.profielerenVanNieuweKleilaag
+        this.hergebruikTeelaarde = api.hergebruik_teelaarde as CostItem ?? this.hergebruikTeelaarde
+        this.aanvullenTeelaarde = api.aanvullen_teelaarde as CostItem ?? this.aanvullenTeelaarde
+        this.profielerenNieuweGraslaag = api.profieleren_nieuwe_graslaag as CostItem ?? this.profielerenNieuweGraslaag
         this.totaleBDBKGrondwerk = api.totale_BDBK_grondwerk as number ?? 0
     }
 
     // convenience getters for value only
     get opruimenTerreinValue() { return this.opruimenTerrein.value }
-    get afgravenGrasbekledingCostValue() { return this.afgravenGrasbekledingCost.value }
-    get afgravenKleilaagCostValue() { return this.afgravenKleilaagCost.value }
-    get herkeurenKleilaagCostValue() { return this.herkeurenKleilaagCost.value }
-    get aanvullenKernCostValue() { return this.aanvullenKernCost.value }
-    get profielerenDijkkernCostValue() { return this.profielerenDijkkernCost.value }
-    get aanbrengenNieuweKleilaagCostValue() { return this.aanbrengenNieuweKleilaagCost.value }
-    get profielerenVanNieuweKleilaagCostValue() { return this.profielerenVanNieuweKleilaagCost.value }
-    get hergebruikTeelaardeCostValue() { return this.hergebruikTeelaardeCost.value }
-    get aanvullenTeelaardeCostValue() { return this.aanvullenTeelaardeCost.value }
-    get profielerenNieuweGraslaagCostValue() { return this.profielerenNieuweGraslaagCost.value }
+    get maaienTerreinenValue() { return this.maaienTerreinen.value }
+    get afgravenGrasbekledingValue() { return this.afgravenGrasbekleding.value }
+    get afgravenKleilaagValue() { return this.afgravenKleilaag.value }
+    get herkeurenKleilaagValue() { return this.herkeurenKleilaag.value }
+    get aanvullenKernValue() { return this.aanvullenKern.value }
+    get profielerenDijkkernValue() { return this.profielerenDijkkern.value }
+    get aanbrengenNieuweKleilaagValue() { return this.aanbrengenNieuweKleilaag.value }
+    get profielerenVanNieuweKleilaagValue() { return this.profielerenVanNieuweKleilaag.value }
+    get hergebruikTeelaardeValue() { return this.hergebruikTeelaarde.value }
+    get aanvullenTeelaardeValue() { return this.aanvullenTeelaarde.value }
+    get profielerenNieuweGraslaagValue() { return this.profielerenNieuweGraslaag.value }
 
     toDict(): Record<string, number> {
         return {
             opruimenTerrein: this.opruimenTerrein.value,
-            afgravenGrasbekledingCost: this.afgravenGrasbekledingCost.value,
-            afgravenKleilaagCost: this.afgravenKleilaagCost.value,
-            herkeurenKleilaagCost: this.herkeurenKleilaagCost.value,
-            aanvullenKernCost: this.aanvullenKernCost.value,
-            profielerenDijkkernCost: this.profielerenDijkkernCost.value,
-            aanbrengenNieuweKleilaagCost: this.aanbrengenNieuweKleilaagCost.value,
-            profielerenVanNieuweKleilaagCost: this.profielerenVanNieuweKleilaagCost.value,
-            hergebruikTeelaardeCost: this.hergebruikTeelaardeCost.value,
-            aanvullenTeelaardeCost: this.aanvullenTeelaardeCost.value,
-            profielerenNieuweGraslaagCost: this.profielerenNieuweGraslaagCost.value,
+            maaienTerreinen: this.maaienTerreinen.value,
+            afgravenGrasbekleding: this.afgravenGrasbekleding.value,
+            afgravenKleilaag: this.afgravenKleilaag.value,
+            herkeurenKleilaag: this.herkeurenKleilaag.value,
+            aanvullenKern: this.aanvullenKern.value,
+            profielerenDijkkern: this.profielerenDijkkern.value,
+            aanbrengenNieuweKleilaag: this.aanbrengenNieuweKleilaag.value,
+            profielerenVanNieuweKleilaag: this.profielerenVanNieuweKleilaag.value,
+            hergebruikTeelaarde: this.hergebruikTeelaarde.value,
+            aanvullenTeelaarde: this.aanvullenTeelaarde.value,
+            profielerenNieuweGraslaag: this.profielerenNieuweGraslaag.value,
             totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
         }
     }
@@ -75,55 +79,88 @@ export class DirectCostGroundWork {
 
 
 export class DirectCostStructures {
-    totaleBDBKconstructie: number = 0;
+    structureDetails: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    totaleBDBKConstructie: number = 0;
 
-    fromApi(api: Record<string, number>) {
-        this.totaleBDBKconstructie = api.totale_BDBK_constructie || 0;
-
+    fromApi(api: Record<string, CostItem | number>) {
+        this.structureDetails = api.structure_details as CostItem || this.structureDetails;
+        this.totaleBDBKConstructie = api.totale_BDBK_constructie as number ?? 0
     }
     toDict(): Record<string, number> {
         return {
-            totaleBDBKconstructie: this.totaleBDBKconstructie,
-
+            structureDetails: this.structureDetails.value,
+            totaleBDBKConstructie: this.totaleBDBKConstructie,
         };
     }
 }
 
-export class ConstructionCost {
-  totaleBDBKGrondwerk: number = 0;
-  totaleBDBKconstructie: number = 0;
-  totaleDirecteBouwkosten: number = 0;
-  pmCost: number = 0;
-  generalCost: number = 0;
-  riskProfit: number = 0;
-  indirectCosts: number = 0;
-  totalCosts: number = 0;
+export class DirectCostInfrastructure {
+    opbrekenRegionaleWeg: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    leverenEnAanbrengenRegionaleWeg: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    totaleBDBKInfra: number = 0;
 
-  // Map API snake_case keys to camelCase properties
-  fromApi(api: Record<string, number>) {
-    this.totaleBDBKGrondwerk = api.totale_BDBK_grondwerk || 0;
-    this.totaleBDBKconstructie = api.totale_BDBK_constructie || 0;
-    this.totaleDirecteBouwkosten = api.totale_directe_bouwkosten || 0;
-    this.pmCost = api.pm_kosten || 0;
-    this.generalCost = api.algemene_kosten || 0;
-    this.riskProfit = api.risico_en_winst || 0;
-    this.indirectCosts = api.indirecte_bouwkosten || 0;
-    this.totalCosts = api.totale_bouwkosten || 0;
-  }
+    fromApi(api: Record<string, CostItem | number>) {
+        this.opbrekenRegionaleWeg = api.opbreken_regionale_weg as CostItem || this.opbrekenRegionaleWeg;
+        this.leverenEnAanbrengenRegionaleWeg = api.leveren_en_aanbrengen_regionale_weg as CostItem || this.leverenEnAanbrengenRegionaleWeg;
+        this.totaleBDBKInfra = api.totale_BDBK_infra as number ?? 0
+    }
+    toDict(): Record<string, number> {
+        return {
+            opbrekenRegionaleWeg: this.opbrekenRegionaleWeg.value,
+            leverenEnAanbrengenRegionaleWeg: this.leverenEnAanbrengenRegionaleWeg.value,
+            totaleBDBKInfra: this.totaleBDBKInfra,
+        };
+    }
+}
 
-  // Provide camelCase dictionary for frontend rendering
-  toDict(): Record<string, number> {
-    return {
-      totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
-      totaleBDBKconstructie: this.totaleBDBKconstructie,
-      totaleDirecteBouwkosten: this.totaleDirecteBouwkosten,
-      pmCost: this.pmCost,
-      generalCost: this.generalCost,
-      riskProfit: this.riskProfit,
-      indirectCosts: this.indirectCosts,
-      totalCosts: this.totalCosts,
-    };
-  }
+export class DirectConstructionCost {
+    directeKostenGrondwerk: DirectCostGroundWork = new DirectCostGroundWork();
+    directeKostenConstructies: DirectCostStructures = new DirectCostStructures();
+    directeKostenInfra: DirectCostInfrastructure = new DirectCostInfrastructure();
+    NTDBK: number = 0;
+    totaleDBK: number = 0;
+
+    fromApi(api: Record<string, any>) {
+        this.directeKostenGrondwerk.fromApi(api['Directe kosten grondwerk'] || {});
+        this.directeKostenConstructies.fromApi(api['Directe kosten constructies'] || {});
+        this.directeKostenInfra.fromApi(api['Directe kosten infra'] || {});
+        this.NTDBK = api.NTDBK as number ?? 0;
+        this.totaleDBK = api.totale_DBK as number ?? 0;
+    }
+
+    toDict(): Record<string, any> {
+        return {
+            directeKostenGrondwerk: this.directeKostenGrondwerk.toDict(),
+            directeKostenConstructies: this.directeKostenConstructies.toDict(),
+            directeKostenInfra: this.directeKostenInfra.toDict(),
+            NTDBK: this.NTDBK,
+            totaleDBK: this.totaleDBK,
+        };
+    }
+}
+
+
+export class IndirectConstructionCosts {
+    pmCost: number = 0;
+    generalCost: number = 0
+    riskProfit: number = 0;
+    totalIndirectCosts: number = 0;
+
+    fromApi(api: Record<string, number>) {
+        this.pmCost = api.pm_kosten as number ?? 0;
+        this.generalCost = api.algemene_kosten as number ?? 0;
+        this.riskProfit = api.risico_en_winst as number ?? 0;
+        this.totalIndirectCosts = api.indirecte_bouwkosten as number ?? 0;
+    }
+    
+    toDict(): Record<string, number> {
+        return {
+            pmCost: this.pmCost,
+            generalCost: this.generalCost,
+            riskProfit: this.riskProfit,
+            totalIndirectCosts: this.totalIndirectCosts,
+        };
+    }
 }
 
 export class EngineeringCost {
@@ -236,7 +273,8 @@ export default class CostModel extends ModelBase {
     // Nested cost objects
     directCostGroundWork: DirectCostGroundWork = new DirectCostGroundWork()
     directCostStructures: DirectCostStructures = new DirectCostStructures();
-    indirectConstructionCosts: ConstructionCost = new ConstructionCost();
+    directCostInfrastructure: DirectCostInfrastructure = new DirectCostInfrastructure();
+    indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
     engineeringCosts: EngineeringCost = new EngineeringCost();
     otherCosts: OtherCosts = new OtherCosts();
     realEstateCosts: RealEstateCosts = new RealEstateCosts();
@@ -247,6 +285,8 @@ export default class CostModel extends ModelBase {
         return {
             "Directe kosten grondwerk": this.directCostGroundWork.toDict(),
             "Directe kosten constructies": this.directCostStructures.toDict(),
+            // "Directe kosten infra": this.directCostInfra.toDict(),
+            // "Directe bouwkosten": this.directConstructionCost.toDict(),
             "Indirecte bouwkosten": this.indirectConstructionCosts.toDict(),
             "Engineeringkosten": this.engineeringCosts.toDict(),
             "Overige bijkomende kosten": this.otherCosts.toDict(),
@@ -263,27 +303,28 @@ export default class CostModel extends ModelBase {
                 value: this.directCostGroundWork.totaleBDBKGrondwerk,
                 children: [
                     { category: "Opruimen terrein", value: this.directCostGroundWork.opruimenTerrein.value },
-                    { category: "Afgraven grasbekleding", value: this.directCostGroundWork.afgravenGrasbekledingCost.value },
-                    { category: "Afgraven kleilaag", value: this.directCostGroundWork.afgravenKleilaagCost.value },
-                    { category: "Herkeuren kleilaag", value: this.directCostGroundWork.herkeurenKleilaagCost.value },
-                    { category: "Aanvullen kern", value: this.directCostGroundWork.aanvullenKernCost.value },
-                    { category: "Profieleren dijkkern", value: this.directCostGroundWork.profielerenDijkkernCost.value },
-                    { category: "Nieuwe kleilaag", value: this.directCostGroundWork.aanbrengenNieuweKleilaagCost.value },
-                    { category: "Profieleren kleilaag", value: this.directCostGroundWork.profielerenVanNieuweKleilaagCost.value },
-                    { category: "Hergebruik teelaarde", value: this.directCostGroundWork.hergebruikTeelaardeCost.value },
-                    { category: "Aanvullen teelaarde", value: this.directCostGroundWork.aanvullenTeelaardeCost.value },
-                    { category: "Profieleren graslaag", value: this.directCostGroundWork.profielerenNieuweGraslaagCost.value },
+                    { category: "Maaien terreinen", value: this.directCostGroundWork.maaienTerreinen.value },
+                    { category: "Afgraven grasbekleding", value: this.directCostGroundWork.afgravenGrasbekleding.value },
+                    { category: "Afgraven kleilaag", value: this.directCostGroundWork.afgravenKleilaag.value },
+                    { category: "Herkeuren kleilaag", value: this.directCostGroundWork.herkeurenKleilaag.value },
+                    { category: "Aanvullen kern", value: this.directCostGroundWork.aanvullenKern.value },
+                    { category: "Profieleren dijkkern", value: this.directCostGroundWork.profielerenDijkkern.value },
+                    { category: "Nieuwe kleilaag", value: this.directCostGroundWork.aanbrengenNieuweKleilaag.value },
+                    { category: "Profieleren kleilaag", value: this.directCostGroundWork.profielerenVanNieuweKleilaag.value },
+                    { category: "Hergebruik teelaarde", value: this.directCostGroundWork.hergebruikTeelaarde.value },
+                    { category: "Aanvullen teelaarde", value: this.directCostGroundWork.aanvullenTeelaarde.value },
+                    { category: "Profieleren graslaag", value: this.directCostGroundWork.profielerenNieuweGraslaag.value },
                 ].filter(d => d.value > 0)
             },
-            {
-                category: "Constructie",
-                value: this.indirectConstructionCosts.totalCosts,
-                children: [
-                    { category: "PM kosten", value: this.indirectConstructionCosts.pmCost },
-                    { category: "Algemene kosten (C)", value: this.indirectConstructionCosts.generalCost },
-                    { category: "Risico & winst (C)", value: this.indirectConstructionCosts.riskProfit },
-                ].filter(d => d.value > 0)
-            },
+            // {
+            //     category: "Constructie",
+            //     value: this.indirectConstructionCosts.totalCosts,
+            //     children: [
+            //         { category: "PM kosten", value: this.indirectConstructionCosts.pmCost },
+            //         { category: "Algemene kosten (C)", value: this.indirectConstructionCosts.generalCost },
+            //         { category: "Risico & winst (C)", value: this.indirectConstructionCosts.riskProfit },
+            //     ].filter(d => d.value > 0)
+            // },
             {
                 category: "Engineering",
                 value: this.engineeringCosts.totalEngineeringCosts,
