@@ -467,39 +467,30 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         total={0}
                         level={1}
                       >
-                        {/* Benoemde Directe BouwKosten - Grondwerk */}
-                        <CollapsibleSection
-                          title="Benoemde Directe BouwKosten - Grondwerk"
-                          total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}
-                          level={2}
-                          showDetailHeader
-                          subHeaderName="Grondversterking"
-                          subHeaderTotal={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}
-                        >
-                          <SubRow label="Opruimen terrein" value={model.costModel.directCostGroundWork.opruimenTerrein.value}/>
-                          <SubRow label="Maaien terreinen" value={model.costModel.directCostGroundWork.maaienTerreinen.value}/>
-                          <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekleding.value}/>
-                          <SubRow label="Afgraven kleilaag" value={model.costModel.directCostGroundWork.afgravenKleilaag.value}/>
-                          <SubRow label="Herkeuren kleilaag" value={model.costModel.directCostGroundWork.herkeurenKleilaag.value} />
-                          <SubRow label="Aanvullen kern" value={model.costModel.directCostGroundWork.aanvullenKern.value}/>
-                          <SubRow label="Profieleren dijkkern" value={model.costModel.directCostGroundWork.profielerenDijkkern.value}/>
-                          <SubRow label="Aanbrengen nieuwe kleilaag" value={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag.value}/>
-                          <SubRow label="Profieleren van nieuwe kleilaag" value={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag.value}/>
-                          <SubRow label="Hergebruik teelaarde" value={model.costModel.directCostGroundWork.hergebruikTeelaarde.value}/>
-                          <SubRow label="Aanvullen teelaarde" value={model.costModel.directCostGroundWork.aanvullenTeelaarde.value}/>
-                          <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaag.value}/>
-                          
-                          <SubHeaderRow label="Constructies" total={0}/>
-                          <SubRow label="Verankerde damwand 10 m" value={0}/>
+                        <SubHeaderRow label="Grondversterking" total={0}/>
+                        <SubRow label="Opruimen terrein" value={model.costModel.directCostGroundWork.opruimenTerrein.value}/>
+                        <SubRow label="Maaien terreinen" value={model.costModel.directCostGroundWork.maaienTerreinen.value}/>
+                        <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekleding.value}/>
+                        <SubRow label="Afgraven kleilaag" value={model.costModel.directCostGroundWork.afgravenKleilaag.value}/>
+                        <SubRow label="Herkeuren kleilaag" value={model.costModel.directCostGroundWork.herkeurenKleilaag.value} />
+                        <SubRow label="Aanvullen kern" value={model.costModel.directCostGroundWork.aanvullenKern.value}/>
+                        <SubRow label="Profieleren dijkkern" value={model.costModel.directCostGroundWork.profielerenDijkkern.value}/>
+                        <SubRow label="Aanbrengen nieuwe kleilaag" value={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag.value}/>
+                        <SubRow label="Profieleren van nieuwe kleilaag" value={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag.value}/>
+                        <SubRow label="Hergebruik teelaarde" value={model.costModel.directCostGroundWork.hergebruikTeelaarde.value}/>
+                        <SubRow label="Aanvullen teelaarde" value={model.costModel.directCostGroundWork.aanvullenTeelaarde.value}/>
+                        <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaag.value}/>
+                        
+                        <SubHeaderRow label="Constructies" total={0}/>
+                        <SubRow label="Verankerde damwand 10 m" value={0}/>
 
-                          <SubHeaderRow label="Infrastructuur" total={0}/>
-                          <SubRow label="Opbreken regionale weg" value={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg.value}/>
-                          <SubRow label="Leveren en aanbrengen regionale weg" value={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg.value}/>
+                        <SubHeaderRow label="Infrastructuur" total={0}/>
+                        <SubRow label="Opbreken regionale weg" value={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg.value}/>
+                        <SubRow label="Leveren en aanbrengen regionale weg" value={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg.value}/>
 
-                          {/* <SubHeaderRow label="Nader te detailleren bouwkosten" total={model.costModel.directConstructionCost.NTDBK} /> */}
+                        {/* <SubHeaderRow label="Nader te detailleren bouwkosten" total={model.costModel.directConstructionCost.NTDBK} /> */}
+                        
                           
-                          
-                        </CollapsibleSection>
                       </CollapsibleSection>
                       
                       {/* Indirecte Bouwkosten (IBK) */}
