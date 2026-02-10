@@ -49,8 +49,8 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   showDetailHeader = false,
   subHeaderName,
   subHeaderTotal,
-  subHeader2Name,
-  subHeader2Total,
+  subHeader2Name,  // consider removing if not needed anymore
+  subHeader2Total, // consider removing if not needed anymore
 }) => {
   const [open, setOpen] = useState(level === 0)
   const paddingLeft = 2 + level * 2
@@ -467,7 +467,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         total={0}
                         level={1}
                         showDetailHeader
-                        
+
                       >
                         <SubHeaderRow label="Grondversterking" total={0}/>
                         <SubRow label="Opruimen terrein" value={model.costModel.directCostGroundWork.opruimenTerrein.value}/>
@@ -498,39 +498,39 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                       {/* Indirecte Bouwkosten (IBK) */}
                       <CollapsibleSection
                         title="Indirecte Bouwkosten (IBK)"
-                        total={0}
+                        total={model.costModel.indirectConstructionCosts.totalIndirectCosts}
                         level={1}
                       >
-                        <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" value={0} />
-                        <SubRow label="Algemene kosten (AK)" value={0} />
-                        <SubRow label="Winst & risico (WR)" value={0} />
+                        <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" value={model.costModel.indirectConstructionCosts.pmCost} />
+                        <SubRow label="Algemene kosten (AK)" value={model.costModel.indirectConstructionCosts.generalCost} />
+                        <SubRow label="Winst & risico (WR)" value={model.costModel.indirectConstructionCosts.riskProfit} />
                       </CollapsibleSection>
                     </CollapsibleSection>
                     
                     {/* Engineeringkosten (EK) */}
                     <CollapsibleSection
                       title="Engineeringkosten (EK)"
-                      total={0}
+                      total={model.costModel.engineeringCosts.totalEngineeringCosts}
                     >
                       {/* Directe engineeringkosten */}
                       <CollapsibleSection
                         title="Directe engineeringkosten"
-                        total={0}
+                        total={model.costModel.engineeringCosts.directEngineeringCost.totalDirectEngineeringCost}
                         level={1}
                       >
-                        <SubRow label="Engineeringskosten opdrachtgever (EPK)" value={0} />
-                        <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" value={0} />
-                        <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" value={0} />
+                        <SubRow label="Engineeringskosten opdrachtgever (EPK)" value={model.costModel.engineeringCosts.directEngineeringCost.epkCost} />
+                        <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" value={model.costModel.engineeringCosts.directEngineeringCost.designCost} />
+                        <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" value={model.costModel.engineeringCosts.directEngineeringCost.researchCost} />
                       </CollapsibleSection>
                       
                       {/* Indirecte engineering kosten */}
                       <CollapsibleSection
                         title="Indirecte engineering kosten"
-                        total={0}
+                        total={model.costModel.engineeringCosts.indirectEngineeringCosts.totalIndirectEngineeringCosts}
                         level={1}
                       >
-                        <SubRow label="Algemene kosten (AK)" value={0} />
-                        <SubRow label="Risico & winst (WR)" value={0} />
+                        <SubRow label="Algemene kosten (AK)" value={model.costModel.engineeringCosts.indirectEngineeringCosts.generalCost} />
+                        <SubRow label="Risico & winst (WR)" value={model.costModel.engineeringCosts.indirectEngineeringCosts.riskProfit} />
 
                       </CollapsibleSection>
                     </CollapsibleSection>

@@ -141,11 +141,10 @@ export const handleCostCalculation = async (
 
             // update model for table
             console.log("Updated directCostGroundWork:", model.costModel.directCostGroundWork);
-
+            
             model.costModel.directCostGroundWork.fromApi(result['breakdown']["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(result['breakdown']["Directe kosten constructies"]);
-            // model.costModel.directCostInfra.fromApi(result['breakdown']["Directe kosten infra"]);
-            // model.costModel.directConstructionCost.fromApi(result['breakdown']["Directe bouwkosten"]);
+            model.costModel.directCostInfrastructure.fromApi(result['breakdown']["Directe kosten infra"]);
             model.costModel.indirectConstructionCosts.fromApi(result['breakdown']["Indirecte bouwkosten"]);
             model.costModel.engineeringCosts.fromApi(result['breakdown']["Engineeringkosten"]);
             model.costModel.otherCosts.fromApi(result['breakdown']["Overige bijkomende kosten"]);
