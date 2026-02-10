@@ -13,7 +13,7 @@ export interface CostItem {
 }
 
 export class DirectCostGroundWork {
-    preparationCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    opruimenTerrein: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
     afgravenGrasbekledingCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
     afgravenKleilaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
     herkeurenKleilaagCost: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
@@ -28,7 +28,7 @@ export class DirectCostGroundWork {
 
     // map API response to class properties
     fromApi(api: Record<string, CostItem | number>) {
-        this.preparationCost = api.preparation_cost as CostItem ?? this.preparationCost
+        this.opruimenTerrein = api.opruimen_terrein as CostItem ?? this.opruimenTerrein
         this.afgravenGrasbekledingCost = api.afgraven_grasbekleding_cost as CostItem ?? this.afgravenGrasbekledingCost
         this.afgravenKleilaagCost = api.afgraven_kleilaag_cost as CostItem ?? this.afgravenKleilaagCost
         this.herkeurenKleilaagCost = api.herkeuren_kleilaag_cost as CostItem ?? this.herkeurenKleilaagCost
@@ -43,7 +43,7 @@ export class DirectCostGroundWork {
     }
 
     // convenience getters for value only
-    get preparationCostValue() { return this.preparationCost.value }
+    get opruimenTerreinValue() { return this.opruimenTerrein.value }
     get afgravenGrasbekledingCostValue() { return this.afgravenGrasbekledingCost.value }
     get afgravenKleilaagCostValue() { return this.afgravenKleilaagCost.value }
     get herkeurenKleilaagCostValue() { return this.herkeurenKleilaagCost.value }
@@ -57,7 +57,7 @@ export class DirectCostGroundWork {
 
     toDict(): Record<string, number> {
         return {
-            preparationCost: this.preparationCost.value,
+            opruimenTerrein: this.opruimenTerrein.value,
             afgravenGrasbekledingCost: this.afgravenGrasbekledingCost.value,
             afgravenKleilaagCost: this.afgravenKleilaagCost.value,
             herkeurenKleilaagCost: this.herkeurenKleilaagCost.value,
@@ -262,17 +262,17 @@ export default class CostModel extends ModelBase {
                 category: "Grondwerk",
                 value: this.directCostGroundWork.totaleBDBKGrondwerk,
                 children: [
-                    { category: "Voorbereiding", value: this.directCostGroundWork.preparationCost },
-                    { category: "Afgraven grasbekleding", value: this.directCostGroundWork.afgravenGrasbekledingCost },
-                    { category: "Afgraven kleilaag", value: this.directCostGroundWork.afgravenKleilaagCost },
-                    { category: "Herkeuren kleilaag", value: this.directCostGroundWork.herkeurenKleilaagCost },
-                    { category: "Aanvullen kern", value: this.directCostGroundWork.aanvullenKernCost },
-                    { category: "Profieleren dijkkern", value: this.directCostGroundWork.profielerenDijkkernCost },
-                    { category: "Nieuwe kleilaag", value: this.directCostGroundWork.aanbrengenNieuweKleilaagCost },
-                    { category: "Profieleren kleilaag", value: this.directCostGroundWork.profielerenVanNieuweKleilaagCost },
-                    { category: "Hergebruik teelaarde", value: this.directCostGroundWork.hergebruikTeelaardeCost },
-                    { category: "Aanvullen teelaarde", value: this.directCostGroundWork.aanvullenTeelaardeCost },
-                    { category: "Profieleren graslaag", value: this.directCostGroundWork.profielerenNieuweGraslaagCost },
+                    { category: "Opruimen terrein", value: this.directCostGroundWork.opruimenTerrein.value },
+                    { category: "Afgraven grasbekleding", value: this.directCostGroundWork.afgravenGrasbekledingCost.value },
+                    { category: "Afgraven kleilaag", value: this.directCostGroundWork.afgravenKleilaagCost.value },
+                    { category: "Herkeuren kleilaag", value: this.directCostGroundWork.herkeurenKleilaagCost.value },
+                    { category: "Aanvullen kern", value: this.directCostGroundWork.aanvullenKernCost.value },
+                    { category: "Profieleren dijkkern", value: this.directCostGroundWork.profielerenDijkkernCost.value },
+                    { category: "Nieuwe kleilaag", value: this.directCostGroundWork.aanbrengenNieuweKleilaagCost.value },
+                    { category: "Profieleren kleilaag", value: this.directCostGroundWork.profielerenVanNieuweKleilaagCost.value },
+                    { category: "Hergebruik teelaarde", value: this.directCostGroundWork.hergebruikTeelaardeCost.value },
+                    { category: "Aanvullen teelaarde", value: this.directCostGroundWork.aanvullenTeelaardeCost.value },
+                    { category: "Profieleren graslaag", value: this.directCostGroundWork.profielerenNieuweGraslaagCost.value },
                 ].filter(d => d.value > 0)
             },
             {
