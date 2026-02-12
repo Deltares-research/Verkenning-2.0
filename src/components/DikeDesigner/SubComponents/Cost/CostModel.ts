@@ -163,6 +163,25 @@ export class IndirectConstructionCosts {
     }
 }
 
+export class ConstructionCost {
+    directConstructionCost: DirectConstructionCost = new DirectConstructionCost();
+    indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
+    totalConstructionCost: number = 0;
+
+    fromApi(api: Record<string, any>) {
+        this.directConstructionCost.fromApi(api['Directe bouwkosten'] || {});
+        this.indirectConstructionCosts.fromApi(api['Indirecte bouwkosten'] || {});
+        this.totalConstructionCost = api.totale_bouwkosten as number ?? 0;
+    }   
+    toDict(): Record<string, any> {
+        return {
+            directConstructionCost: this.directConstructionCost.toDict(),
+            indirectConstructionCosts: this.indirectConstructionCosts.toDict(),
+            totalConstructionCost: this.totalConstructionCost,
+        };
+    }
+}
+
 
 export class DirectEngineeringCost {
     epkCost: number = 0;
@@ -329,6 +348,8 @@ export default class CostModel extends ModelBase {
     directCostInfrastructure: DirectCostInfrastructure = new DirectCostInfrastructure();
     directConstructionCost: DirectConstructionCost = new DirectConstructionCost();
     indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
+    constructionCost: ConstructionCost = new ConstructionCost();
+
     engineeringCosts: EngineeringCost = new EngineeringCost();
     otherCosts: OtherCosts = new OtherCosts();
     realEstateCosts: RealEstateCosts = new RealEstateCosts();
@@ -340,8 +361,7 @@ export default class CostModel extends ModelBase {
             "Directe kosten grondwerk": this.directCostGroundWork.toDict(),
             "Directe kosten constructies": this.directCostStructures.toDict(),
             "Directe kosten infra": this.directCostInfrastructure.toDict(),
-            "Directe bouwkosten": this.directConstructionCost.toDict(),
-            "Indirecte bouwkosten": this.indirectConstructionCosts.toDict(),
+            "Bouwkosten": this.constructionCost.toDict(),
             "Engineeringkosten": this.engineeringCosts.toDict(),
             "Overige bijkomende kosten": this.otherCosts.toDict(),
             "Risicoreservering": this.risicoreservering,

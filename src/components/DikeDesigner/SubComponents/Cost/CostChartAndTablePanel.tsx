@@ -459,7 +459,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Bouwkosten (BK) */}
                     <CollapsibleSection
                       title="Bouwkosten (BK)"
-                      total={model.costModel.constructionCost.totalConstructionCost}
+                      total={model.costModel.bouwkostenTotal}
                     >
                       {/* Directe Bouwkosten (DBK) */}
                       <CollapsibleSection
