@@ -10,37 +10,41 @@ export interface CostItem {
     unit_cost: number
     quantity: number
     unit: string
+    description: string
+    dimensions: string
 }
 
 export class DirectCostGroundWork {
-    opruimenTerrein: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    maaienTerreinen: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    afgravenGrasbekleding: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    afgravenKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    herkeurenKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    aanvullenKern: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    profielerenDijkkern: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    aanbrengenNieuweKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    profielerenVanNieuweKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    hergebruikTeelaarde: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    aanvullenTeelaarde: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    profielerenNieuweGraslaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    opruimenTerrein: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: ''}
+    maaienTerreinen: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: ''}
+    afgravenGrasbekleding: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    afgravenKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: '' }
+    herkeurenKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    aanvullenKern: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    profielerenDijkkern: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    aanbrengenNieuweKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    profielerenVanNieuweKleilaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    hergebruikTeelaarde: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    aanvullenTeelaarde: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    profielerenNieuweGraslaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    inzaaienNieuweToplaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totaleBDBKGrondwerk: number = 0
 
     // map API response to class properties
-    fromApi(api: Record<string, CostItem | number>) {
-        this.opruimenTerrein = api.opruimen_terrein as CostItem ?? this.opruimenTerrein
-        this.maaienTerreinen = api.maaien_terreinen as CostItem ?? this.maaienTerreinen
-        this.afgravenGrasbekleding = api.afgraven_grasbekleding as CostItem ?? this.afgravenGrasbekleding
-        this.afgravenKleilaag = api.afgraven_kleilaag as CostItem ?? this.afgravenKleilaag
-        this.herkeurenKleilaag = api.herkeuren_kleilaag as CostItem ?? this.herkeurenKleilaag
+    fromApi(api: Record<string, CostItem | number> = {}) {
+        this.opruimenTerrein = api.kosten_opruimen as CostItem ?? this.opruimenTerrein
+        this.maaienTerreinen = api.kosten_maaien as CostItem ?? this.maaienTerreinen
+        this.afgravenGrasbekleding = api.afgraven_toplaag as CostItem ?? this.afgravenGrasbekleding
+        this.afgravenKleilaag = api.afgraven_oud_materiaal as CostItem ?? this.afgravenKleilaag
+        this.herkeurenKleilaag = api.hergebruik_oud_materiaal as CostItem ?? this.herkeurenKleilaag
         this.aanvullenKern = api.aanvullen_kern as CostItem ?? this.aanvullenKern
-        this.profielerenDijkkern = api.profieleren_dijkkern as CostItem ?? this.profielerenDijkkern
-        this.aanbrengenNieuweKleilaag = api.aanbregen_nieuwe_kleilaag as CostItem ?? this.aanbrengenNieuweKleilaag
-        this.profielerenVanNieuweKleilaag = api.profieleren_vannieuwe_kleilaag as CostItem ?? this.profielerenVanNieuweKleilaag
-        this.hergebruikTeelaarde = api.hergebruik_teelaarde as CostItem ?? this.hergebruikTeelaarde
-        this.aanvullenTeelaarde = api.aanvullen_teelaarde as CostItem ?? this.aanvullenTeelaarde
-        this.profielerenNieuweGraslaag = api.profieleren_nieuwe_graslaag as CostItem ?? this.profielerenNieuweGraslaag
+        this.profielerenDijkkern = api.profileren_dijkkern as CostItem ?? this.profielerenDijkkern
+        this.aanbrengenNieuweKleilaag = api.aanbrengen_nieuwe_kleilaag as CostItem ?? this.aanbrengenNieuweKleilaag
+        this.profielerenVanNieuweKleilaag = api.profileren_nieuwe_kleilaag as CostItem ?? this.profielerenVanNieuweKleilaag
+        this.hergebruikTeelaarde = api.hergebruik_toplaag as CostItem ?? this.hergebruikTeelaarde
+        this.aanvullenTeelaarde = api.aanvullen_toplaag as CostItem ?? this.aanvullenTeelaarde
+        this.profielerenNieuweGraslaag = api.profileren_nieuwe_toplaag as CostItem ?? this.profielerenNieuweGraslaag
+        this.inzaaienNieuweToplaag = api.inzaaien_nieuwe_toplaag as CostItem ?? this.inzaaienNieuweToplaag
         this.totaleBDBKGrondwerk = api.totale_BDBK_grondwerk as number ?? 0
     }
 
@@ -57,6 +61,7 @@ export class DirectCostGroundWork {
     get hergebruikTeelaardeValue() { return this.hergebruikTeelaarde.value }
     get aanvullenTeelaardeValue() { return this.aanvullenTeelaarde.value }
     get profielerenNieuweGraslaagValue() { return this.profielerenNieuweGraslaag.value }
+    get inzaaienNieuweToplaagValue() { return this.inzaaienNieuweToplaag.value }
 
     toDict(): Record<string, number> {
         return {
@@ -72,6 +77,7 @@ export class DirectCostGroundWork {
             hergebruikTeelaarde: this.hergebruikTeelaarde.value,
             aanvullenTeelaarde: this.aanvullenTeelaarde.value,
             profielerenNieuweGraslaag: this.profielerenNieuweGraslaag.value,
+            inzaaienNieuweToplaag: this.inzaaienNieuweToplaag.value,
             totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
         }
     }
@@ -79,11 +85,11 @@ export class DirectCostGroundWork {
 
 
 export class DirectCostStructures {
-    structureDetails: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    structureDetails: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totaleBDBKConstructie: number = 0;
 
-    fromApi(api: Record<string, CostItem | number>) {
-        this.structureDetails = api.structure_details as CostItem || this.structureDetails;
+    fromApi(api: Record<string, CostItem | number> = {}) {
+        this.structureDetails = api.directe_bouwkosten as CostItem || this.structureDetails;
         this.totaleBDBKConstructie = api.totale_BDBK_constructie as number ?? 0
     }
     toDict(): Record<string, number> {
@@ -95,19 +101,25 @@ export class DirectCostStructures {
 }
 
 export class DirectCostInfrastructure {
-    opbrekenRegionaleWeg: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
-    leverenEnAanbrengenRegionaleWeg: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '' }
+    opbrekenRegionaleWeg: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    leverenEnAanbrengenRegionaleWeg: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    verwijderenFietspad: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    aanleggenFietspad: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totaleBDBKInfra: number = 0;
 
-    fromApi(api: Record<string, CostItem | number>) {
-        this.opbrekenRegionaleWeg = api.opbreken_regionale_weg as CostItem || this.opbrekenRegionaleWeg;
-        this.leverenEnAanbrengenRegionaleWeg = api.leveren_en_aanbrengen_regionale_weg as CostItem || this.leverenEnAanbrengenRegionaleWeg;
-        this.totaleBDBKInfra = api.totale_BDBK_infra as number ?? 0
+    fromApi(api: Record<string, CostItem | number> = {}) {
+        this.opbrekenRegionaleWeg = api.verwijderen_weg as CostItem || this.opbrekenRegionaleWeg;
+        this.leverenEnAanbrengenRegionaleWeg = api.aanleggen_weg as CostItem || this.leverenEnAanbrengenRegionaleWeg;
+        this.verwijderenFietspad = api.verwijderen_fietspad as CostItem || this.verwijderenFietspad;
+        this.aanleggenFietspad = api.aanleggen_fietspad as CostItem || this.aanleggenFietspad;
+        this.totaleBDBKInfra = api.totale_BDBK_infrastructuur as number ?? 0
     }
     toDict(): Record<string, number> {
         return {
             opbrekenRegionaleWeg: this.opbrekenRegionaleWeg.value,
             leverenEnAanbrengenRegionaleWeg: this.leverenEnAanbrengenRegionaleWeg.value,
+            verwijderenFietspad: this.verwijderenFietspad.value,
+            aanleggenFietspad: this.aanleggenFietspad.value,
             totaleBDBKInfra: this.totaleBDBKInfra,
         };
     }
@@ -120,10 +132,10 @@ export class DirectConstructionCost {
     NTDBK: number = 0;
     totaleDBK: number = 0;
 
-    fromApi(api: Record<string, any>) {
-        this.directeKostenGrondwerk.fromApi(api['Directe kosten grondwerk'] || {});
-        this.directeKostenConstructies.fromApi(api['Directe kosten constructies'] || {});
-        this.directeKostenInfra.fromApi(api['Directe kosten infra'] || {});
+    fromApi(api: Record<string, any> = {}) {
+        this.directeKostenGrondwerk.fromApi(api["Directe kosten grondwerk"] || {});
+        this.directeKostenConstructies.fromApi(api["Directe kosten constructies"] || {});
+        this.directeKostenInfra.fromApi(api["Directe kosten infrastructuur"] || api["Directe kosten infra"] || {});
         this.NTDBK = api.NTDBK as number ?? 0;
         this.totaleDBK = api.totale_DBK as number ?? 0;
     }
@@ -144,12 +156,14 @@ export class IndirectConstructionCosts {
     pmCost: number = 0;
     generalCost: number = 0
     riskProfit: number = 0;
+    totalDirectCosts: number = 0;
     totalIndirectCosts: number = 0;
 
-    fromApi(api: Record<string, number>) {
-        this.pmCost = api.pm_kosten as number ?? 0;
-        this.generalCost = api.algemene_kosten as number ?? 0;
-        this.riskProfit = api.risico_en_winst as number ?? 0;
+    fromApi(api: Record<string, any> = {}) {
+        this.pmCost = (api.pm_kosten as any)?.value ?? 0;
+        this.generalCost = (api.algemene_kosten as any)?.value ?? 0;
+        this.riskProfit = (api.risico_en_winst as any)?.value ?? 0;
+        this.totalDirectCosts = api.totale_directe_bouwkosten as number ?? 0;
         this.totalIndirectCosts = api.indirecte_bouwkosten as number ?? 0;
     }
     
@@ -158,6 +172,7 @@ export class IndirectConstructionCosts {
             pmCost: this.pmCost,
             generalCost: this.generalCost,
             riskProfit: this.riskProfit,
+            totalDirectCosts: this.totalDirectCosts,
             totalIndirectCosts: this.totalIndirectCosts,
         };
     }
@@ -168,10 +183,16 @@ export class ConstructionCost {
     indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
     totalConstructionCost: number = 0;
 
-    fromApi(api: Record<string, any>) {
-        this.directConstructionCost.fromApi(api['Directe bouwkosten'] || {});
-        this.indirectConstructionCosts.fromApi(api['Indirecte bouwkosten'] || {});
-        this.totalConstructionCost = api.totale_bouwkosten as number ?? 0;
+    fromApi(api: Record<string, any> = {}) {
+        const directe = api["Directe Bouwkosten"] || api["Directe bouwkosten"] || {};
+        const indirecte = api["Indirecte Bouwkosten"] || api["Indirecte bouwkosten"] || {};
+
+        this.directConstructionCost.fromApi(directe);
+        this.indirectConstructionCosts.fromApi(indirecte);
+        this.totalConstructionCost =
+            (indirecte?.totale_bouwkosten as number) ??
+            (api.totale_bouwkosten as number) ??
+            0;
     }   
     toDict(): Record<string, any> {
         return {
@@ -189,11 +210,11 @@ export class DirectEngineeringCost {
     researchCost: number = 0;    
     totalDirectEngineeringCost: number = 0;
 
-    fromApi(api: Record<string, number>) {
-        this.epkCost = api.epk_cost as number ?? 0;
-        this.designCost = api.design_cost as number ?? 0;
-        this.researchCost = api.research_cost as number ?? 0;
-        this.totalDirectEngineeringCost = api.total_direct_engineering_cost as number ?? 0;
+    fromApi(api: Record<string, any>) {
+        this.epkCost = (api.engineering_opdrachtgever as any)?.value ?? 0;
+        this.designCost = (api.engineering_opdrachtnemer as any)?.value ?? 0;
+        this.researchCost = (api.onderzoekskosten as any)?.value ?? 0;
+        this.totalDirectEngineeringCost = api.direct_engineering_cost as number ?? 0;
     }
     toDict(): Record<string, number> {
         return {
@@ -209,10 +230,10 @@ export class IndirectEngineeringCosts {
     generalCost: number = 0;
     riskProfit: number = 0
     totalIndirectEngineeringCosts: number = 0;
-    fromApi(api: Record<string, number>) {
-        this.generalCost = api.general_cost as number ?? 0;
-        this.riskProfit = api.risk_profit as number ?? 0;
-        this.totalIndirectEngineeringCosts = api.indirect_engineering_costs as number ?? 0;
+    fromApi(api: Record<string, any>) {
+        this.generalCost = (api.algemene_kosten as any)?.value ?? 0;
+        this.riskProfit = (api.winst_en_risico as any)?.value ?? 0;
+        this.totalIndirectEngineeringCosts = api.indirect_engineering_cost as number ?? 0;
     }
     toDict(): Record<string, any> {
         return {
@@ -230,8 +251,8 @@ export class EngineeringCost {
 
   // Map API keys to camelCase properties
   fromApi(api: Record<string, any>) {
-    this.directEngineeringCost.fromApi(api['Directe engineeringkosten'] || {});
-    this.indirectEngineeringCosts.fromApi(api['Indirecte engineeringkosten'] || {});
+    this.directEngineeringCost.fromApi(api);
+    this.indirectEngineeringCosts.fromApi(api);
     this.totalEngineeringCosts = api.total_engineering_costs as number ?? 0;
   }
 
@@ -252,11 +273,11 @@ export class DirectOtherCosts {
     damages: number = 0;    
     totalDirectOtherCosts: number = 0;
 
-    fromApi(api: Record<string, number>) {
-        this.insurances = api.insurances as number ?? 0;
-        this.cablesPipes = api.cables_pipes as number ?? 0;
-        this.damages = api.damages as number ?? 0;
-        this.totalDirectOtherCosts = api.total_direct_other_costs as number ?? 0;
+    fromApi(api: Record<string, any>) {
+        this.insurances = (api.vergunningen_verzekeringen as any)?.value ?? 0;
+        this.cablesPipes = (api.kabels_leidingen as any)?.value ?? 0;
+        this.damages = (api.planschade_inpassingsmaatregelen as any)?.value ?? 0;
+        this.totalDirectOtherCosts = api.direct_general_costs as number ?? 0;
     }
     toDict(): Record<string, number> {
         return {
@@ -272,9 +293,9 @@ export class IndirectOtherCosts {
     generalCost: number = 0;
     riskProfit: number = 0
     totalIndirectOtherCosts: number = 0;
-    fromApi(api: Record<string, number>) {
-        this.generalCost = api.general_cost as number ?? 0;
-        this.riskProfit = api.risk_profit as number ?? 0;
+    fromApi(api: Record<string, any>) {
+        this.generalCost = (api.algemene_kosten as any)?.value ?? 0;
+        this.riskProfit = (api.risico_en_winst as any)?.value ?? 0;
         this.totalIndirectOtherCosts = api.indirect_general_costs as number ?? 0;
     }
     toDict(): Record<string, any> {
@@ -292,8 +313,8 @@ export class OtherCosts {
     totalGeneralCosts: number = 0;
 
     fromApi(api: Record<string, any>) {
-        this.directOtherCosts.fromApi(api['Directe overige kosten'] || {});
-        this.indirectOtherCosts.fromApi(api['Indirecte overige kosten'] || {});
+        this.directOtherCosts.fromApi(api);
+        this.indirectOtherCosts.fromApi(api);
         this.totalGeneralCosts = api.total_general_costs as number ?? 0;
     }
 
@@ -307,20 +328,26 @@ export class OtherCosts {
 }
 
 export class RealEstateCosts {
-  roadCost: number = 0;
-  houseCost: number = 0;
+  directBenoemdCost: number = 0;
+  directNietBenoemdCost: number = 0;
+  indirectCost: number = 0;
+  riskCost: number = 0;
   totalRealEstateCosts: number = 0;
 
-  fromApi(api: Record<string, number>) {
-    this.roadCost = api.road_cost || 0;
-    this.houseCost = api.house_cost || 0;
+  fromApi(api: Record<string, any>) {
+    this.directBenoemdCost = (api.direct_benoemd_real_estate_cost as any)?.value ?? 0;
+    this.directNietBenoemdCost = (api.direct_niet_benoemd_real_estate_cost as any)?.value ?? 0;
+    this.indirectCost = (api.indirect_real_estate_cost as any)?.value ?? 0;
+    this.riskCost = (api.real_estate_risk_cost as any)?.value ?? 0;
     this.totalRealEstateCosts = api.total_real_estate_costs || 0;
   }
 
   toDict(): Record<string, number> {
     return {
-      roadCost: this.roadCost,
-      houseCost: this.houseCost,
+      directBenoemdCost: this.directBenoemdCost,
+      directNietBenoemdCost: this.directNietBenoemdCost,
+      indirectCost: this.indirectCost,
+      riskCost: this.riskCost,
       totalRealEstateCosts: this.totalRealEstateCosts,
     };
   }
@@ -346,7 +373,6 @@ export default class CostModel extends ModelBase {
     directCostGroundWork: DirectCostGroundWork = new DirectCostGroundWork()
     directCostStructures: DirectCostStructures = new DirectCostStructures();
     directCostInfrastructure: DirectCostInfrastructure = new DirectCostInfrastructure();
-    directConstructionCost: DirectConstructionCost = new DirectConstructionCost();
     indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
     constructionCost: ConstructionCost = new ConstructionCost();
 
@@ -425,8 +451,10 @@ export default class CostModel extends ModelBase {
                 category: "Vastgoed",
                 value: this.realEstateCosts.totalRealEstateCosts,
                 children: [
-                    { category: "Wegen", value: this.realEstateCosts.roadCost },
-                    { category: "Panden", value: this.realEstateCosts.houseCost },
+                    { category: "Direct benoemd", value: this.realEstateCosts.directBenoemdCost },
+                    { category: "Direct niet benoemd", value: this.realEstateCosts.directNietBenoemdCost },
+                    { category: "Indirect", value: this.realEstateCosts.indirectCost },
+                    { category: "Risico", value: this.realEstateCosts.riskCost },
                 ].filter(d => d.value > 0)
             },
         ].filter(d => d.value > 0);

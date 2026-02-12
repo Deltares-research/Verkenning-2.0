@@ -459,17 +459,17 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Bouwkosten (BK) */}
                     <CollapsibleSection
                       title="Bouwkosten (BK)"
-                      total={model.costModel.bouwkostenTotal}
+                      total={model.costModel.constructionCost.totalConstructionCost}
                     >
                       {/* Directe Bouwkosten (DBK) */}
                       <CollapsibleSection
                         title="Directe Bouwkosten (DBK)"
-                        total={0}
+                        total={model.costModel.indirectConstructionCosts.totalDirectCosts}
                         level={1}
                         showDetailHeader
 
                       >
-                        <SubHeaderRow label="Grondversterking" total={0}/>
+                        <SubHeaderRow label="Grondversterking" total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}/>
                         <SubRow label="Opruimen terrein" value={model.costModel.directCostGroundWork.opruimenTerrein.value}/>
                         <SubRow label="Maaien terreinen" value={model.costModel.directCostGroundWork.maaienTerreinen.value}/>
                         <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekleding.value}/>
@@ -482,15 +482,16 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         <SubRow label="Hergebruik teelaarde" value={model.costModel.directCostGroundWork.hergebruikTeelaarde.value}/>
                         <SubRow label="Aanvullen teelaarde" value={model.costModel.directCostGroundWork.aanvullenTeelaarde.value}/>
                         <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaag.value}/>
+                        <SubRow label="Inzaaien nieuwe toplaag" value={model.costModel.directCostGroundWork.inzaaienNieuweToplaag.value}/>
                         
-                        <SubHeaderRow label="Constructies" total={0}/>
-                        <SubRow label="Verankerde damwand 10 m" value={0}/>
+                        <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
+                        <SubRow label="Constructiedetails" value={model.costModel.directCostStructures.structureDetails.value}/>
 
-                        <SubHeaderRow label="Infrastructuur" total={0}/>
-                        <SubRow label="Opbreken regionale weg" value={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg.value}/>
-                        <SubRow label="Leveren en aanbrengen regionale weg" value={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg.value}/>
-
-                        <SubHeaderRow label="Nader te detailleren bouwkosten" total={model.costModel.directConstructionCost.NTDBK} />
+                        <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
+                        <SubRow label="Verwijderen weg" value={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg.value}/>
+                        <SubRow label="Aanleggen weg" value={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg.value}/>
+                        <SubRow label="Verwijderen fietspad" value={model.costModel.directCostInfrastructure.verwijderenFietspad.value}/>
+                        <SubRow label="Aanleggen fietspad" value={model.costModel.directCostInfrastructure.aanleggenFietspad.value}/>
                         
                           
                       </CollapsibleSection>
@@ -566,9 +567,9 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Subtotaal investeringkosten */}
                     <CollapsibleSection
                       title="Subtotaal investeringkosten"
-                      total={0}
+                      total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
                     >
-                      <SubRow label="Objectoverstijgende risico's" value={0} />
+                      <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
                     </CollapsibleSection>
                     
                     {/* Bottom summary rows */}
@@ -595,7 +596,10 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                           pt: 2,
                         }}
                       >
-                        {(0).toLocaleString("nl-NL", {
+                        {(model.costModel.constructionCost.totalConstructionCost + 
+                          model.costModel.engineeringCosts.totalEngineeringCosts + 
+                          model.costModel.otherCosts.totalGeneralCosts + 
+                          model.costModel.risicoreservering).toLocaleString("nl-NL", {
                           style: "currency",
                           currency: "EUR",
                           maximumFractionDigits: 0,
@@ -622,7 +626,10 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                           fontSize: 14,
                         }}
                       >
-                        {(0).toLocaleString("nl-NL", {
+                        {((model.costModel.constructionCost.totalConstructionCost + 
+                          model.costModel.engineeringCosts.totalEngineeringCosts + 
+                          model.costModel.otherCosts.totalGeneralCosts + 
+                          model.costModel.risicoreservering) * 1.21).toLocaleString("nl-NL", {
                           style: "currency",
                           currency: "EUR",
                           maximumFractionDigits: 0,
@@ -722,7 +729,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   overflow: "auto"
                 }}>
                   <CostRangeStackedBar
-                    bouwKosten={model.costModel.indirectConstructionCosts.totalCosts}
+                    bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
                     engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                     overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                     vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
@@ -858,7 +865,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     overflow: "auto"
                   }}>
                     <CostRangeStackedBar
-                      bouwKosten={model.costModel.indirectConstructionCosts.totalCosts}
+                      bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
                       engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                       overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                       vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
