@@ -536,7 +536,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                       </CollapsibleSection>
                     </CollapsibleSection>
                     
-                    {/* Engineeringkosten (EK) */}
+                    Engineeringkosten (EK)
                     <CollapsibleSection
                       title="Engineeringkosten (EK)"
                       total={model.costModel.engineeringCosts.totalEngineeringCosts}
@@ -609,7 +609,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Subtotaal investeringkosten */}
                     <CollapsibleSection
                       title="Subtotaal investeringkosten"
-                      total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringTest.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
+                      total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
                     >
                       <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
                     </CollapsibleSection>
@@ -656,7 +656,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                           color: "#0f172a",
                         }}
                       >
-                        Investeringkosten incl. BTW
+                        Investeringskosten incl. BTW
                       </TableCell>
                       <TableCell
                         align="right"
@@ -778,7 +778,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 }}>
                   <CostRangeStackedBar
                     bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
-                    engineering={model.costModel.engineeringTest.totalEngineeringCosts}
+                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                     overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                     vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
                   />
@@ -914,7 +914,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   }}>
                     <CostRangeStackedBar
                       bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
-                      engineering={model.costModel.engineeringTest.totalEngineeringCosts}
+                      engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                       overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                       vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
                     />

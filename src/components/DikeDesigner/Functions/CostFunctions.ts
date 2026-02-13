@@ -10,7 +10,7 @@ import * as intersectionOperator from "@arcgis/core/geometry/operators/intersect
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
-import { IndirectConstructionCosts, DirectCostGroundWork, EngineeringCost, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
+import { IndirectConstructionCosts, DirectCostGroundWork, EngineeringCosts, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -147,9 +147,12 @@ export const handleCostCalculation = async (
 
             const result = await response.json();
             console.log("API cost calculation result:", result);
+            console.log('1', 1)
 
             // update model for table
             model.costModel.constructionCost.fromApi(result["breakdown"]["Bouwkosten"]);
+            console.log('2', 1)
+
             
             const directeBouwkosten = result["breakdown"]["Bouwkosten"]["Directe Bouwkosten"];
             const indirecteBouwkosten = result["breakdown"]["Bouwkosten"]["Indirecte Bouwkosten"];
@@ -170,7 +173,7 @@ export const handleCostCalculation = async (
             model.costModel.indirectConstructionCosts.fromApi(indirecteBouwkosten);
             console.log("1", 1);
             // model.costModel.engineeringCosts.directEngineeringCost.fromApi(engineeringCosts);
-            model.costModel.engineeringTest.fromApi(engineeringCosts);
+            model.costModel.engineeringCosts.fromApi(engineeringCosts);
             console.log("2", 2);
 
 
