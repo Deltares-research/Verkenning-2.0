@@ -1,5 +1,6 @@
 import React from "react";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -12,7 +13,7 @@ import { stackStyle } from "../../../styles";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { handleCostCalculation } from "../../Functions/CostFunctions";
+import { downloadCostTableExcel, handleCostCalculation } from "../../Functions/CostFunctions";
 
 interface CostCalculationPanelProps {
   model: DikeDesignerModel;
@@ -84,6 +85,18 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
         sx={{ mt: 2 }}
       >
         Toon kostenoverzicht & grafieken
+      </Button>
+
+      <Button
+        variant="outlined"
+        color="primary"
+        startIcon={<CloudDownloadIcon />}
+        onClick={() => downloadCostTableExcel(model)}
+        fullWidth
+        sx={{ mt: 1 }}
+        disabled={!model.costsCalculated || model.loading}
+      >
+        Download kostenoverzicht (Excel)
       </Button>
     </Stack>
   );
