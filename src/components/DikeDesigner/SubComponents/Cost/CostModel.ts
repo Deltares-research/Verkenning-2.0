@@ -464,8 +464,8 @@ export default class CostModel extends ModelBase {
     getPieChartData() {
         return [
             {
-                category: "Grondwerk",
-                value: this.directCostGroundWork.totaleBDBKGrondwerk,
+                category: "Bouwkosten",
+                value: this.constructionCost.totalConstructionCost,
                 children: [
                     { category: "Opruimen terrein", value: this.directCostGroundWork.opruimenTerrein.value },
                     { category: "Maaien terreinen", value: this.directCostGroundWork.maaienTerreinen.value },
@@ -479,47 +479,41 @@ export default class CostModel extends ModelBase {
                     { category: "Hergebruik teelaarde", value: this.directCostGroundWork.hergebruikTeelaarde.value },
                     { category: "Aanvullen teelaarde", value: this.directCostGroundWork.aanvullenTeelaarde.value },
                     { category: "Profieleren graslaag", value: this.directCostGroundWork.profielerenNieuweGraslaag.value },
+                    { category: "Inzaaien nieuwe toplaag", value: this.directCostGroundWork.inzaaienNieuweToplaag.value },
+                    { category: "Directe kosten constructies", value: this.directCostStructures.totaleBDBKConstructie },
+                    { category: "Directe kosten infra", value: this.directCostInfrastructure.totaleBDBKInfra },
                 ].filter(d => d.value > 0)
             },
-            // {
-            //     category: "Constructie",
-            //     value: this.indirectConstructionCosts.totalCosts,
-            //     children: [
-            //         { category: "PM kosten", value: this.indirectConstructionCosts.pmCost },
-            //         { category: "Algemene kosten (C)", value: this.indirectConstructionCosts.generalCost },
-            //         { category: "Risico & winst (C)", value: this.indirectConstructionCosts.riskProfit },
-            //     ].filter(d => d.value > 0)
-            // },
             {
                 category: "Engineering",
                 value: this.engineeringCosts.totalEngineeringCosts,
                 children: [
-                    // { category: "EPK kosten", value: this.engineeringCosts.epkCost },
-                    // { category: "Ontwerp", value: this.engineeringCosts.designCost },
-                    // { category: "Onderzoeken", value: this.engineeringCosts.researchCost },
-                    // { category: "Algemene kosten (E)", value: this.engineeringCosts.generalCost },
-                    // { category: "Risico & winst (E)", value: this.engineeringCosts.riskProfit },
+                    { category: "EPK kosten", value: this.engineeringCosts.epkCost.value },
+                    { category: "Ontwerp", value: this.engineeringCosts.designCost.value },
+                    { category: "Onderzoeken", value: this.engineeringCosts.researchCost.value },
+                    { category: "Algemene kosten (E)", value: this.engineeringCosts.generalCost.value },
+                    { category: "Risico & winst (E)", value: this.engineeringCosts.riskProfit.value },
                 ].filter(d => d.value > 0)
             },
             {
                 category: "Overige kosten",
                 value: this.otherCosts.totalGeneralCosts,
                 children: [
-                    // { category: "Vergunningen", value: this.otherCosts.directOtherCosts.insurances },
-                    // { category: "Kabels & leidingen", value: this.otherCosts.directOtherCosts.cablesPipes },
-                    // { category: "Planschade", value: this.otherCosts.directOtherCosts.damages },
-                    // { category: "Algemene kosten (O)", value: this.otherCosts.indirectOtherCosts.generalCost },
-                    // { category: "Risico & winst (O)", value: this.otherCosts.indirectOtherCosts.riskProfit },
+                    { category: "Vergunningen", value: this.otherCosts.insurances.value },
+                    { category: "Kabels & leidingen", value: this.otherCosts.cablesPipes.value },
+                    { category: "Planschade", value: this.otherCosts.damages.value },
+                    { category: "Algemene kosten (O)", value: this.otherCosts.generalCost.value },
+                    { category: "Risico & winst (O)", value: this.otherCosts.riskProfit.value },
                 ].filter(d => d.value > 0)
             },
             {
                 category: "Vastgoed",
                 value: this.realEstateCosts.totalRealEstateCosts,
                 children: [
-                    // { category: "Direct benoemd", value: this.realEstateCosts.directBenoemdCost },
-                    // { category: "Direct niet benoemd", value: this.realEstateCosts.directNietBenoemdCost },
-                    // { category: "Indirect", value: this.realEstateCosts.indirectCost },
-                    // { category: "Risico", value: this.realEstateCosts.riskCost },
+                    { category: "Direct benoemd", value: this.realEstateCosts.directBenoemdItem.value },
+                    { category: "Direct niet benoemd", value: this.realEstateCosts.directNietBenoemdItem.value },
+                    { category: "Indirect", value: this.realEstateCosts.indirectItem.value },
+                    { category: "Risico", value: this.realEstateCosts.riskItem.value },
                 ].filter(d => d.value > 0)
             },
         ].filter(d => d.value > 0);

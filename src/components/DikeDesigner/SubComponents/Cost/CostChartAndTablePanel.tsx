@@ -798,7 +798,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   overflow: "auto"
                 }}>
                   <CostRangeStackedBar
-                    bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
+                    bouwKosten={model.costModel.constructionCost.totalConstructionCost}
                     engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                     overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                     vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
@@ -934,7 +934,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     overflow: "auto"
                   }}>
                     <CostRangeStackedBar
-                      bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
+                      bouwKosten={model.costModel.constructionCost.totalConstructionCost}
                       engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                       overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                       vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}

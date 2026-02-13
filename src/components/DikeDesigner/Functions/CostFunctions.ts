@@ -147,11 +147,6 @@ export const handleCostCalculation = async (
 
             const result = await response.json();
             console.log("API cost calculation result:", result);
-            console.log('1', 1)
-
-            // update model for table
-            model.costModel.constructionCost.fromApi(result["breakdown"]["Bouwkosten"]);
-            console.log('2', 1)
 
             
             const directeBouwkosten = result["breakdown"]["Bouwkosten"]["Directe Bouwkosten"];
@@ -165,13 +160,15 @@ export const handleCostCalculation = async (
 
             console.log("Updated model costModel:", model.costModel.risicoreservering);
 
-
-
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(directeBouwkosten["Directe kosten constructies"]);
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
             model.costModel.indirectConstructionCosts.fromApi(indirecteBouwkosten);
-            console.log("1", 1);
+            console.log("0", model.costModel.constructionCost);
+
+            model.costModel.constructionCost.fromApi(result["breakdown"]["Bouwkosten"]);
+
+            console.log("1", model.costModel.constructionCost);
             model.costModel.engineeringCosts.fromApi(engineeringCosts);
             console.log("2", 2);
 
