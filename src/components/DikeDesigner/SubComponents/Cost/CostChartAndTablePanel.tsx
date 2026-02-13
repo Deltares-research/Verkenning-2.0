@@ -310,6 +310,267 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
   // Get pie chart data from model
   const pieData = model.costModel.getPieChartData();
 
+  const CostTable: React.FC = () => (
+    <TableContainer component={Paper} sx={{
+      boxShadow: "none",
+      backgroundColor: "#fafafa"
+    }}>
+      <Table aria-label="collapsible table">
+        <TableHead>
+          <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+            <TableCell sx={{
+              border: 0,
+              width: 50,
+              backgroundColor: "#fafafa"
+            }} />
+            <TableCell sx={{
+              fontSize: "14px",
+              fontWeight: 500,
+              color: "#000000",
+              border: 0,
+              backgroundColor: "#fafafa"
+            }}>
+              Categorie
+            </TableCell>
+            <TableCell align="right" sx={{
+              fontSize: "14px",
+              fontWeight: 500,
+              color: "#000000",
+              border: 0,
+              backgroundColor: "#fafafa"
+            }}>
+              Kosten (€)
+            </TableCell>
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {/* Bouwkosten (BK) */}
+          <CollapsibleSection
+            title="Bouwkosten (BK)"
+            total={model.costModel.constructionCost.totalConstructionCost}
+          >
+            {/* Directe Bouwkosten (DBK) */}
+            <CollapsibleSection
+              title="Directe Bouwkosten (DBK)"
+              total={model.costModel.indirectConstructionCosts.totalDirectCosts}
+              level={1}
+              showDetailHeader
+
+            >
+              <SubHeaderRow label="Grondversterking" total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}/>
+              <SubRow label="Opruimen terrein" item={model.costModel.directCostGroundWork.opruimenTerrein}/>
+              <SubRow label="Maaien terreinen" item={model.costModel.directCostGroundWork.maaienTerreinen}/>
+              <SubRow label="Afgraven grasbekleding" item={model.costModel.directCostGroundWork.afgravenGrasbekleding}/>
+              <SubRow label="Afgraven kleilaag" item={model.costModel.directCostGroundWork.afgravenKleilaag}/>
+              <SubRow label="Herkeuren kleilaag" item={model.costModel.directCostGroundWork.herkeurenKleilaag} />
+              <SubRow label="Aanvullen kern" item={model.costModel.directCostGroundWork.aanvullenKern}/>
+              <SubRow label="Profieleren dijkkern" item={model.costModel.directCostGroundWork.profielerenDijkkern}/>
+              <SubRow label="Aanbrengen nieuwe kleilaag" item={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag}/>
+              <SubRow label="Profieleren van nieuwe kleilaag" item={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag}/>
+              <SubRow label="Hergebruik teelaarde" item={model.costModel.directCostGroundWork.hergebruikTeelaarde}/>
+              <SubRow label="Aanvullen teelaarde" item={model.costModel.directCostGroundWork.aanvullenTeelaarde}/>
+              <SubRow label="Profieleren nieuwe graslaag" item={model.costModel.directCostGroundWork.profielerenNieuweGraslaag}/>
+              <SubRow label="Inzaaien nieuwe toplaag" item={model.costModel.directCostGroundWork.inzaaienNieuweToplaag}/>
+
+              <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
+              <SubRow label={model.constructionModel.structureType} item={model.costModel.directCostStructures.structureDetails}/>
+
+              <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
+              <SubRow label="Verwijderen weg" item={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg}/>
+              <SubRow label="Aanleggen weg" item={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg}/>
+              <SubRow label="Verwijderen fietspad" item={model.costModel.directCostInfrastructure.verwijderenFietspad}/>
+              <SubRow label="Aanleggen fietspad" item={model.costModel.directCostInfrastructure.aanleggenFietspad}/>
+
+
+            </CollapsibleSection>
+
+            {/* Indirecte Bouwkosten (IBK) */}
+            <CollapsibleSection
+              title="Indirecte Bouwkosten (IBK)"
+              total={model.costModel.indirectConstructionCosts.totalIndirectCosts}
+              level={1}
+              showDetailHeader
+              detailHeaderLabels={{
+                costPost: "Kostenpost",
+                quantity: "Opslag (%)",
+                unitCost: "Basis",
+                total: "Totaal",
+              }}
+            >
+              <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" item={model.costModel.indirectConstructionCosts.pmCost} />
+              <SubRow label="Algemene kosten (AK)" item={model.costModel.indirectConstructionCosts.generalCost} />
+              <SubRow label="Winst & risico (WR)" item={model.costModel.indirectConstructionCosts.riskProfit} />
+            </CollapsibleSection>
+          </CollapsibleSection>
+
+          {/* Engineeringkosten (EK) */}
+          <CollapsibleSection
+            title="Engineeringkosten (EK)"
+            total={model.costModel.engineeringCosts.totalEngineeringCosts}
+          >
+            {/* Directe engineeringkosten */}
+            <CollapsibleSection
+              title="Directe engineeringkosten"
+              total={model.costModel.engineeringCosts.totalDirectEngineeringCost}
+              level={1}
+              showDetailHeader
+              detailHeaderLabels={{
+                costPost: "Kostenpost",
+                quantity: "Opslag (%)",
+                unitCost: "Basis",
+                total: "Totaal",
+              }}
+            >
+              <SubRow label="Engineeringskosten opdrachtgever (EPK)" item={model.costModel.engineeringCosts.epkCost} />
+              <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" item={model.costModel.engineeringCosts.designCost} />
+              <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" item={model.costModel.engineeringCosts.researchCost} />
+            </CollapsibleSection>
+
+            {/* Indirecte engineering kosten */}
+            <CollapsibleSection
+              title="Indirecte engineering kosten"
+              total={model.costModel.engineeringCosts.totalIndirectEngineeringCosts}
+              level={1}
+              showDetailHeader
+              detailHeaderLabels={{
+                costPost: "Kostenpost",
+                quantity: "Opslag (%)",
+                unitCost: "Basis",
+                total: "Totaal",
+              }}
+            >
+              <SubRow label="Algemene kosten (AK)" item={model.costModel.engineeringCosts.generalCost} />
+              <SubRow label="Risico & winst (WR)" item={model.costModel.engineeringCosts.riskProfit} />
+
+            </CollapsibleSection>
+          </CollapsibleSection>
+
+          {/* Overige bijkomende kosten */}
+          <CollapsibleSection
+            title="Overige bijkomende kosten"
+            total={model.costModel.otherCosts.totalGeneralCosts}
+          >
+            {/* Directe overige bijkomende kosten */}
+            <CollapsibleSection
+              title="Directe overige bijkomende kosten"
+              total={model.costModel.otherCosts.totalDirectGeneralCosts}
+              level={1}
+              showDetailHeader
+              detailHeaderLabels={{
+                costPost: "Kostenpost",
+                quantity: "Opslag (%)",
+                unitCost: "Basis",
+                total: "Totaal",
+              }}
+            >
+              <SubRow label="Vergunningen, heffingen en verzekering" item={model.costModel.otherCosts.insurances} />
+              <SubRow label="Kabels & leidingen" item={model.costModel.otherCosts.cablesPipes} />
+              <SubRow label="Planschade & inpassingsmaatregelen" item={model.costModel.otherCosts.damages} />
+            </CollapsibleSection>
+
+            {/* Indirecte overige bijkomende kosten */}
+            <CollapsibleSection
+              title="Indirecte overige bijkomende kosten"
+              total={model.costModel.otherCosts.totalIndirectGeneralCosts}
+              level={1}
+              showDetailHeader
+              detailHeaderLabels={{
+                costPost: "Kostenpost",
+                quantity: "Opslag (%)",
+                unitCost: "Basis",
+                total: "Totaal",
+              }}
+            >
+              <SubRow label="Algemene kosten (AK)" item={model.costModel.otherCosts.generalCost} />
+              <SubRow label="Risico & winst (WR)" item={model.costModel.otherCosts.riskProfit} />
+
+            </CollapsibleSection>
+          </CollapsibleSection>
+
+          {/* Subtotaal investeringkosten */}
+          <CollapsibleSection
+            title="Subtotaal investeringkosten"
+            total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
+          >
+            <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
+          </CollapsibleSection>
+
+          {/* Bottom summary rows */}
+          <TableRow>
+            <TableCell width={48} />
+            <TableCell
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                pl: 2,
+                color: "#0f172a",
+                borderTop: "2px solid #e0e0e0",
+                pt: 2,
+              }}
+            >
+              Investeringskosten excl. BTW
+            </TableCell>
+            <TableCell
+              align="right"
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                borderTop: "2px solid #e0e0e0",
+                pt: 2,
+              }}
+            >
+              {model.costModel.totalExcludingBTW.toLocaleString("nl-NL", {
+                style: "currency",
+                currency: "EUR",
+                maximumFractionDigits: 0,
+              })}
+            </TableCell>
+          </TableRow>
+
+          <TableRow>
+            <TableCell width={48} />
+            <TableCell
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                pl: 2,
+                color: "#0f172a",
+              }}
+            >
+              Investeringskosten incl. BTW
+            </TableCell>
+            <TableCell
+              align="right"
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              {model.costModel.totalIncludingBTW.toLocaleString("nl-NL", {
+                style: "currency",
+                currency: "EUR",
+                maximumFractionDigits: 0,
+              })}
+            </TableCell>
+          </TableRow>
+
+          <CollapsibleSection
+            title="Vastgoedkosten"
+            total={model.costModel.realEstateCosts.totalRealEstateCosts}
+            showDetailHeader
+          >
+            <SubRow label="Direct benoemd" item={model.costModel.realEstateCosts.directBenoemdItem}  />
+            <SubRow label="Direct niet benoemd" item={model.costModel.realEstateCosts.directNietBenoemdItem} />
+            <SubRow label="Indirect" item={model.costModel.realEstateCosts.indirectItem}  />
+            <SubRow label="Risico" item={model.costModel.realEstateCosts.riskItem} />
+
+          </CollapsibleSection>
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+
   return (
     <>
       <Paper
@@ -450,266 +711,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             </Typography>
             
             <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-              <TableContainer component={Paper} sx={{ 
-                boxShadow: "none",
-                backgroundColor: "#fafafa"
-              }}>
-                <Table aria-label="collapsible table">
-                  <TableHead>
-                    <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <TableCell sx={{
-                        border: 0,
-                        width: 50,
-                        backgroundColor: "#fafafa"
-                      }} />
-                      <TableCell sx={{
-                        fontSize: "14px",
-                        fontWeight: 500,
-                        color: "#000000",
-                        border: 0,
-                        backgroundColor: "#fafafa"
-                      }}>
-                        Categorie
-                      </TableCell>
-                      <TableCell align="right" sx={{
-                        fontSize: "14px",
-                        fontWeight: 500,
-                        color: "#000000",
-                        border: 0,
-                        backgroundColor: "#fafafa"
-                      }}>
-                        Kosten (€)
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {/* Bouwkosten (BK) */}
-                    <CollapsibleSection
-                      title="Bouwkosten (BK)"
-                      total={model.costModel.constructionCost.totalConstructionCost}
-                    >
-                      {/* Directe Bouwkosten (DBK) */}
-                      <CollapsibleSection
-                        title="Directe Bouwkosten (DBK)"
-                        total={model.costModel.indirectConstructionCosts.totalDirectCosts}
-                        level={1}
-                        showDetailHeader
-
-                      >
-                        <SubHeaderRow label="Grondversterking" total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}/>
-                        <SubRow label="Opruimen terrein" item={model.costModel.directCostGroundWork.opruimenTerrein}/>
-                        <SubRow label="Maaien terreinen" item={model.costModel.directCostGroundWork.maaienTerreinen}/>
-                        <SubRow label="Afgraven grasbekleding" item={model.costModel.directCostGroundWork.afgravenGrasbekleding}/>
-                        <SubRow label="Afgraven kleilaag" item={model.costModel.directCostGroundWork.afgravenKleilaag}/>
-                        <SubRow label="Herkeuren kleilaag" item={model.costModel.directCostGroundWork.herkeurenKleilaag} />
-                        <SubRow label="Aanvullen kern" item={model.costModel.directCostGroundWork.aanvullenKern}/>
-                        <SubRow label="Profieleren dijkkern" item={model.costModel.directCostGroundWork.profielerenDijkkern}/>
-                        <SubRow label="Aanbrengen nieuwe kleilaag" item={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag}/>
-                        <SubRow label="Profieleren van nieuwe kleilaag" item={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag}/>
-                        <SubRow label="Hergebruik teelaarde" item={model.costModel.directCostGroundWork.hergebruikTeelaarde}/>
-                        <SubRow label="Aanvullen teelaarde" item={model.costModel.directCostGroundWork.aanvullenTeelaarde}/>
-                        <SubRow label="Profieleren nieuwe graslaag" item={model.costModel.directCostGroundWork.profielerenNieuweGraslaag}/>
-                        <SubRow label="Inzaaien nieuwe toplaag" item={model.costModel.directCostGroundWork.inzaaienNieuweToplaag}/>
-                        
-                        <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
-                        <SubRow label={model.constructionModel.structureType} item={model.costModel.directCostStructures.structureDetails}/>
-
-                        <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
-                        <SubRow label="Verwijderen weg" item={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg}/>
-                        <SubRow label="Aanleggen weg" item={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg}/>
-                        <SubRow label="Verwijderen fietspad" item={model.costModel.directCostInfrastructure.verwijderenFietspad}/>
-                        <SubRow label="Aanleggen fietspad" item={model.costModel.directCostInfrastructure.aanleggenFietspad}/>
-                        
-                          
-                      </CollapsibleSection>
-                      
-                      {/* Indirecte Bouwkosten (IBK) */}
-                      <CollapsibleSection
-                        title="Indirecte Bouwkosten (IBK)"
-                        total={model.costModel.indirectConstructionCosts.totalIndirectCosts}
-                        level={1}
-                        showDetailHeader
-                        detailHeaderLabels={{
-                          costPost: "Kostenpost",
-                          quantity: "Opslag (%)",
-                          unitCost: "Basis",
-                          total: "Totaal",
-                        }}
-                      >
-                        <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" item={model.costModel.indirectConstructionCosts.pmCost} />
-                        <SubRow label="Algemene kosten (AK)" item={model.costModel.indirectConstructionCosts.generalCost} />
-                        <SubRow label="Winst & risico (WR)" item={model.costModel.indirectConstructionCosts.riskProfit} />
-                      </CollapsibleSection>
-                    </CollapsibleSection>
-                    
-                    {/* Engineeringkosten (EK) */}
-                    <CollapsibleSection
-                      title="Engineeringkosten (EK)"
-                      total={model.costModel.engineeringCosts.totalEngineeringCosts}
-                    >
-                      {/* Directe engineeringkosten */}
-                      <CollapsibleSection
-                        title="Directe engineeringkosten"
-                        total={model.costModel.engineeringCosts.totalDirectEngineeringCost}
-                        level={1}
-                        showDetailHeader
-                        detailHeaderLabels={{
-                          costPost: "Kostenpost",
-                          quantity: "Opslag (%)",
-                          unitCost: "Basis",
-                          total: "Totaal",
-                        }}
-                      >
-                        <SubRow label="Engineeringskosten opdrachtgever (EPK)" item={model.costModel.engineeringCosts.epkCost} />
-                        <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" item={model.costModel.engineeringCosts.designCost} />
-                        <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" item={model.costModel.engineeringCosts.researchCost} />
-                      </CollapsibleSection>
-                      
-                      {/* Indirecte engineering kosten */}
-                      <CollapsibleSection
-                        title="Indirecte engineering kosten"
-                        total={model.costModel.engineeringCosts.totalIndirectEngineeringCosts}
-                        level={1}
-                        showDetailHeader
-                        detailHeaderLabels={{
-                          costPost: "Kostenpost",
-                          quantity: "Opslag (%)",
-                          unitCost: "Basis",
-                          total: "Totaal",
-                        }}
-                      >
-                        <SubRow label="Algemene kosten (AK)" item={model.costModel.engineeringCosts.generalCost} />
-                        <SubRow label="Risico & winst (WR)" item={model.costModel.engineeringCosts.riskProfit} />
-
-                      </CollapsibleSection>
-                    </CollapsibleSection>
-                    
-                    {/* Overige bijkomende kosten */}
-                    <CollapsibleSection
-                      title="Overige bijkomende kosten"
-                      total={model.costModel.otherCosts.totalGeneralCosts}
-                    >
-                      {/* Directe overige bijkomende kosten */}
-                      <CollapsibleSection
-                        title="Directe overige bijkomende kosten"
-                        total={model.costModel.otherCosts.totalDirectGeneralCosts}
-                        level={1}
-                        showDetailHeader
-                        detailHeaderLabels={{
-                          costPost: "Kostenpost",
-                          quantity: "Opslag (%)",
-                          unitCost: "Basis",
-                          total: "Totaal",
-                        }}
-                      >
-                        <SubRow label="Vergunningen, heffingen en verzekering" item={model.costModel.otherCosts.insurances} />
-                        <SubRow label="Kabels & leidingen" item={model.costModel.otherCosts.cablesPipes} />
-                        <SubRow label="Planschade & inpassingsmaatregelen" item={model.costModel.otherCosts.damages} />
-                      </CollapsibleSection>
-                      
-                      {/* Indirecte overige bijkomende kosten */}
-                      <CollapsibleSection
-                        title="Indirecte overige bijkomende kosten"
-                        total={model.costModel.otherCosts.totalIndirectGeneralCosts}
-                        level={1}
-                        showDetailHeader
-                        detailHeaderLabels={{
-                          costPost: "Kostenpost",
-                          quantity: "Opslag (%)",
-                          unitCost: "Basis",
-                          total: "Totaal",
-                        }}
-                      >
-                        <SubRow label="Algemene kosten (AK)" item={model.costModel.otherCosts.generalCost} />
-                        <SubRow label="Risico & winst (WR)" item={model.costModel.otherCosts.riskProfit} />
-
-                      </CollapsibleSection>
-                    </CollapsibleSection>
-                    
-                    {/* Subtotaal investeringkosten */}
-                    <CollapsibleSection
-                      title="Subtotaal investeringkosten"
-                      total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
-                    >
-                      <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
-                    </CollapsibleSection>
-                    
-                    {/* Bottom summary rows */}
-                    <TableRow>
-                      <TableCell width={48} />
-                      <TableCell
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: 14,
-                          pl: 2,
-                          color: "#0f172a",
-                          borderTop: "2px solid #e0e0e0",
-                          pt: 2,
-                        }}
-                      >
-                        Investeringskosten excl. BTW
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: 14,
-                          borderTop: "2px solid #e0e0e0",
-                          pt: 2,
-                        }}
-                      >
-                        {model.costModel.totalExcludingBTW.toLocaleString("nl-NL", {
-                          style: "currency",
-                          currency: "EUR",
-                          maximumFractionDigits: 0,
-                        })}
-                      </TableCell>
-                    </TableRow>
-                    
-                    <TableRow>
-                      <TableCell width={48} />
-                      <TableCell
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: 14,
-                          pl: 2,
-                          color: "#0f172a",
-                        }}
-                      >
-                        Investeringskosten incl. BTW
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: 14,
-                        }}
-                      >
-                        {model.costModel.totalIncludingBTW.toLocaleString("nl-NL", {
-                          style: "currency",
-                          currency: "EUR",
-                          maximumFractionDigits: 0,
-                        })}
-                      </TableCell>
-                    </TableRow>
-
-                    <CollapsibleSection
-                      title="Vastgoedkosten"
-                      total={model.costModel.realEstateCosts.totalRealEstateCosts}
-                      showDetailHeader
-                    >
-                      <SubRow label="Direct benoemd" item={model.costModel.realEstateCosts.directBenoemdItem}  />
-                      <SubRow label="Direct niet benoemd" item={model.costModel.realEstateCosts.directNietBenoemdItem} />
-                      <SubRow label="Indirect" item={model.costModel.realEstateCosts.indirectItem}  />
-                      <SubRow label="Risico" item={model.costModel.realEstateCosts.riskItem} />
-
-                    </CollapsibleSection>
-                  </TableBody>
-                </Table>
-                
-                
-            </TableContainer>
+              <CostTable />
             </Box>
           </Box>
 
@@ -838,12 +840,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               </Typography>
 
               <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-                <TableContainer component={Paper} sx={{
-                  boxShadow: "none",
-                  backgroundColor: "#fafafa"
-                }}>
-                  
-              </TableContainer>
+                <CostTable />
               </Box>
             </Box>
           )}
