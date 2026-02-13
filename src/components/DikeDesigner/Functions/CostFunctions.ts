@@ -168,9 +168,17 @@ export const handleCostCalculation = async (
             model.costModel.directCostStructures.fromApi(directeBouwkosten["Directe kosten constructies"]);
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
             model.costModel.indirectConstructionCosts.fromApi(indirecteBouwkosten);
-            model.costModel.engineeringCosts.fromApi(engineeringCosts);
+            console.log("1", 1);
+            // model.costModel.engineeringCosts.directEngineeringCost.fromApi(engineeringCosts);
+            model.costModel.engineeringTest.fromApi(engineeringCosts);
+            console.log("2", 2);
+
+
             model.costModel.otherCosts.fromApi(otherCosts);
+            // console.log("1", 1);
             model.costModel.realEstateCosts.fromApi(realEstateCosts);
+            // console.log("2", 2);
+
             
 
             model.messages.commands.ui.displayNotification.execute({

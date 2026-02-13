@@ -26,7 +26,7 @@ import { TableHead } from "@mui/material"
 
 import CostPieChart from "./CostPieChart";
 import CostRangeStackedBar from "./CostRangeStackedBar";
-import { CostItem } from "./CostModel";
+import { CostItem, SurchargeCostItem } from "./CostModel";
 
 
 interface CollapsibleSectionProps {
@@ -35,6 +35,12 @@ interface CollapsibleSectionProps {
   children: React.ReactNode
   level?: number
   showDetailHeader?: boolean
+  detailHeaderLabels?: {
+    costPost?: string
+    quantity?: string
+    unitCost?: string
+    total?: string
+  }
   subHeaderName?: string       // optional name for subheader row
   subHeaderTotal?: number      // optional total for subheader row
   subHeader2Name?: string      // optional name for second subheader row
@@ -47,6 +53,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   children,
   level = 0,
   showDetailHeader = false,
+  detailHeaderLabels,
   subHeaderName,
   subHeaderTotal,
   subHeader2Name,  // consider removing if not needed anymore
@@ -100,16 +107,16 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontSize: 11, fontWeight: 600, pl: 6 }}>
-                        Kostenpost
+                        {detailHeaderLabels?.costPost ?? "Kostenpost"}
                       </TableCell>
                       <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                        Hoeveelheid
+                        {detailHeaderLabels?.quantity ?? "Hoeveelheid"}
                       </TableCell>
                       <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                        Eenheidsprijs
+                        {detailHeaderLabels?.unitCost ?? "Eenheidsprijs"}
                       </TableCell>
                       <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                        Totaal
+                        {detailHeaderLabels?.total ?? "Totaal"}
                       </TableCell>
                     </TableRow>
 
@@ -210,13 +217,19 @@ const SubHeaderRow: React.FC<SubHeaderRowProps> = ({ label, total }) => {
   )
 }
 
-interface SubRowProps { label: string; item?: CostItem; value?: number }
+interface SubRowProps { label: string; item?: CostItem | SurchargeCostItem; value?: number }
 
 const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
   const total = item ? Number(item.value ?? 0) : Number(value ?? 0)
-  const quantity = item ? Number(item.quantity) : NaN
-  const unitCost = item ? Number(item.unit_cost) : NaN
-  const unit = item?.unit ?? ""
+  const isSurchargeItem = !!item && typeof item === "object" && "surcharge_percentage" in (item as any)
+
+  const quantity = !isSurchargeItem && item ? Number((item as CostItem).quantity) : NaN
+  const unitCost = !isSurchargeItem && item ? Number((item as CostItem).unit_cost) : NaN
+  const unit = !isSurchargeItem ? (item as CostItem | undefined)?.unit ?? "" : ""
+
+  const surchargeRaw = isSurchargeItem ? Number((item as any).surcharge_percentage) : NaN
+  const surchargeDisplay = Number.isFinite(surchargeRaw) ? (surchargeRaw <= 1 ? surchargeRaw * 100 : surchargeRaw) : NaN
+  const baseCost = isSurchargeItem ? Number((item as any).base_cost) : NaN
 
   return (
     <TableRow>
@@ -227,22 +240,34 @@ const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
 
       {/* Hoeveelheid */}
       <TableCell align="right" sx={{ fontSize: 10 }}>
-        {item && Number.isFinite(quantity)
-          ? `${Math.round(quantity).toLocaleString("nl-NL", {
-              maximumFractionDigits: 0,
-            })} ${unit}`
-          : "-"}
+        {isSurchargeItem
+          ? (Number.isFinite(surchargeDisplay)
+              ? `${surchargeDisplay.toLocaleString("nl-NL", { maximumFractionDigits: 2 })} %`
+              : "-")
+          : (item && Number.isFinite(quantity)
+              ? `${Math.round(quantity).toLocaleString("nl-NL", {
+                  maximumFractionDigits: 0,
+                })} ${unit}`
+              : "-")}
       </TableCell>
 
       {/* Eenheidsprijs */}
       <TableCell align="right" sx={{ fontSize: 10 }}>
-        {item && Number.isFinite(unitCost)
-          ? unitCost.toLocaleString("nl-NL", {
-              style: "currency",
-              currency: "EUR",
-              maximumFractionDigits: 2,
-            })
-          : "-"}
+        {isSurchargeItem
+          ? (Number.isFinite(baseCost)
+              ? baseCost.toLocaleString("nl-NL", {
+                  style: "currency",
+                  currency: "EUR",
+                  maximumFractionDigits: 0,
+                })
+              : "-")
+          : (item && Number.isFinite(unitCost)
+              ? unitCost.toLocaleString("nl-NL", {
+                  style: "currency",
+                  currency: "EUR",
+                  maximumFractionDigits: 2,
+                })
+              : "-")}
       </TableCell>
 
       {/* Totaal */}
@@ -519,22 +544,36 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                       {/* Directe engineeringkosten */}
                       <CollapsibleSection
                         title="Directe engineeringkosten"
-                        total={model.costModel.engineeringCosts.directEngineeringCost.totalDirectEngineeringCost}
+                        total={model.costModel.engineeringCosts.totalDirectEngineeringCost}
                         level={1}
+                        showDetailHeader
+                        detailHeaderLabels={{
+                          costPost: "Kostenpost",
+                          quantity: "Opslag (%)",
+                          unitCost: "Basis",
+                          total: "Totaal",
+                        }}
                       >
-                        <SubRow label="Engineeringskosten opdrachtgever (EPK)" value={model.costModel.engineeringCosts.directEngineeringCost.epkCost} />
-                        <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" value={model.costModel.engineeringCosts.directEngineeringCost.designCost} />
-                        <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" value={model.costModel.engineeringCosts.directEngineeringCost.researchCost} />
+                        <SubRow label="Engineeringskosten opdrachtgever (EPK)" item={model.costModel.engineeringCosts.epkCost} />
+                        <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" item={model.costModel.engineeringCosts.designCost} />
+                        <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" item={model.costModel.engineeringCosts.researchCost} />
                       </CollapsibleSection>
                       
                       {/* Indirecte engineering kosten */}
                       <CollapsibleSection
                         title="Indirecte engineering kosten"
-                        total={model.costModel.engineeringCosts.indirectEngineeringCosts.totalIndirectEngineeringCosts}
+                        total={model.costModel.engineeringCosts.totalIndirectEngineeringCosts}
                         level={1}
+                        showDetailHeader
+                        detailHeaderLabels={{
+                          costPost: "Kostenpost",
+                          quantity: "Opslag (%)",
+                          unitCost: "Basis",
+                          total: "Totaal",
+                        }}
                       >
-                        <SubRow label="Algemene kosten (AK)" value={model.costModel.engineeringCosts.indirectEngineeringCosts.generalCost} />
-                        <SubRow label="Risico & winst (WR)" value={model.costModel.engineeringCosts.indirectEngineeringCosts.riskProfit} />
+                        <SubRow label="Algemene kosten (AK)" item={model.costModel.engineeringCosts.generalCost} />
+                        <SubRow label="Risico & winst (WR)" item={model.costModel.engineeringCosts.riskProfit} />
 
                       </CollapsibleSection>
                     </CollapsibleSection>
@@ -570,7 +609,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     {/* Subtotaal investeringkosten */}
                     <CollapsibleSection
                       title="Subtotaal investeringkosten"
-                      total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
+                      total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringTest.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
                     >
                       <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
                     </CollapsibleSection>
@@ -739,7 +778,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 }}>
                   <CostRangeStackedBar
                     bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
-                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
+                    engineering={model.costModel.engineeringTest.totalEngineeringCosts}
                     overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                     vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
                   />
@@ -875,7 +914,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   }}>
                     <CostRangeStackedBar
                       bouwKosten={model.costModel.indirectConstructionCosts.totalIndirectCosts}
-                      engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
+                      engineering={model.costModel.engineeringTest.totalEngineeringCosts}
                       overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                       vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
                     />

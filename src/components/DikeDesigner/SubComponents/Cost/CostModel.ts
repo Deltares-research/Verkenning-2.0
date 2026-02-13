@@ -14,6 +14,14 @@ export interface CostItem {
     dimensions: string
 }
 
+export interface SurchargeCostItem {
+    value: number
+    base_cost: number
+    surcharge_percentage: number
+    code: string
+    description: string
+}
+
 export class DirectCostGroundWork {
     opruimenTerrein: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: ''}
     maaienTerreinen: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: ''}
@@ -204,6 +212,49 @@ export class ConstructionCost {
 }
 
 
+export class EngineeringTest {
+    epkCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: ''}
+    designCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: ''}
+    researchCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: ''}
+    generalCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: ''}
+    riskProfit: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: ''}
+
+    totalDirectEngineeringCost: number = 0;
+    totalIndirectEngineeringCosts: number = 0;
+    totalEngineeringCosts: number = 0;
+
+
+    // map API response to class properties
+    fromApi(api: Record<string, SurchargeCostItem | number> = {}) {
+        this.epkCost = api.engineering_opdrachtgever as SurchargeCostItem ?? this.epkCost
+        this.designCost = api.engineering_opdrachtnemer as SurchargeCostItem ?? this.designCost
+        this.researchCost = api.onderzoekskosten as SurchargeCostItem ?? this.researchCost
+        this.generalCost = api.algemene_kosten as SurchargeCostItem ?? this.generalCost
+        this.riskProfit = api.winst_en_risico as SurchargeCostItem ?? this.riskProfit
+
+        this.totalDirectEngineeringCost = api.direct_engineering_cost as number ?? 0
+        this.totalIndirectEngineeringCosts = api.indirect_engineering_cost as number ?? 0
+        this.totalEngineeringCosts = api.total_engineering_costs as number ?? 0
+    }
+
+    toDict(): Record<string, any> {
+        return {
+            epkCost: this.epkCost,
+            designCost: this.designCost,
+            researchCost: this.researchCost,
+            generalCost: this.generalCost,
+            riskProfit: this.riskProfit,
+            totalDirectEngineeringCost: this.totalDirectEngineeringCost,
+            totalIndirectEngineeringCosts: this.totalIndirectEngineeringCosts,
+            totalEngineeringCosts: this.totalEngineeringCosts,
+        }
+    }
+}
+
+
+
+
+
 export class DirectEngineeringCost {
     epkCost: number = 0;
     designCost: number = 0;
@@ -244,11 +295,9 @@ export class IndirectEngineeringCosts {
     }   
 }
 export class EngineeringCost {
-    directEngineeringCost: DirectEngineeringCost = new DirectEngineeringCost();
-    indirectEngineeringCosts: IndirectEngineeringCosts = new IndirectEngineeringCosts();
-    totalEngineeringCosts: number = 0;
-
-
+        directEngineeringCost: DirectEngineeringCost = new DirectEngineeringCost();
+        indirectEngineeringCosts: IndirectEngineeringCosts = new IndirectEngineeringCosts();
+        totalEngineeringCosts: number = 0;
   // Map API keys to camelCase properties
   fromApi(api: Record<string, any>) {
     this.directEngineeringCost.fromApi(api);
@@ -433,12 +482,14 @@ export default class CostModel extends ModelBase {
     otherCosts: OtherCosts = new OtherCosts();
     realEstateCosts: RealEstateCosts = new RealEstateCosts();
     risicoreservering: number = 0;
+
+    engineeringTest: EngineeringTest = new EngineeringTest();
     
 
     get totalExcludingBTW(): number {
         return (
             (this.constructionCost?.totalConstructionCost ?? 0) +
-            (this.engineeringCosts?.totalEngineeringCosts ?? 0) +
+            (this.engineeringTest?.totalEngineeringCosts ?? 0) +
             (this.otherCosts?.totalGeneralCosts ?? 0) +
             (this.risicoreservering ?? 0)
         );
@@ -455,7 +506,7 @@ export default class CostModel extends ModelBase {
             "Directe kosten constructies": this.directCostStructures.toDict(),
             "Directe kosten infra": this.directCostInfrastructure.toDict(),
             "Bouwkosten": this.constructionCost.toDict(),
-            "Engineeringkosten": this.engineeringCosts.toDict(),
+            "Engineeringkosten": this.engineeringTest.toDict(),
             "Overige bijkomende kosten": this.otherCosts.toDict(),
             "Risicoreservering": this.risicoreservering,
             "Vastgoedkosten": this.realEstateCosts.toDict(),
@@ -496,7 +547,7 @@ export default class CostModel extends ModelBase {
             // },
             {
                 category: "Engineering",
-                value: this.engineeringCosts.totalEngineeringCosts,
+                value: this.engineeringTest.totalEngineeringCosts,
                 children: [
                     // { category: "EPK kosten", value: this.engineeringCosts.epkCost },
                     // { category: "Ontwerp", value: this.engineeringCosts.designCost },
