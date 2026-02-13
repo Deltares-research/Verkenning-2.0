@@ -22,6 +22,41 @@ export interface SurchargeCostItem {
     description: string
 }
 
+const normalizeSurchargeCostItem = (value: unknown, fallback: SurchargeCostItem): SurchargeCostItem => {
+    const safeFallback: SurchargeCostItem =
+        fallback && typeof fallback === "object"
+            ? fallback
+            : { value: 0, base_cost: 0, surcharge_percentage: 0, code: "", description: "" };
+
+    if (value && typeof value === "object") {
+        const maybe: any = value;
+        let rawValue: unknown = maybe.value;
+        if (rawValue && typeof rawValue === "object" && "value" in (rawValue as any)) {
+            rawValue = (rawValue as any).value;
+        }
+
+        const parsedValue = Number(rawValue ?? safeFallback.value ?? 0);
+        const parsedBase = Number(maybe.base_cost ?? maybe.baseCost ?? safeFallback.base_cost ?? 0);
+        const parsedSurcharge = Number(
+            maybe.surcharge_percentage ?? maybe.surchargePercentage ?? safeFallback.surcharge_percentage ?? 0
+        );
+
+        return {
+            value: Number.isFinite(parsedValue) ? parsedValue : Number(safeFallback.value ?? 0),
+            base_cost: Number.isFinite(parsedBase) ? parsedBase : Number(safeFallback.base_cost ?? 0),
+            surcharge_percentage: Number.isFinite(parsedSurcharge) ? parsedSurcharge : Number(safeFallback.surcharge_percentage ?? 0),
+            code: String(maybe.code ?? safeFallback.code ?? ""),
+            description: String(maybe.description ?? safeFallback.description ?? ""),
+        };
+    }
+
+    if (typeof value === "number") {
+        return { ...safeFallback, value };
+    }
+
+    return safeFallback;
+};
+
 export class DirectCostGroundWork {
     opruimenTerrein: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: ''}
     maaienTerreinen: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '',description: '', dimensions: ''}
@@ -161,21 +196,21 @@ export class DirectConstructionCost {
 
 
 export class IndirectConstructionCosts {
-    pmCost: number = 0;
-    generalCost: number = 0
-    riskProfit: number = 0;
+    pmCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' };
+    generalCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' };
+    riskProfit: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' };
     totalDirectCosts: number = 0;
     totalIndirectCosts: number = 0;
 
     fromApi(api: Record<string, any> = {}) {
-        this.pmCost = (api.pm_kosten as any)?.value ?? 0;
-        this.generalCost = (api.algemene_kosten as any)?.value ?? 0;
-        this.riskProfit = (api.risico_en_winst as any)?.value ?? 0;
+        this.pmCost = normalizeSurchargeCostItem(api.pm_kosten, this.pmCost);
+        this.generalCost = normalizeSurchargeCostItem(api.algemene_kosten, this.generalCost);
+        this.riskProfit = normalizeSurchargeCostItem(api.risico_en_winst ?? api.winst_en_risico, this.riskProfit);
         this.totalDirectCosts = api.totale_directe_bouwkosten as number ?? 0;
         this.totalIndirectCosts = api.indirecte_bouwkosten as number ?? 0;
     }
     
-    toDict(): Record<string, number> {
+    toDict(): Record<string, any> {
         return {
             pmCost: this.pmCost,
             generalCost: this.generalCost,
@@ -226,11 +261,11 @@ export class EngineeringCosts {
 
     // map API response to class properties
     fromApi(api: Record<string, SurchargeCostItem | number> = {}) {
-        this.epkCost = api.engineering_opdrachtgever as SurchargeCostItem ?? this.epkCost
-        this.designCost = api.engineering_opdrachtnemer as SurchargeCostItem ?? this.designCost
-        this.researchCost = api.onderzoekskosten as SurchargeCostItem ?? this.researchCost
-        this.generalCost = api.algemene_kosten as SurchargeCostItem ?? this.generalCost
-        this.riskProfit = api.winst_en_risico as SurchargeCostItem ?? this.riskProfit
+        this.epkCost = normalizeSurchargeCostItem(api.engineering_opdrachtgever, this.epkCost)
+        this.designCost = normalizeSurchargeCostItem(api.engineering_opdrachtnemer, this.designCost)
+        this.researchCost = normalizeSurchargeCostItem(api.onderzoekskosten, this.researchCost)
+        this.generalCost = normalizeSurchargeCostItem(api.algemene_kosten, this.generalCost)
+        this.riskProfit = normalizeSurchargeCostItem(api.winst_en_risico, this.riskProfit)
 
         this.totalDirectEngineeringCost = api.direct_engineering_cost as number ?? 0
         this.totalIndirectEngineeringCosts = api.indirect_engineering_cost as number ?? 0
@@ -264,11 +299,11 @@ export class OtherCosts {
     totalGeneralCosts: number = 0;
 
     fromApi(api: Record<string, SurchargeCostItem | number> = {}) {
-        this.insurances = api.vergunningen_verzekeringen as SurchargeCostItem ?? this.insurances
-        this.cablesPipes = api.kabels_leidingen as SurchargeCostItem ?? this.cablesPipes
-        this.damages = api.planschade_inpassingsmaatregelen as SurchargeCostItem ?? this.damages
-        this.generalCost = api.algemene_kosten as SurchargeCostItem ?? this.generalCost
-        this.riskProfit = api.risico_en_winst as SurchargeCostItem ?? this.riskProfit
+        this.insurances = normalizeSurchargeCostItem(api.vergunningen_verzekeringen, this.insurances)
+        this.cablesPipes = normalizeSurchargeCostItem(api.kabels_leidingen, this.cablesPipes)
+        this.damages = normalizeSurchargeCostItem(api.planschade_inpassingsmaatregelen, this.damages)
+        this.generalCost = normalizeSurchargeCostItem(api.algemene_kosten, this.generalCost)
+        this.riskProfit = normalizeSurchargeCostItem(api.risico_en_winst ?? api.winst_en_risico, this.riskProfit)
 
         this.totalDirectGeneralCosts = api.direct_general_costs as number ?? 0
         this.totalIndirectGeneralCosts = api.indirect_general_costs as number ?? 0

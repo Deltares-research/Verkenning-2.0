@@ -529,14 +529,21 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         title="Indirecte Bouwkosten (IBK)"
                         total={model.costModel.indirectConstructionCosts.totalIndirectCosts}
                         level={1}
+                        showDetailHeader
+                        detailHeaderLabels={{
+                          costPost: "Kostenpost",
+                          quantity: "Opslag (%)",
+                          unitCost: "Basis",
+                          total: "Totaal",
+                        }}
                       >
-                        <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" value={model.costModel.indirectConstructionCosts.pmCost} />
-                        <SubRow label="Algemene kosten (AK)" value={model.costModel.indirectConstructionCosts.generalCost} />
-                        <SubRow label="Winst & risico (WR)" value={model.costModel.indirectConstructionCosts.riskProfit} />
+                        <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" item={model.costModel.indirectConstructionCosts.pmCost} />
+                        <SubRow label="Algemene kosten (AK)" item={model.costModel.indirectConstructionCosts.generalCost} />
+                        <SubRow label="Winst & risico (WR)" item={model.costModel.indirectConstructionCosts.riskProfit} />
                       </CollapsibleSection>
                     </CollapsibleSection>
                     
-                    Engineeringkosten (EK)
+                    {/* Engineeringkosten (EK) */}
                     <CollapsibleSection
                       title="Engineeringkosten (EK)"
                       total={model.costModel.engineeringCosts.totalEngineeringCosts}
@@ -588,10 +595,17 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         title="Directe overige bijkomende kosten"
                         total={model.costModel.otherCosts.totalDirectGeneralCosts}
                         level={1}
+                        showDetailHeader
+                        detailHeaderLabels={{
+                          costPost: "Kostenpost",
+                          quantity: "Opslag (%)",
+                          unitCost: "Basis",
+                          total: "Totaal",
+                        }}
                       >
-                        <SubRow label="Vergunningen, heffingen en verzekering" value={model.costModel.otherCosts.insurances} />
-                        <SubRow label="Kabels & leidingen" value={model.costModel.otherCosts.cablesPipes} />
-                        <SubRow label="Planschade & inpassingsmaatregelen" value={model.costModel.otherCosts.damages} />
+                        <SubRow label="Vergunningen, heffingen en verzekering" item={model.costModel.otherCosts.insurances} />
+                        <SubRow label="Kabels & leidingen" item={model.costModel.otherCosts.cablesPipes} />
+                        <SubRow label="Planschade & inpassingsmaatregelen" item={model.costModel.otherCosts.damages} />
                       </CollapsibleSection>
                       
                       {/* Indirecte overige bijkomende kosten */}
@@ -599,9 +613,16 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                         title="Indirecte overige bijkomende kosten"
                         total={model.costModel.otherCosts.totalIndirectGeneralCosts}
                         level={1}
+                        showDetailHeader
+                        detailHeaderLabels={{
+                          costPost: "Kostenpost",
+                          quantity: "Opslag (%)",
+                          unitCost: "Basis",
+                          total: "Totaal",
+                        }}
                       >
-                        <SubRow label="Algemene kosten (AK)" value={model.costModel.otherCosts.generalCost} />
-                        <SubRow label="Risico & winst (WR)" value={model.costModel.otherCosts.riskProfit} />
+                        <SubRow label="Algemene kosten (AK)" item={model.costModel.otherCosts.generalCost} />
+                        <SubRow label="Risico & winst (WR)" item={model.costModel.otherCosts.riskProfit} />
 
                       </CollapsibleSection>
                     </CollapsibleSection>
