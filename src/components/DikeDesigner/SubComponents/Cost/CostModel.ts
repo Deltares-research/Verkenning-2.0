@@ -252,63 +252,40 @@ export class EngineeringCosts {
 }
 
 
-export class DirectOtherCosts {
-    insurances: number = 0;
-    cablesPipes: number = 0;
-    damages: number = 0;    
-    totalDirectOtherCosts: number = 0;
+export class OtherCosts {
+    insurances: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' }
+    cablesPipes: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' }
+    damages: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' }   
+    generalCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' }
+    riskProfit: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' }
 
-    fromApi(api: Record<string, any>) {
-        this.insurances = (api.vergunningen_verzekeringen as any)?.value ?? 0;
-        this.cablesPipes = (api.kabels_leidingen as any)?.value ?? 0;
-        this.damages = (api.planschade_inpassingsmaatregelen as any)?.value ?? 0;
-        this.totalDirectOtherCosts = api.direct_general_costs as number ?? 0;
+    totalDirectGeneralCosts: number = 0;
+    totalIndirectGeneralCosts: number = 0;
+    totalGeneralCosts: number = 0;
+
+    fromApi(api: Record<string, SurchargeCostItem | number> = {}) {
+        this.insurances = api.vergunningen_verzekeringen as SurchargeCostItem ?? this.insurances
+        this.cablesPipes = api.kabels_leidingen as SurchargeCostItem ?? this.cablesPipes
+        this.damages = api.planschade_inpassingsmaatregelen as SurchargeCostItem ?? this.damages
+        this.generalCost = api.algemene_kosten as SurchargeCostItem ?? this.generalCost
+        this.riskProfit = api.risico_en_winst as SurchargeCostItem ?? this.riskProfit
+
+        this.totalDirectGeneralCosts = api.direct_general_costs as number ?? 0
+        this.totalIndirectGeneralCosts = api.indirect_general_costs as number ?? 0
+        this.totalGeneralCosts = api.total_general_costs as number ?? 0
     }
-    toDict(): Record<string, number> {
+
+    toDict(): Record<string, any> {
         return {
             insurances: this.insurances,
             cablesPipes: this.cablesPipes,
             damages: this.damages,
-            totalDirectOtherCosts: this.totalDirectOtherCosts,
-        };
-    }
-}
-
-export class IndirectOtherCosts {
-    generalCost: number = 0;
-    riskProfit: number = 0
-    totalIndirectOtherCosts: number = 0;
-    fromApi(api: Record<string, any>) {
-        this.generalCost = (api.algemene_kosten as any)?.value ?? 0;
-        this.riskProfit = (api.risico_en_winst as any)?.value ?? 0;
-        this.totalIndirectOtherCosts = api.indirect_general_costs as number ?? 0;
-    }
-    toDict(): Record<string, any> {
-        return {
             generalCost: this.generalCost,
             riskProfit: this.riskProfit,
-            totalIndirectOtherCosts: this.totalIndirectOtherCosts,
-        };
-    }   
-}
-
-export class OtherCosts {
-    directOtherCosts: DirectOtherCosts = new DirectOtherCosts();
-    indirectOtherCosts: IndirectOtherCosts = new IndirectOtherCosts();
-    totalGeneralCosts: number = 0;
-
-    fromApi(api: Record<string, any>) {
-        this.directOtherCosts.fromApi(api);
-        this.indirectOtherCosts.fromApi(api);
-        this.totalGeneralCosts = api.total_general_costs as number ?? 0;
-    }
-
-    toDict(): Record<string, any> {
-        return {
-            directOtherCosts: this.directOtherCosts.toDict(),
-            indirectOtherCosts: this.indirectOtherCosts.toDict(),
+            totalDirectGeneralCosts: this.totalDirectGeneralCosts,
+            totalIndirectGeneralCosts: this.totalIndirectGeneralCosts,
             totalGeneralCosts: this.totalGeneralCosts,
-        };
+        }
     }
 }
 
@@ -493,11 +470,11 @@ export default class CostModel extends ModelBase {
                 category: "Overige kosten",
                 value: this.otherCosts.totalGeneralCosts,
                 children: [
-                    { category: "Vergunningen", value: this.otherCosts.directOtherCosts.insurances },
-                    { category: "Kabels & leidingen", value: this.otherCosts.directOtherCosts.cablesPipes },
-                    { category: "Planschade", value: this.otherCosts.directOtherCosts.damages },
-                    { category: "Algemene kosten (O)", value: this.otherCosts.indirectOtherCosts.generalCost },
-                    { category: "Risico & winst (O)", value: this.otherCosts.indirectOtherCosts.riskProfit },
+                    // { category: "Vergunningen", value: this.otherCosts.directOtherCosts.insurances },
+                    // { category: "Kabels & leidingen", value: this.otherCosts.directOtherCosts.cablesPipes },
+                    // { category: "Planschade", value: this.otherCosts.directOtherCosts.damages },
+                    // { category: "Algemene kosten (O)", value: this.otherCosts.indirectOtherCosts.generalCost },
+                    // { category: "Risico & winst (O)", value: this.otherCosts.indirectOtherCosts.riskProfit },
                 ].filter(d => d.value > 0)
             },
             {

@@ -586,22 +586,22 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                       {/* Directe overige bijkomende kosten */}
                       <CollapsibleSection
                         title="Directe overige bijkomende kosten"
-                        total={model.costModel.otherCosts.directOtherCosts.totalDirectOtherCosts}
+                        total={model.costModel.otherCosts.totalDirectGeneralCosts}
                         level={1}
                       >
-                        <SubRow label="Vergunningen, heffingen en verzekering" value={model.costModel.otherCosts.directOtherCosts.insurances} />
-                        <SubRow label="Kabels & leidingen" value={model.costModel.otherCosts.directOtherCosts.cablesPipes} />
-                        <SubRow label="Planschade & inpassingsmaatregelen" value={model.costModel.otherCosts.directOtherCosts.damages} />
+                        <SubRow label="Vergunningen, heffingen en verzekering" value={model.costModel.otherCosts.insurances} />
+                        <SubRow label="Kabels & leidingen" value={model.costModel.otherCosts.cablesPipes} />
+                        <SubRow label="Planschade & inpassingsmaatregelen" value={model.costModel.otherCosts.damages} />
                       </CollapsibleSection>
                       
                       {/* Indirecte overige bijkomende kosten */}
                       <CollapsibleSection
                         title="Indirecte overige bijkomende kosten"
-                        total={model.costModel.otherCosts.indirectOtherCosts.totalIndirectOtherCosts}
+                        total={model.costModel.otherCosts.totalIndirectGeneralCosts}
                         level={1}
                       >
-                        <SubRow label="Algemene kosten (AK)" value={model.costModel.otherCosts.indirectOtherCosts.generalCost} />
-                        <SubRow label="Risico & winst (WR)" value={model.costModel.otherCosts.indirectOtherCosts.riskProfit} />
+                        <SubRow label="Algemene kosten (AK)" value={model.costModel.otherCosts.generalCost} />
+                        <SubRow label="Risico & winst (WR)" value={model.costModel.otherCosts.riskProfit} />
 
                       </CollapsibleSection>
                     </CollapsibleSection>

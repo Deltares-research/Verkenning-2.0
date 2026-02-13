@@ -172,15 +172,14 @@ export const handleCostCalculation = async (
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
             model.costModel.indirectConstructionCosts.fromApi(indirecteBouwkosten);
             console.log("1", 1);
-            // model.costModel.engineeringCosts.directEngineeringCost.fromApi(engineeringCosts);
             model.costModel.engineeringCosts.fromApi(engineeringCosts);
             console.log("2", 2);
 
 
             model.costModel.otherCosts.fromApi(otherCosts);
-            // console.log("1", 1);
+            console.log("3", 3);
             model.costModel.realEstateCosts.fromApi(realEstateCosts);
-            // console.log("2", 2);
+            console.log("4", 4);
 
             
 
