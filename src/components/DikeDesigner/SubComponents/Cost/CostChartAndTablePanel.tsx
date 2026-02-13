@@ -213,7 +213,10 @@ const SubHeaderRow: React.FC<SubHeaderRowProps> = ({ label, total }) => {
 interface SubRowProps { label: string; item?: CostItem; value?: number }
 
 const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
-  const total = item ? item.value : value ?? 0
+  const total = item ? Number(item.value ?? 0) : Number(value ?? 0)
+  const quantity = item ? Number(item.quantity) : NaN
+  const unitCost = item ? Number(item.unit_cost) : NaN
+  const unit = item?.unit ?? ""
 
   return (
     <TableRow>
@@ -224,17 +227,17 @@ const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
 
       {/* Hoeveelheid */}
       <TableCell align="right" sx={{ fontSize: 10 }}>
-        {item
-          ? `${item.quantity.toLocaleString("nl-NL", {
-              maximumFractionDigits: 2,
-            })} ${item.unit}`
+        {item && Number.isFinite(quantity)
+          ? `${Math.round(quantity).toLocaleString("nl-NL", {
+              maximumFractionDigits: 0,
+            })} ${unit}`
           : "-"}
       </TableCell>
 
       {/* Eenheidsprijs */}
       <TableCell align="right" sx={{ fontSize: 10 }}>
-        {item
-          ? item.unit_cost.toLocaleString("nl-NL", {
+        {item && Number.isFinite(unitCost)
+          ? unitCost.toLocaleString("nl-NL", {
               style: "currency",
               currency: "EUR",
               maximumFractionDigits: 2,
@@ -470,28 +473,28 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
 
                       >
                         <SubHeaderRow label="Grondversterking" total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}/>
-                        <SubRow label="Opruimen terrein" value={model.costModel.directCostGroundWork.opruimenTerrein.value}/>
-                        <SubRow label="Maaien terreinen" value={model.costModel.directCostGroundWork.maaienTerreinen.value}/>
-                        <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekleding.value}/>
-                        <SubRow label="Afgraven kleilaag" value={model.costModel.directCostGroundWork.afgravenKleilaag.value}/>
-                        <SubRow label="Herkeuren kleilaag" value={model.costModel.directCostGroundWork.herkeurenKleilaag.value} />
-                        <SubRow label="Aanvullen kern" value={model.costModel.directCostGroundWork.aanvullenKern.value}/>
-                        <SubRow label="Profieleren dijkkern" value={model.costModel.directCostGroundWork.profielerenDijkkern.value}/>
-                        <SubRow label="Aanbrengen nieuwe kleilaag" value={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag.value}/>
-                        <SubRow label="Profieleren van nieuwe kleilaag" value={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag.value}/>
-                        <SubRow label="Hergebruik teelaarde" value={model.costModel.directCostGroundWork.hergebruikTeelaarde.value}/>
-                        <SubRow label="Aanvullen teelaarde" value={model.costModel.directCostGroundWork.aanvullenTeelaarde.value}/>
-                        <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaag.value}/>
-                        <SubRow label="Inzaaien nieuwe toplaag" value={model.costModel.directCostGroundWork.inzaaienNieuweToplaag.value}/>
+                        <SubRow label="Opruimen terrein" item={model.costModel.directCostGroundWork.opruimenTerrein}/>
+                        <SubRow label="Maaien terreinen" item={model.costModel.directCostGroundWork.maaienTerreinen}/>
+                        <SubRow label="Afgraven grasbekleding" item={model.costModel.directCostGroundWork.afgravenGrasbekleding}/>
+                        <SubRow label="Afgraven kleilaag" item={model.costModel.directCostGroundWork.afgravenKleilaag}/>
+                        <SubRow label="Herkeuren kleilaag" item={model.costModel.directCostGroundWork.herkeurenKleilaag} />
+                        <SubRow label="Aanvullen kern" item={model.costModel.directCostGroundWork.aanvullenKern}/>
+                        <SubRow label="Profieleren dijkkern" item={model.costModel.directCostGroundWork.profielerenDijkkern}/>
+                        <SubRow label="Aanbrengen nieuwe kleilaag" item={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag}/>
+                        <SubRow label="Profieleren van nieuwe kleilaag" item={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag}/>
+                        <SubRow label="Hergebruik teelaarde" item={model.costModel.directCostGroundWork.hergebruikTeelaarde}/>
+                        <SubRow label="Aanvullen teelaarde" item={model.costModel.directCostGroundWork.aanvullenTeelaarde}/>
+                        <SubRow label="Profieleren nieuwe graslaag" item={model.costModel.directCostGroundWork.profielerenNieuweGraslaag}/>
+                        <SubRow label="Inzaaien nieuwe toplaag" item={model.costModel.directCostGroundWork.inzaaienNieuweToplaag}/>
                         
                         <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
-                        <SubRow label="Constructiedetails" value={model.costModel.directCostStructures.structureDetails.value}/>
+                        <SubRow label={model.constructionModel.structureType} item={model.costModel.directCostStructures.structureDetails}/>
 
                         <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
-                        <SubRow label="Verwijderen weg" value={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg.value}/>
-                        <SubRow label="Aanleggen weg" value={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg.value}/>
-                        <SubRow label="Verwijderen fietspad" value={model.costModel.directCostInfrastructure.verwijderenFietspad.value}/>
-                        <SubRow label="Aanleggen fietspad" value={model.costModel.directCostInfrastructure.aanleggenFietspad.value}/>
+                        <SubRow label="Verwijderen weg" item={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg}/>
+                        <SubRow label="Aanleggen weg" item={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg}/>
+                        <SubRow label="Verwijderen fietspad" item={model.costModel.directCostInfrastructure.verwijderenFietspad}/>
+                        <SubRow label="Aanleggen fietspad" item={model.costModel.directCostInfrastructure.aanleggenFietspad}/>
                         
                           
                       </CollapsibleSection>
@@ -596,10 +599,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                           pt: 2,
                         }}
                       >
-                        {(model.costModel.constructionCost.totalConstructionCost + 
-                          model.costModel.engineeringCosts.totalEngineeringCosts + 
-                          model.costModel.otherCosts.totalGeneralCosts + 
-                          model.costModel.risicoreservering).toLocaleString("nl-NL", {
+                        {model.costModel.totalExcludingBTW.toLocaleString("nl-NL", {
                           style: "currency",
                           currency: "EUR",
                           maximumFractionDigits: 0,
@@ -626,16 +626,25 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                           fontSize: 14,
                         }}
                       >
-                        {((model.costModel.constructionCost.totalConstructionCost + 
-                          model.costModel.engineeringCosts.totalEngineeringCosts + 
-                          model.costModel.otherCosts.totalGeneralCosts + 
-                          model.costModel.risicoreservering) * 1.21).toLocaleString("nl-NL", {
+                        {model.costModel.totalIncludingBTW.toLocaleString("nl-NL", {
                           style: "currency",
                           currency: "EUR",
                           maximumFractionDigits: 0,
                         })}
                       </TableCell>
                     </TableRow>
+
+                    <CollapsibleSection
+                      title="Vastgoedkosten"
+                      total={model.costModel.realEstateCosts.totalRealEstateCosts}
+                      showDetailHeader
+                    >
+                      <SubRow label="Direct benoemd" item={model.costModel.realEstateCosts.directBenoemdItem}  />
+                      <SubRow label="Direct niet benoemd" item={model.costModel.realEstateCosts.directNietBenoemdItem} />
+                      <SubRow label="Indirect" item={model.costModel.realEstateCosts.indirectItem}  />
+                      <SubRow label="Risico" item={model.costModel.realEstateCosts.riskItem} />
+
+                    </CollapsibleSection>
                   </TableBody>
                 </Table>
                 

@@ -108,7 +108,7 @@ export const handleCostCalculation = async (
             geojson_dike: geojsonDike.features.length ? geojsonDike : null,
             geojson_structure: geojsonStructure.features.length ? geojsonStructure : null,
             complexity: model.costModel.complexity || "makkelijke maatregel",
-            road_surface: Number(model.intersectingWegdelen2dRuimtebeslag) || 0,
+            road_surface: Number(model.uitvoeringszoneWegoppervlak) || 0,
             number_houses: Number(model.intersectingPandenBuffer?.length) || 0,
         };
         console.log("API cost payload:", payload);
@@ -153,20 +153,25 @@ export const handleCostCalculation = async (
             
             const directeBouwkosten = result["breakdown"]["Bouwkosten"]["Directe Bouwkosten"];
             const indirecteBouwkosten = result["breakdown"]["Bouwkosten"]["Indirecte Bouwkosten"];
+            const engineeringCosts = result["breakdown"]["Engineeringkosten"];
+            const otherCosts = result["breakdown"]["Overige bijkomende kosten"];
+            const realEstateCosts = result["breakdown"]["Vastgoedkosten"];
+            const risicoreservering = result["breakdown"]["Risicoreservering"];
+            model.costModel.risicoreservering = Number(risicoreservering['value'] ?? 0);
 
-            console.log("API cost calculation result:", directeBouwkosten);
-            model.costModel.directCostGroundWork.totaleBDBKGrondwerk = directeBouwkosten["Directe kosten grondwerk"]?.totale_BDBK_grondwerk || 1;
-            console.log("API cost calculation result00:", model.costModel.directCostGroundWork.totaleBDBKGrondwerk)
+
+            console.log("Updated model costModel:", model.costModel.risicoreservering);
+
+
 
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
-            console.log("API cost calculation result00:", model.costModel.directCostGroundWork)
             model.costModel.directCostStructures.fromApi(directeBouwkosten["Directe kosten constructies"]);
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
             model.costModel.indirectConstructionCosts.fromApi(indirecteBouwkosten);
-            model.costModel.engineeringCosts.fromApi(result["Engineeringkosten"]);
-            model.costModel.otherCosts.fromApi(result["Overige bijkomende kosten"]);
-            model.costModel.realEstateCosts.fromApi(result["Vastgoedkosten"]);
-            model.costModel.risicoreservering = result["Risicoreservering"];
+            model.costModel.engineeringCosts.fromApi(engineeringCosts);
+            model.costModel.otherCosts.fromApi(otherCosts);
+            model.costModel.realEstateCosts.fromApi(realEstateCosts);
+            
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",

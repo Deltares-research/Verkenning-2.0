@@ -328,27 +328,80 @@ export class OtherCosts {
 }
 
 export class RealEstateCosts {
-  directBenoemdCost: number = 0;
-  directNietBenoemdCost: number = 0;
-  indirectCost: number = 0;
-  riskCost: number = 0;
-  totalRealEstateCosts: number = 0;
+    directBenoemdItem: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    directNietBenoemdItem: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    indirectItem: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    riskItem: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
+    totalRealEstateCosts: number = 0;
+    
 
-  fromApi(api: Record<string, any>) {
-    this.directBenoemdCost = (api.direct_benoemd_real_estate_cost as any)?.value ?? 0;
-    this.directNietBenoemdCost = (api.direct_niet_benoemd_real_estate_cost as any)?.value ?? 0;
-    this.indirectCost = (api.indirect_real_estate_cost as any)?.value ?? 0;
-    this.riskCost = (api.real_estate_risk_cost as any)?.value ?? 0;
-    this.totalRealEstateCosts = api.total_real_estate_costs || 0;
-  }
+    private normalizeCostItem(value: unknown, fallback: CostItem): CostItem {
+        const safeFallback: CostItem =
+            fallback && typeof fallback === "object"
+                ? fallback
+                : { value: 0, unit_cost: Number.NaN, quantity: Number.NaN, unit: "", description: "", dimensions: "" };
+
+        if (value && typeof value === "object") {
+            const maybe: any = value;
+            let rawValue: unknown = maybe.value;
+            if (rawValue && typeof rawValue === "object" && "value" in (rawValue as any)) {
+                rawValue = (rawValue as any).value;
+            }
+
+            const parsedValue = Number(rawValue);
+
+            const hasQuantity = "quantity" in maybe;
+            const hasUnitCost = "unit_cost" in maybe;
+            const hasUnit = "unit" in maybe;
+
+            const parsedQuantity = hasQuantity ? Number(maybe.quantity) : Number.NaN;
+            const parsedUnitCost = hasUnitCost ? Number(maybe.unit_cost ?? maybe.unitCost) : Number.NaN;
+            const dimensionLike = maybe.dimensions ?? maybe.dimension ?? safeFallback.dimensions ?? "";
+
+            return {
+                value: Number.isFinite(parsedValue) ? parsedValue : Number(safeFallback.value ?? 0),
+                unit_cost: Number.isFinite(parsedUnitCost) ? parsedUnitCost : Number.NaN,
+                quantity: Number.isFinite(parsedQuantity) ? parsedQuantity : Number.NaN,
+                unit: hasUnit ? String(maybe.unit ?? "") : "",
+                description: String(maybe.description ?? safeFallback.description ?? ""),
+                dimensions: dimensionLike == null ? "" : String(dimensionLike),
+            };
+        }
+        if (typeof value === "number") {
+            return { ...safeFallback, value };
+        }
+        return safeFallback;
+    }
+
+    fromApi(api: Record<string, any> = {}) {
+        const section = (api?.Vastgoedkosten ?? api?.vastgoedkosten ?? api) as Record<string, any>;
+
+        this.directBenoemdItem = this.normalizeCostItem(
+            section?.direct_benoemd_real_estate_cost ?? section?.directBenoemdRealEstateCost,
+            this.directBenoemdItem
+        );
+        this.directNietBenoemdItem = this.normalizeCostItem(
+            section?.direct_niet_benoemd_real_estate_cost ?? section?.directNietBenoemdRealEstateCost,
+            this.directNietBenoemdItem
+        );
+        this.indirectItem = this.normalizeCostItem(
+            section?.indirect_real_estate_cost ?? section?.indirectRealEstateCost,
+            this.indirectItem
+        );
+        this.riskItem = this.normalizeCostItem(
+            section?.real_estate_risk_cost ?? section?.realEstateRiskCost,
+            this.riskItem
+        );
+        this.totalRealEstateCosts = Number(section?.total_real_estate_costs ?? section?.totalRealEstateCosts ?? 0);
+    }
 
   toDict(): Record<string, number> {
     return {
-      directBenoemdCost: this.directBenoemdCost,
-      directNietBenoemdCost: this.directNietBenoemdCost,
-      indirectCost: this.indirectCost,
-      riskCost: this.riskCost,
-      totalRealEstateCosts: this.totalRealEstateCosts,
+        directBenoemdItem: this.directBenoemdItem.value,
+        directNietBenoemdItem: this.directNietBenoemdItem.value,
+        indirectItem: this.indirectItem.value,
+        riskItem: this.riskItem.value,
+        totalRealEstateCosts: this.totalRealEstateCosts,
     };
   }
 }
@@ -380,6 +433,20 @@ export default class CostModel extends ModelBase {
     otherCosts: OtherCosts = new OtherCosts();
     realEstateCosts: RealEstateCosts = new RealEstateCosts();
     risicoreservering: number = 0;
+    
+
+    get totalExcludingBTW(): number {
+        return (
+            (this.constructionCost?.totalConstructionCost ?? 0) +
+            (this.engineeringCosts?.totalEngineeringCosts ?? 0) +
+            (this.otherCosts?.totalGeneralCosts ?? 0) +
+            (this.risicoreservering ?? 0)
+        );
+    }
+
+    get totalIncludingBTW(): number {
+        return this.totalExcludingBTW * 1.21;
+    }
 
     // Converts the model into the API-ready nested dictionary
     toDict(): Record<string, any> {
@@ -392,6 +459,8 @@ export default class CostModel extends ModelBase {
             "Overige bijkomende kosten": this.otherCosts.toDict(),
             "Risicoreservering": this.risicoreservering,
             "Vastgoedkosten": this.realEstateCosts.toDict(),
+            "Totaal exclusief BTW": this.totalExcludingBTW,
+            "Totaal inclusief BTW": this.totalIncludingBTW,
         }
     }
 
@@ -451,10 +520,10 @@ export default class CostModel extends ModelBase {
                 category: "Vastgoed",
                 value: this.realEstateCosts.totalRealEstateCosts,
                 children: [
-                    { category: "Direct benoemd", value: this.realEstateCosts.directBenoemdCost },
-                    { category: "Direct niet benoemd", value: this.realEstateCosts.directNietBenoemdCost },
-                    { category: "Indirect", value: this.realEstateCosts.indirectCost },
-                    { category: "Risico", value: this.realEstateCosts.riskCost },
+                    // { category: "Direct benoemd", value: this.realEstateCosts.directBenoemdCost },
+                    // { category: "Direct niet benoemd", value: this.realEstateCosts.directNietBenoemdCost },
+                    // { category: "Indirect", value: this.realEstateCosts.indirectCost },
+                    // { category: "Risico", value: this.realEstateCosts.riskCost },
                 ].filter(d => d.value > 0)
             },
         ].filter(d => d.value > 0);
