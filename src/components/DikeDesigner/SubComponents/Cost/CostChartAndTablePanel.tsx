@@ -634,8 +634,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
         <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#ffffff' }}>
           <Tabs value={currentTab} onChange={handleTabChange} aria-label="cost view tabs">
             <Tab label="Overzicht" sx={{ fontSize: '12px' }} />
-            <Tab label="Tabel" sx={{ fontSize: '12px' }} />
-            <Tab label="Grafieken" sx={{ fontSize: '12px' }} />
+            <Tab label="Kostenverdeling" sx={{ fontSize: '12px' }} />
+            <Tab label="Kostenbereik" sx={{ fontSize: '12px' }} />
           </Tabs>
         </Box>
 
@@ -679,8 +679,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               </Typography>
             </Box>
           )}
-
-          {/* Tab 0: Overview - Table (2/3) + Charts (1/3) */}
+          
+          {/* Tab 0: Overview - Table Only */}
           {currentTab === 0 && (
             <>
               {/* Table Panel - Takes 2/3 */}
@@ -695,11 +695,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             p: 2
           }}>
             {/* Section Header */}
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: 2, 
-                fontWeight: 600, 
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                fontWeight: 600,
                 color: "#1976d2",
                 fontSize: "14px",
                 display: "flex",
@@ -709,7 +709,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             >
               📊 Kostenoverzicht
             </Typography>
-            
+
             <Box sx={{ flexGrow: 1, overflow: "auto" }}>
               <CostTable />
             </Box>
@@ -845,8 +845,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             </Box>
           )}
 
-          {/* Tab 2: Charts Only */}
-          {currentTab === 2 && (
+          {/* Tab 1: Kostenverdeling (Pie Chart) */}
+          {currentTab === 1 && (
             <Box sx={{
               flex: "1",
               display: "flex",
@@ -895,15 +895,13 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 </Box>
               </Box>
 
-              {/* Stacked Bar Chart Section - Takes 30% */}
+          {/* Tab 2: Kostenbereik (Bar Chart) */}
               <Box sx={{
-                flex: "1 1 30%",
+                flex: "1%",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
-                backgroundColor: "#f9f9f9",
-                borderRadius: "8px",
-                p: 2
+                minWidth: 0
               }}>
                 <Typography
                   variant="h6"

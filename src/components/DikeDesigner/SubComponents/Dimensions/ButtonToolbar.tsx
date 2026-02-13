@@ -15,7 +15,7 @@ import MenuItem from "@vertigis/web/ui/MenuItem";
 
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile, setDwpLocation, createCrossSection } from "../../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, setDwpLocation, createCrossSection, createFreeCrossSection } from "../../Functions/DesignFunctions";
 
 interface ButtonToolbarProps {
   model: any;
@@ -75,8 +75,8 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       model.graphicsLayerPoint.removeAll();
       model.graphicsLayerCrossSection.removeAll();
       
-      // Start drawing a free cross section line
-      createCrossSection(model);
+      // Create free cross section (user draws any line they want)
+      createFreeCrossSection(model);
     } else if (option === 'lengte_aanpassen') {
       handleToggleLengthSlider();
     }

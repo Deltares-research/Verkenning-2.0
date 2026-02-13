@@ -573,6 +573,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.graphicsLayerRuimtebeslag3d.removeAll();
+        model.graphicsLayerUitvoeringszone.removeAll();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;

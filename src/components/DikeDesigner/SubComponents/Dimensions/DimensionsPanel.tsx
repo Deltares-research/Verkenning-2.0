@@ -282,7 +282,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     variant="contained"
                     color="primary"
                     startIcon={<InsightsIcon />}
-                    onClick={handleCreateCrossSection()}
+                    onClick={() => handleCreateCrossSection()()}
                     fullWidth
                     sx={buttonWithIconStyle}
                 >
