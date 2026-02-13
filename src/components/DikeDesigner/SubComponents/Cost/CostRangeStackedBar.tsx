@@ -43,6 +43,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             am5xy.ValueAxis.new(root, {
                 min: 0,
                 strictMinMax: true,
+                extraMin: 0,
                 renderer: am5xy.AxisRendererY.new(root, {}),
             })
         );
@@ -74,15 +75,11 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
 
         xAxis.data.setAll(data);
 
-        // Colors
-        const colors = {
-            bouwKosten: am5.color(0x00cc44),         // green
-            engineering: am5.color(0xff0000),        // red
-            overigeBijkomende: am5.color(0xffa500),  // orange
-            vastgoed: am5.color(0x800080),           // purple
-        };
+        // Use the same default palette as the PieChart (amCharts ColorSet).
+        const colorSet = am5.ColorSet.new(root, {});
 
-        function makeSeries(field: string, name: string, color: am5.Color) {
+        function makeSeries(field: string, name: string) {
+            const color = colorSet.next();
             const series = chart.series.push(
                 am5xy.ColumnSeries.new(root, {
                     name,
@@ -105,10 +102,10 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             return series;
         }
 
-        makeSeries("bouwKosten", "Bouwkosten grondwerk", colors.bouwKosten);
-        makeSeries("engineering", "Engineeringkosten", colors.engineering);
-        makeSeries("overigeBijkomende", "Overige bijkomende kosten", colors.overigeBijkomende);
-        makeSeries("vastgoed", "Vastgoedkosten", colors.vastgoed);
+        makeSeries("bouwKosten", "Bouwkosten grondwerk");
+        makeSeries("engineering", "Engineeringkosten");
+        makeSeries("overigeBijkomende", "Overige bijkomende kosten");
+        makeSeries("vastgoed", "Vastgoedkosten");
 
         chart.children.push(
             am5.Legend.new(root, {

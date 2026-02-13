@@ -247,7 +247,7 @@ const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
           : (item && Number.isFinite(quantity)
               ? `${Math.round(quantity).toLocaleString("nl-NL", {
                   maximumFractionDigits: 0,
-                })} ${unit}`
+                })}${unit ? ` [${unit}]` : ""}`
               : "-")}
       </TableCell>
 
