@@ -113,18 +113,6 @@ export const handleCostCalculation = async (
         };
         console.log("API cost payload:", payload);
 
-        // // Download payload as JSON file
-        // const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        // const url = URL.createObjectURL(blob);
-        // const a = document.createElement('a');
-        // a.href = url;
-        // a.download = `cost-payload-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-        // document.body.appendChild(a);
-        // a.click();
-        // document.body.removeChild(a);
-        // URL.revokeObjectURL(url);
-
-
         try {
             
             const response = await fetch(`${model.apiUrl}cost_calculation`, {
@@ -155,30 +143,18 @@ export const handleCostCalculation = async (
             const otherCosts = result["breakdown"]["Overige bijkomende kosten"];
             const realEstateCosts = result["breakdown"]["Vastgoedkosten"];
             const risicoreservering = result["breakdown"]["Risicoreservering"];
+            
             model.costModel.risicoreservering = Number(risicoreservering['value'] ?? 0);
-
-
-            console.log("Updated model costModel:", model.costModel.risicoreservering);
-
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(directeBouwkosten["Directe kosten constructies"]);
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
             model.costModel.indirectConstructionCosts.fromApi(indirecteBouwkosten);
-            console.log("0", model.costModel.constructionCost);
-
             model.costModel.constructionCost.fromApi(result["breakdown"]["Bouwkosten"]);
-
-            console.log("1", model.costModel.constructionCost);
             model.costModel.engineeringCosts.fromApi(engineeringCosts);
-            console.log("2", 2);
-
-
             model.costModel.otherCosts.fromApi(otherCosts);
-            console.log("3", 3);
             model.costModel.realEstateCosts.fromApi(realEstateCosts);
-            console.log("4", 4);
 
-            
+    
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
