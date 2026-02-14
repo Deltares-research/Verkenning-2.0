@@ -12,6 +12,11 @@ import type { LayerGroupConfig } from "./NestedLayerListModel";
 import LayerConfigEditor from "./LayerConfigEditor";
 import "./NestedLayerList.css";
 
+const INDENT = 20;
+const BASE_PAD = 8;
+
+const layoutStyle = { width: "100%", height: "100%", overflow: "hidden" };
+
 function groupMatchesFilter(group: LayerGroupConfig, filter: string): boolean {
     const lowerFilter = filter.toLowerCase();
     if (group.label.toLowerCase().includes(lowerFilter)) return true;
@@ -39,7 +44,6 @@ const LayerMenu = ({ layer, model, anchorEl, onClose, onUpdate }: LayerMenuProps
     const opacity = (layer as any).opacity ?? 1;
     const transparencyPercent = Math.round((1 - opacity) * 100);
 
-    // Close on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (
@@ -54,7 +58,6 @@ const LayerMenu = ({ layer, model, anchorEl, onClose, onUpdate }: LayerMenuProps
         return () => document.removeEventListener("mousedown", handler);
     }, [anchorEl, onClose]);
 
-    // Position below the anchor
     const rect = anchorEl.getBoundingClientRect();
 
     return (
@@ -63,7 +66,6 @@ const LayerMenu = ({ layer, model, anchorEl, onClose, onUpdate }: LayerMenuProps
             className="nested-layer-list-popover"
             style={{ top: rect.bottom + 4, right: window.innerWidth - rect.right }}
         >
-            {/* Transparency slider */}
             <div className="nested-layer-list-popover-section">
                 <div className="nested-layer-list-popover-header">Layer Transparency</div>
                 <div className="nested-layer-list-popover-slider-row">
@@ -95,7 +97,6 @@ const LayerMenu = ({ layer, model, anchorEl, onClose, onUpdate }: LayerMenuProps
 
             <div className="nested-layer-list-popover-divider" />
 
-            {/* Zoom to layer */}
             <button
                 className="nested-layer-list-popover-action"
                 onClick={() => {
@@ -129,7 +130,7 @@ const LayerItem = ({ title, layer, depth, model, onVisibilityChange }: LayerItem
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     return (
-        <div className="nested-layer-list-row" style={{ paddingLeft: depth * 24 }}>
+        <div className="nested-layer-list-row" style={{ paddingLeft: BASE_PAD + depth * INDENT }}>
             <div className="nested-layer-list-expand-spacer" />
             <Checkbox
                 checked={layer?.visible ?? false}
@@ -148,25 +149,22 @@ const LayerItem = ({ title, layer, depth, model, onVisibilityChange }: LayerItem
             >
                 {title}
             </span>
-            {layer && (
-                <>
-                    <button
-                        className="nested-layer-list-menu-btn"
-                        title="Options"
-                        onClick={(e) => setMenuAnchor(menuAnchor ? null : e.currentTarget)}
-                    >
-                        &#8942;
-                    </button>
-                    {menuAnchor && (
-                        <LayerMenu
-                            layer={layer}
-                            model={model}
-                            anchorEl={menuAnchor}
-                            onClose={() => setMenuAnchor(null)}
-                            onUpdate={onVisibilityChange}
-                        />
-                    )}
-                </>
+            <button
+                className={`nested-layer-list-menu-btn${!layer ? " nested-layer-list-menu-btn-hidden" : ""}`}
+                title="Options"
+                disabled={!layer}
+                onClick={(e) => layer && setMenuAnchor(menuAnchor ? null : e.currentTarget)}
+            >
+                &#8942;
+            </button>
+            {layer && menuAnchor && (
+                <LayerMenu
+                    layer={layer}
+                    model={model}
+                    anchorEl={menuAnchor}
+                    onClose={() => setMenuAnchor(null)}
+                    onUpdate={onVisibilityChange}
+                />
             )}
         </div>
     );
@@ -195,7 +193,7 @@ const GroupItem = ({ group, model, depth, filter, onVisibilityChange }: GroupIte
 
     return (
         <>
-            <div className="nested-layer-list-row" style={{ paddingLeft: depth * 24 }}>
+            <div className="nested-layer-list-row" style={{ paddingLeft: BASE_PAD + depth * INDENT }}>
                 <button
                     className="nested-layer-list-expand-btn"
                     onClick={() => setExpanded(!expanded)}
@@ -314,7 +312,7 @@ const NestedLayerList = (
 
     const hasResults = useMemo(() => {
         if (!filter) return true;
-        return model.layerConfig.some((g) => groupMatchesFilter(g, filter));
+        return (model.layerConfig ?? []).some((g) => groupMatchesFilter(g, filter));
     }, [filter, model.layerConfig]);
 
     const handleEditorSave = useCallback((config: LayerGroupConfig[]) => {
@@ -325,7 +323,7 @@ const NestedLayerList = (
 
     if (!model.initialized) {
         return (
-            <LayoutElement {...props} style={{ width: "100%" }}>
+            <LayoutElement {...props} style={layoutStyle}>
                 <div className="nested-layer-list-root">
                     <div className="nested-layer-list-empty">Loading layers...</div>
                 </div>
@@ -335,7 +333,7 @@ const NestedLayerList = (
 
     if (editorOpen) {
         return (
-            <LayoutElement {...props} style={{ width: "100%" }}>
+            <LayoutElement {...props} style={layoutStyle}>
                 <LayerConfigEditor
                     model={model}
                     onSave={handleEditorSave}
@@ -346,7 +344,7 @@ const NestedLayerList = (
     }
 
     return (
-        <LayoutElement {...props} style={{ width: "100%" }}>
+        <LayoutElement {...props} style={layoutStyle}>
             <div className="nested-layer-list-root">
                 <div className="nested-layer-list-filter">
                     <input
@@ -379,7 +377,7 @@ const NestedLayerList = (
                 <div className="nested-layer-list-content">
                     {hasResults ? (
                         <LayerGroupList
-                            groups={model.layerConfig}
+                            groups={model.layerConfig ?? []}
                             model={model}
                             depth={0}
                             filter={filter}

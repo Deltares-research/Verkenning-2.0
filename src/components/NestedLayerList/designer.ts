@@ -45,7 +45,7 @@ export const getSettings: GetDesignerSettingsCallback<NestedLayerListModel, Sett
     const { model } = args;
     return {
         ...await getComponentModelDesignerSettings(args),
-        layerConfigJson: JSON.stringify(model.layerConfig, null, 2),
+        layerConfigJson: JSON.stringify(model.layerConfig ?? [], null, 2),
     };
 };
 

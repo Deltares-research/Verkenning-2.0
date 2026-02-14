@@ -318,7 +318,7 @@ interface LayerConfigEditorProps {
 }
 
 const LayerConfigEditor = ({ model, onSave, onCancel }: LayerConfigEditorProps): ReactElement => {
-    const [tree, setTree] = useState<TreeNode[]>(() => configToTree(model.layerConfig));
+    const [tree, setTree] = useState<TreeNode[]>(() => configToTree(model.layerConfig ?? []));
     const [dragId, setDragId] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ id: string; position: "before" | "inside" } | null>(null);
     const [availFilter, setAvailFilter] = useState("");

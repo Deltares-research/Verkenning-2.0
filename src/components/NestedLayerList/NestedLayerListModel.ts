@@ -24,7 +24,7 @@ export default class NestedLayerListModel extends ComponentModelBase<NestedLayer
     map: any;
     view: any;
 
-    layerConfig: LayerGroupConfig[] = [];
+    layerConfig: NestedLayerListModelProperties["layerConfig"];
     resolvedLayers: Map<string, Layer> = new Map();
     initialized = false;
 
@@ -56,7 +56,7 @@ export default class NestedLayerListModel extends ComponentModelBase<NestedLayer
                 }
             }
         };
-        resolve(this.layerConfig);
+        resolve(this.layerConfig ?? []);
     }
 
     collectLayerTitles(group: LayerGroupConfig): string[] {

@@ -1,8 +1,10 @@
+/* Root fills the entire parent container */
 .nested-layer-list-root {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -10,9 +12,9 @@
 .nested-layer-list-filter {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
-    gap: 4px;
+    padding: 8px 8px 8px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    gap: 2px;
     flex-shrink: 0;
 }
 
@@ -29,23 +31,29 @@
 }
 
 .nested-layer-list-filter-input::placeholder {
-    color: var(--text-secondary, rgba(0, 0, 0, 0.54));
+    color: rgba(0, 0, 0, 0.45);
 }
 
 .nested-layer-list-clear-btn {
     cursor: pointer;
-    opacity: 0.54;
-    font-size: 18px;
+    opacity: 0.45;
+    font-size: 16px;
     display: flex;
     align-items: center;
-    padding: 2px;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     border: none;
     background: none;
+    border-radius: 50%;
     color: inherit;
+    transition: opacity 0.15s, background 0.15s;
 }
 
 .nested-layer-list-clear-btn:hover {
-    opacity: 0.87;
+    opacity: 0.75;
+    background: rgba(0, 0, 0, 0.06);
 }
 
 /* Scrollable layer tree */
@@ -55,26 +63,25 @@
     overflow-x: hidden;
 }
 
-/* Row styling */
+/* Row styling — every row stretches full width */
 .nested-layer-list-row {
     display: flex;
     align-items: center;
-    min-height: 48px;
-    padding: 4px 8px 4px 0;
-    border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
+    min-height: 44px;
+    padding: 2px 12px 2px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     cursor: default;
-    width: 100%;
     box-sizing: border-box;
 }
 
 .nested-layer-list-row:hover {
-    background: var(--hover-bg, rgba(0, 0, 0, 0.04));
+    background: rgba(0, 0, 0, 0.035);
 }
 
 /* Expand/collapse button */
 .nested-layer-list-expand-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -93,18 +100,20 @@
 }
 
 .nested-layer-list-arrow {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1;
     transition: transform 0.2s ease;
     display: inline-block;
+    opacity: 0.6;
 }
 
 .nested-layer-list-arrow.expanded {
     transform: rotate(90deg);
 }
 
+/* Spacer for leaf layers — same width as expand button */
 .nested-layer-list-expand-spacer {
-    width: 32px;
+    width: 28px;
     flex-shrink: 0;
 }
 
@@ -117,17 +126,17 @@
     text-overflow: ellipsis;
     font-size: 14px;
     line-height: 1.4;
-    padding-right: 4px;
+    padding: 0 4px;
 }
 
 .nested-layer-list-label-group {
     font-weight: 600;
 }
 
-/* Three-dot menu button */
+/* Three-dot menu button — always present for alignment */
 .nested-layer-list-menu-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -136,7 +145,7 @@
     border: none;
     background: none;
     color: inherit;
-    opacity: 0.54;
+    opacity: 0.4;
     padding: 0;
     border-radius: 50%;
     font-size: 18px;
@@ -145,11 +154,12 @@
 
 .nested-layer-list-menu-btn:hover {
     background: rgba(0, 0, 0, 0.08);
-    opacity: 0.87;
+    opacity: 0.8;
 }
 
 .nested-layer-list-menu-btn-hidden {
-    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ── Popover menu ──────────────────────────────────── */
@@ -198,7 +208,7 @@
 }
 
 .nested-layer-list-popover-input:focus {
-    border-color: var(--primary-color, #1976d2);
+    border-color: #1976d2;
 }
 
 /* Hide number input spinner */
@@ -257,8 +267,8 @@
 
 /* Gear/settings button in filter bar */
 .nested-layer-list-gear-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -267,7 +277,7 @@
     border: none;
     background: none;
     color: inherit;
-    opacity: 0.54;
+    opacity: 0.45;
     padding: 0;
     border-radius: 50%;
     transition: background 0.15s, opacity 0.15s;
@@ -275,13 +285,13 @@
 
 .nested-layer-list-gear-btn:hover {
     background: rgba(0, 0, 0, 0.08);
-    opacity: 0.87;
+    opacity: 0.8;
 }
 
 /* No results */
 .nested-layer-list-empty {
-    padding: 16px;
+    padding: 24px 16px;
     text-align: center;
-    opacity: 0.54;
+    opacity: 0.45;
     font-size: 14px;
 }
