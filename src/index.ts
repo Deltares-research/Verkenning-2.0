@@ -4,6 +4,7 @@ import type { GetDesignerSettingsSchemaArgs } from "@vertigis/web/designer";
 import { signIn } from "./auth";
 import DikeDesigner, { DikeDesignerModel } from "./components/DikeDesigner";
 import { registerElevationExaggeratorComponent }  from "./components/ElevationExaggarator"
+import { registerNestedLayerListComponent } from "./components/NestedLayerList"
 
 // Suppress harmless ResizeObserver warnings
 const resizeObserverError = window.console.error;
@@ -55,4 +56,5 @@ export default function (registry: LibraryRegistry): void {
     });
 
     registerElevationExaggeratorComponent(registry);
+    registerNestedLayerListComponent(registry);
 }

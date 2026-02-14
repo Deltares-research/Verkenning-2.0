@@ -44,10 +44,46 @@
             "$type": "stack"
         },
         {
+            "id": "nested-layer-list-model-1",
+            "$type": "nested-layer-list-model",
+            "layerConfig": [
+                {
+                    "label": "Ondergrond",
+                    "layers": [
+                        "Luchtfoto",
+                        "Topografie"
+                    ]
+                },
+                {
+                    "label": "Dijkgegevens",
+                    "expanded": false,
+                    "layers": [
+                        "Dijkvakken"
+                    ],
+                    "groups": [
+                        {
+                            "label": "Meetgegevens",
+                            "layers": [
+                                "DKK -perceel"
+                            ],
+                            "groups": [
+                                {
+                                    "label": "BGT",
+                                    "layers": [
+                                        "BGT - wegdeel"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "id": "dike-designer-model-1",
             "$type": "dike-designer-model",
             "apiKey": "GB0joLKaSshreEigJmUqYb9fdnF64RxC",
-            "apiUrl": "https://deltares-api-demo-3dz9p.ondigitalocean.app/api/", 
+            "apiUrl": "https://deltares-api-demo-3dz9p.ondigitalocean.app/api/",
             "natuurbeheerplanLayerName": "Natuurbeheerplan 2026 Gelderland",
             "percelenWaterschapLayerName": "BRK Kadaster eigendom WSRL",
             "pandenBufferDistance": 10,

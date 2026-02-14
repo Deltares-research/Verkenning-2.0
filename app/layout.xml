@@ -11,7 +11,7 @@
         <stack resizable="true" id="stack-3" config="stack-config-3" width="26">
             <tabs xmlns="https://geocortex.com/layout/web/v1" id="tabs-db811610" config="tabs-config-1" slot="top-left" width="26">
                 <stack xmlns="https://geocortex.com/layout/v1" id="stack-2" config="stack-config-2">
-                    <layer-list xmlns="https://geocortex.com/layout/v1" id="layers-b780758f" models="#map-primary" config="layer-config-1"/>
+                    <vertigis-wsrl:nested-layer-list id="nested-layer-list-1" config="nested-layer-list-model-1" models="#map-primary"/>
                 </stack>
                 <stack xmlns="https://geocortex.com/layout/v1" id="stack-1" config="stack-config-1">
                     <legend xmlns="https://geocortex.com/layout/v1" id="legend-b780758f" models="#map-primary" config="legend-config-1"/>
