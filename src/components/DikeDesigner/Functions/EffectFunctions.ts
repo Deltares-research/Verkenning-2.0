@@ -15,6 +15,7 @@ import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 function getQueryLayer(model: any, mappingKey: string, fallback: string): string {
     const mapping = (model.effectLayerMappings as any)?.[mappingKey];
     if (typeof mapping === 'object' && mapping?.query) {
+        console.log(`Using query layer for ${mappingKey}:`, mapping.query);
         return mapping.query;
     }
     return fallback;
@@ -396,6 +397,33 @@ export function getLineLength(profileLine: any): number {
 
 export async function handleEffectAnalysis(model) {
     model.loading = true;
+    
+    // Initialize all values to 0 or empty arrays
+    model.intersectingPanden = [];
+    model.intersectingPandenArea = 0;
+    model.intersectingBomen = [];
+    model.intersectingPercelen = [];
+    model.intersectingPercelenArea = 0;
+    model.intersectingWegdelen2dRuimtebeslag = 0;
+    model.intersectingInritten2dRuimtebeslag = 0;
+    model.intersectingInritten2dRuimtebeslagCount = [];
+    model.intersectingNatura2000 = 0;
+    model.intersectingGNN = 0;
+    model.intersectingBeheertypen = [];
+    model.intersectingBeheertypeArea = 0;
+    model.intersectingPandenBuffer = [];
+    model.intersectingPandenBufferArea = 0;
+    model.intersectingErven = [];
+    model.intersectingErvenArea = 0;
+    model.uitvoeringszoneWegoppervlak = 0;
+    model.uitvoeringszonePanden = [];
+    model.uitvoeringszonePandenArea = 0;
+    model.uitvoeringszonePercelen = [];
+    model.uitvoeringszonePercelenArea = 0;
+    model.uitvoeringszoneNatura2000 = 0;
+    model.uitvoeringszoneGNN = 0;
+    model.uitvoeringszoneBeheertypeArea = 0;
+    
     await getIntersectingFeatures(model, getQueryLayer(model, "bag_panden", "BAG 2D")).then((result) => {
         model.intersectingPanden = result;
         console.log("Intersecting panden:", result);
@@ -470,7 +498,8 @@ export async function handleEffectAnalysis(model) {
         });
 
     await getIntersectingArea2dRuimtebeslag(model, getQueryLayer(model, "bgt_wegdeel", "BGT - wegdeel")).then((result) => {
-        console.log("Total 2D intersecting area:", result);
+        model.intersectingWegdelen2dRuimtebeslag = result;
+        console.log("Total 2D intersecting area bgt wegdeel:", result);
     }).catch((error) => {
         console.error("Error fetching intersecting area:", error);
     });

@@ -543,6 +543,13 @@ const DikeDesigner = (
         setConstructionChartVersion((prev) => prev + 1);
     };
 
+    const handleClearConstructionWithRecalculate = () => {
+        // Reset calculation status when construction is cleared
+        model.effectsCalculated = false;
+        model.costsCalculated = false;
+        setConstructionChartVersion((prev) => prev + 1);
+    };
+
     React.useEffect(() => {
         // Show home dialog when designName becomes empty, close it when filled
         if (!model.designName && model.mapInitialized) {
@@ -566,6 +573,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.graphicsLayerRuimtebeslag3d.removeAll();
+        model.graphicsLayerUitvoeringszone.removeAll();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;
@@ -890,132 +898,135 @@ const DikeDesigner = (
                     {/* Sidebar Action Buttons */}
                     <Stack spacing={sidebarExpanded ? 1.5 : 1}>
                         {/* Load Button */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center"
-                            }}
-                            title={!sidebarExpanded ? "Laden" : ""}
-                        >
-                            <Button
-                                variant="outlined"
-                                startIcon={<UploadIcon />}
-                                onClick={handleFileMenuLoad}
-                                fullWidth={sidebarExpanded}
-                                size="small"
+                        <Tooltip title="Lokaal bestand laden" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                            <Box
                                 sx={{
-                                    backgroundColor: "#fff",
-                                    color: "#0078d4",
-                                    textTransform: "none",
-                                    fontSize: sidebarExpanded ? "13px" : "0px",
-                                    fontWeight: 600,
-                                    boxShadow: "none",
-                                    transition: "all 0.2s ease",
-                                    borderColor: "#e5e7eb",
-                                    borderLeft: "3px solid #0078d4",
-                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
-                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
-                                    minWidth: sidebarExpanded ? "auto" : "44px",
-                                    width: sidebarExpanded ? "100%" : "44px",
-                                    height: "44px",
-                                    "&:hover": {
-                                        backgroundColor: "#f5f7fa",
-                                        boxShadow: "none",
-                                        borderColor: "#0078d4",
-                                    }
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
                                 }}
                             >
-                                {sidebarExpanded ? "Laden" : ""}
-                            </Button>
-                        </Box>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<UploadIcon />}
+                                    onClick={handleFileMenuLoad}
+                                    fullWidth={sidebarExpanded}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: "#fff",
+                                        color: "#0078d4",
+                                        textTransform: "none",
+                                        fontSize: sidebarExpanded ? "13px" : "0px",
+                                        fontWeight: 600,
+                                        boxShadow: "none",
+                                        transition: "all 0.2s ease",
+                                        borderColor: "#e5e7eb",
+                                        borderLeft: "3px solid #0078d4",
+                                        justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                        paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                        minWidth: sidebarExpanded ? "auto" : "44px",
+                                        width: sidebarExpanded ? "100%" : "44px",
+                                        height: "44px",
+                                        "&:hover": {
+                                            backgroundColor: "#f5f7fa",
+                                            boxShadow: "none",
+                                            borderColor: "#0078d4",
+                                        }
+                                    }}
+                                >
+                                    {sidebarExpanded ? "Laden" : ""}
+                                </Button>
+                            </Box>
+                        </Tooltip>
 
                         {/* Save Button */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center"
-                            }}
-                            title={!sidebarExpanded ? "Opslaan" : ""}
-                        >
-                            <Button
-                                variant="outlined"
-                                startIcon={<SaveIcon />}
-                                onClick={handleFileMenuSave}
-                                disabled={!designName}
-                                fullWidth={sidebarExpanded}
-                                size="small"
+                        <Tooltip title="Project lokaal opslaan" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                            <Box
                                 sx={{
-                                    backgroundColor: "#fff",
-                                    color: designName ? "#0078d4" : "#ccc",
-                                    textTransform: "none",
-                                    fontSize: sidebarExpanded ? "13px" : "0px",
-                                    fontWeight: 600,
-                                    boxShadow: "none",
-                                    transition: "all 0.2s ease",
-                                    borderColor: designName ? "#e5e7eb" : "#f0f0f0",
-                                    borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
-                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
-                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
-                                    minWidth: sidebarExpanded ? "auto" : "44px",
-                                    width: sidebarExpanded ? "100%" : "44px",
-                                    height: "44px",
-                                    "&:hover": designName ? {
-                                        backgroundColor: "#f5f7fa",
-                                        boxShadow: "none",
-                                        borderColor: "#0078d4",
-                                    } : {},
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
                                 }}
                             >
-                                {sidebarExpanded ? "Opslaan" : ""}
-                            </Button>
-                        </Box>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<SaveIcon />}
+                                    onClick={handleFileMenuSave}
+                                    disabled={!designName}
+                                    fullWidth={sidebarExpanded}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: "#fff",
+                                        color: designName ? "#0078d4" : "#ccc",
+                                        textTransform: "none",
+                                        fontSize: sidebarExpanded ? "13px" : "0px",
+                                        fontWeight: 600,
+                                        boxShadow: "none",
+                                        transition: "all 0.2s ease",
+                                        borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                        borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                        justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                        paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                        minWidth: sidebarExpanded ? "auto" : "44px",
+                                        width: sidebarExpanded ? "100%" : "44px",
+                                        height: "44px",
+                                        "&:hover": designName ? {
+                                            backgroundColor: "#f5f7fa",
+                                            boxShadow: "none",
+                                            borderColor: "#0078d4",
+                                        } : {},
+                                    }}
+                                >
+                                    {sidebarExpanded ? "Opslaan" : ""}
+                                </Button>
+                            </Box>
+                        </Tooltip>
 
                         {/* Change Title Button */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center"
-                            }}
-                            title={!sidebarExpanded ? "Titel wijzigen" : ""}
-                        >
-                            <Button
-                                variant="outlined"
-                                startIcon={<EditIcon />}
-                                onClick={() => {
-                                    setDesignNameDialogMode("edit");
-                                    setDesignNameDialogOpen(true);
-                                }}
-                                disabled={!designName}
-                                fullWidth={sidebarExpanded}
-                                size="small"
+                        <Tooltip title="Designnaam wijzigen" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                            <Box
                                 sx={{
-                                    backgroundColor: "#fff",
-                                    color: designName ? "#0078d4" : "#ccc",
-                                    textTransform: "none",
-                                    fontSize: sidebarExpanded ? "13px" : "0px",
-                                    fontWeight: 600,
-                                    boxShadow: "none",
-                                    transition: "all 0.2s ease",
-                                    borderColor: designName ? "#e5e7eb" : "#f0f0f0",
-                                    borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
-                                    justifyContent: sidebarExpanded ? "flex-start" : "center",
-                                    paddingLeft: sidebarExpanded ? 1.5 : 0.5,
-                                    minWidth: sidebarExpanded ? "auto" : "44px",
-                                    width: sidebarExpanded ? "100%" : "44px",
-                                    height: "44px",
-                                    "&:hover": designName ? {
-                                        backgroundColor: "#f5f7fa",
-                                        boxShadow: "none",
-                                        borderColor: "#0078d4",
-                                    } : {},
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
                                 }}
                             >
-                                {sidebarExpanded ? "Titel wijzigen" : ""}
-                            </Button>
-                        </Box>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<EditIcon />}
+                                    onClick={() => {
+                                        setDesignNameDialogMode("edit");
+                                        setDesignNameDialogOpen(true);
+                                    }}
+                                    disabled={!designName}
+                                    fullWidth={sidebarExpanded}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: "#fff",
+                                        color: designName ? "#0078d4" : "#ccc",
+                                        textTransform: "none",
+                                        fontSize: sidebarExpanded ? "13px" : "0px",
+                                        fontWeight: 600,
+                                        boxShadow: "none",
+                                        transition: "all 0.2s ease",
+                                        borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                        borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                        justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                        paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                        minWidth: sidebarExpanded ? "auto" : "44px",
+                                        width: sidebarExpanded ? "100%" : "44px",
+                                        height: "44px",
+                                        "&:hover": designName ? {
+                                            backgroundColor: "#f5f7fa",
+                                            boxShadow: "none",
+                                            borderColor: "#0078d4",
+                                        } : {},
+                                    }}
+                                >
+                                    {sidebarExpanded ? "Titel wijzigen" : ""}
+                                </Button>
+                            </Box>
+                        </Tooltip>
                     </Stack>
 
                     {/* Global Status Indicator */}
@@ -1269,7 +1280,7 @@ const DikeDesigner = (
                             />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={1}>
-                            <ConstructionPanel model={model} onCreateConstruction={handleCreateConstructionWithRecalculate} />
+                            <ConstructionPanel model={model} onCreateConstruction={handleCreateConstructionWithRecalculate} onClearConstruction={handleClearConstructionWithRecalculate} />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={2}>
                             <EffectAnalysisPanel model={model} />

@@ -48,6 +48,71 @@ interface CreatePolygonBetweenDistancesArgs {
     polygonName: string;
 }
 
+export async function projectFreeLintPointsToReferenceLine(model) {
+    // Get the reference line and free line
+    const referenceLine = model.graphicsLayerLine.graphics.items[0]?.geometry as Polyline;
+
+    if (!referenceLine || !model.chartDataElevation) {
+        console.warn("Missing reference line or elevation data");
+        return;
+    }
+
+    console.log("Projecting free line points to reference line");
+
+    // Project both lines to RD New for accurate calculations
+    await projectOperator.load();
+    const rdNewSpatialRef = new SpatialReference({ wkid: 28992 });
+    
+    const refLineRD = projectOperator.execute(referenceLine, rdNewSpatialRef) as Polyline;
+
+    // Get reference line direction vector (from start to end)
+    const refPath = refLineRD.paths[0];
+    const refLineStart = new Point({
+        x: refPath[0][0],
+        y: refPath[0][1],
+        spatialReference: rdNewSpatialRef
+    });
+
+    const refLineEnd = new Point({
+        x: refPath[refPath.length - 1][0],
+        y: refPath[refPath.length - 1][1],
+        spatialReference: rdNewSpatialRef
+    });
+
+    const refVector = [refLineEnd.x - refLineStart.x, refLineEnd.y - refLineStart.y];
+    const refLength = Math.sqrt(refVector[0] ** 2 + refVector[1] ** 2);
+    const refUnitVector = [refVector[0] / refLength, refVector[1] / refLength];
+    
+    // Perpendicular unit vector (rotated 90 degrees)
+    const perpUnitVector = [-refUnitVector[1], refUnitVector[0]];
+
+    // Update each point's afstand value based on perpendicular distance to reference line
+    model.chartDataElevation = model.chartDataElevation.map((point) => {
+        const pointGeom = new Point({
+            x: point.x,
+            y: point.y,
+            spatialReference: referenceLine.spatialReference
+        });
+
+        const pointRD = projectOperator.execute(pointGeom, rdNewSpatialRef) as Point;
+
+        // Vector from reference line start to this point
+        const toPointVector = [pointRD.x - refLineStart.x, pointRD.y - refLineStart.y];
+
+        // Project onto perpendicular vector to get signed distance
+        const perpDist = perpUnitVector[0] * toPointVector[0] + perpUnitVector[1] * toPointVector[1];
+
+        console.log("Point:", point, "Perpendicular distance:", perpDist);
+
+        return {
+            ...point,
+            afstand: perpDist // Use perpendicular distance as afstand
+        };
+    });
+
+    console.log("Updated chart data with projected points:", model.chartDataElevation);
+}
+
 export async function createDesigns(model): Promise<void> {
     let basePath: Polyline | undefined = undefined;
     let chartData: any[] = [];
@@ -865,9 +930,6 @@ export async function createCrossSection(model) {
                 }));
 
 
-                model.crossSectionPanelVisible = true;
-
-
                 console.log("Elevation query result:", elevationResult);
 
                 if (model.meshes.length > 0) {
@@ -898,11 +960,13 @@ export async function createCrossSection(model) {
                     console.log("Mesh elevation result:", meshElevationResult);
                     model.loading = false;
                     model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
+                    model.crossSectionPanelVisible = true;
 
                 } 
                 else{
                     model.loading = false;
                     model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
+                    model.crossSectionPanelVisible = true;
                     console.log("No mesh available for elevation sampling.");
                 }
             });
@@ -912,6 +976,70 @@ export async function createCrossSection(model) {
         });
     }).catch((error) => {
         console.error("Error during cross section drawing:", error);
+    });
+}
+
+export async function createFreeCrossSection(model) {
+    model.messages.commands.ui.displayNotification.execute({
+        message: `Teken de dwarsdoorsnede door twee punten op de kaart aan te klikken.`,
+        title: "Vrije Dwarsdoorsnede Tekenen",
+        disableTimeouts: true
+    });
+
+    model.startDrawingLine(model.graphicsLayerCrossSection).then(() => {
+        const drawnLine = model.graphicsLayerCrossSection.graphics.items[0].geometry;
+        
+        getPointsOnLine(drawnLine, 0.1).then((offsetLocations) => {
+            console.log(offsetLocations, "Offset locations for free cross section");
+            const sRef = drawnLine.spatialReference;
+            const promises = offsetLocations.map(loc =>
+                getPointAlongLine(drawnLine.paths[0], loc, sRef)
+            );
+
+            model.loading = true;
+            model.messages.commands.ui.displayNotification.execute({
+                message: `Dwarsdoorsnede wordt geladen...`,
+                title: "Dwarsdoorsnede Laden",
+                disableTimeouts: true,
+                id: "crossSectionLoading"
+            });
+
+            Promise.all(promises).then(async pointGraphics => {
+                console.log(pointGraphics, "Point graphics for free cross section");
+                const multipoint = new Multipoint({
+                    hasM: true,
+                    points: pointGraphics.map(g => {
+                        const { x, y } = g.geometry as Point;
+                        const offset = g.attributes?.offset ?? 0;
+                        return [x, y, undefined, offset]; // [x, y, z, m]
+                    }),
+                    spatialReference: drawnLine.spatialReference
+                });
+
+                const elevationResult = await model.elevationLayer.queryElevation(multipoint, { returnSampleInfo: true });
+
+                // Store data in the design chart datasets, not cross-section
+                model.chartDataElevation = elevationResult.geometry.points.map((point, index) => ({
+                    afstand: point[3], // m value
+                    hoogte: point[2],
+                    x: point[0],
+                    y: point[1]
+                }));
+
+                console.log("Free cross section elevation result:", elevationResult);
+
+                // Project the free line points back to the reference line to get correct afstand values
+                await projectFreeLintPointsToReferenceLine(model);
+
+                model.loading = false;
+                model.messages.commands.ui.hideNotification.execute("crossSectionLoading");
+                
+                // Keep design panel visible instead of opening cross-section panel
+                model.designPanelVisible = true;
+            });
+        });
+    }).catch((error) => {
+        console.error("Error during free cross section drawing:", error);
     });
 }
 
