@@ -133,11 +133,11 @@ const LayerItem = ({ title, layer, depth, model, onVisibilityChange }: LayerItem
         <div className="nested-layer-list-row" style={{ paddingLeft: BASE_PAD + depth * INDENT }}>
             <div className="nested-layer-list-expand-spacer" />
             <Checkbox
-                checked={layer?.visible ?? false}
+                checked={model.getLayerIntent(title)}
                 disabled={!layer}
                 onChange={() => {
                     if (layer) {
-                        layer.visible = !layer.visible;
+                        model.toggleLayerIntent(title);
                         onVisibilityChange();
                     }
                 }}
@@ -197,6 +197,14 @@ const GroupItem = ({ group, model, depth, filter, onVisibilityChange }: GroupIte
                         &#9654;
                     </span>
                 </button>
+                <Checkbox
+                    checked={group.visible !== false}
+                    onChange={() => {
+                        model.toggleGroupVisible(group);
+                        onVisibilityChange();
+                    }}
+                    size="small"
+                />
                 <span className="nested-layer-list-label nested-layer-list-label-group">
                     {group.label}
                 </span>
