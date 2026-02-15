@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Box from "@vertigis/web/ui/Box";
 import Typography from "@vertigis/web/ui/Typography";
 import Paper from "@vertigis/web/ui/Paper";
@@ -15,6 +15,9 @@ import TableRow from "@vertigis/web/ui/TableRow";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Tooltip from "@mui/material/Tooltip";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 import type DikeDesignerModel from "../../DikeDesignerModel";
 
@@ -52,6 +55,101 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
         }
         return String(value);
     };
+
+    const [layerVisibility, setLayerVisibility] = useState<{ [key: string]: boolean }>({});
+
+    const toggleLayerVisibility = (layerTitle: string) => {
+        const layer = model.map.allLayers.items.find((l: any) => l.title === layerTitle);
+        if (layer) {
+            const newVisibility = !layer.visible;
+            layer.visible = newVisibility;
+            setLayerVisibility(prev => ({ ...prev, [layerTitle]: newVisibility }));
+        }
+    };
+
+    const getDisplayLayer = (mappingKey: string, fallback: string): string => {
+        const mapping = (model.effectLayerMappings as any)?.[mappingKey];
+        if (typeof mapping === 'object' && mapping?.display) {
+            return mapping.display;
+        }
+        return fallback;
+    };
+
+    // Layer popover menu (position: fixed, same pattern as NestedLayerList)
+    const LayerPopover: React.FC<{ layerTitle: string; anchorEl: HTMLElement; onClose: () => void }> = ({ layerTitle, anchorEl, onClose }) => {
+        const menuRef = useRef<HTMLDivElement>(null);
+        const layer = model.map.allLayers.items.find((l: any) => l.title === layerTitle);
+        const isVisible = layer?.visible ?? false;
+
+        useEffect(() => {
+            const handler = (e: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(e.target as Node) && !anchorEl.contains(e.target as Node)) {
+                    onClose();
+                }
+            };
+            document.addEventListener("mousedown", handler);
+            return () => document.removeEventListener("mousedown", handler);
+        }, [anchorEl, onClose]);
+
+        const rect = anchorEl.getBoundingClientRect();
+
+        return (
+            <div
+                ref={menuRef}
+                style={{
+                    position: "fixed",
+                    top: rect.bottom + 4,
+                    right: window.innerWidth - rect.right,
+                    zIndex: 1300,
+                    background: "#fff",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.08)",
+                    minWidth: 180,
+                    padding: "4px 0",
+                }}
+            >
+                <button
+                    onClick={() => { toggleLayerVisibility(layerTitle); onClose(); }}
+                    style={{
+                        display: "flex", alignItems: "center", gap: 10, width: "100%",
+                        padding: "8px 16px", border: "none", background: "none",
+                        cursor: "pointer", fontFamily: "inherit", fontSize: 13, color: "inherit",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.04)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                >
+                    {isVisible ? <VisibilityOffIcon sx={{ fontSize: 18, opacity: 0.7 }} /> : <VisibilityIcon sx={{ fontSize: 18, opacity: 0.7 }} />}
+                    {isVisible ? "Laag verbergen" : "Laag tonen"}
+                </button>
+            </div>
+        );
+    };
+
+    const LayerMenuButton: React.FC<{ layerTitle: string }> = ({ layerTitle }) => {
+        const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+        return (
+            <>
+                <Tooltip title="Opties" placement="left" slotProps={{ tooltip: { sx: { fontSize: '13px' } } }}>
+                    <button
+                        onClick={(e) => setAnchorEl(anchorEl ? null : e.currentTarget)}
+                        style={{
+                            width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center",
+                            border: "1px solid #1976d2", background: "none", cursor: "pointer",
+                            borderRadius: "50%", fontSize: 14, color: "#1976d2", padding: 0,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(25,118,210,0.08)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                    >
+                        &#8942;
+                    </button>
+                </Tooltip>
+                {anchorEl && <LayerPopover layerTitle={layerTitle} anchorEl={anchorEl} onClose={() => setAnchorEl(null)} />}
+            </>
+        );
+    };
+
+    const btnCellSx = { border: 0, padding: "0 4px", width: 36 } as const;
+    const emptyCellSx = { border: 0, width: 36, padding: 0 } as const;
 
     if (snapshots.length < 2) {
         return (
@@ -208,12 +306,13 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         </TableCell>
                                     );
                                 })}
+                                <TableCell sx={{ width: 36, border: 0, backgroundColor: "#fafafa", padding: 0 }} />
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {/* Design Values */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     Ontwerpwaarden
                                 </TableCell>
                             </TableRow>
@@ -224,6 +323,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.designValues.trajectLength)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Volumeverschil (m³)</TableCell>
@@ -232,6 +332,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.designValues.volumeDifference)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Uitgravingsvolume (m³)</TableCell>
@@ -240,6 +341,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.designValues.excavationVolume)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Opvulvolume (m³)</TableCell>
@@ -248,6 +350,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.designValues.fillVolume)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>2D Oppervlakte (m²)</TableCell>
@@ -256,6 +359,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.designValues.area2d)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>3D Oppervlakte (m²)</TableCell>
@@ -264,11 +368,12 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.designValues.area3d)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
 
                             {/* Constructie */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     Constructie
                                 </TableCell>
                             </TableRow>
@@ -279,6 +384,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.constructions?.structureType || "-"}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Onderkant constructie t.o.v. NAP (m)</TableCell>
@@ -287,6 +393,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.constructions?.depth)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Offset gebruikt</TableCell>
@@ -295,6 +402,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.constructions?.useOffset ? "Ja" : "Nee"}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Offset afstand (m)</TableCell>
@@ -303,6 +411,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.constructions?.useOffset ? formatNumber(s.projectJSON.constructions?.offsetDistance) : "-"}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Offset zijde</TableCell>
@@ -311,11 +420,12 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.constructions?.useOffset ? (s.projectJSON.constructions?.offsetSide === 'left' ? 'Links' : 'Rechts') : "-"}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
 
                             {/* Cost Data */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     Kosten
                                 </TableCell>
                             </TableRow>
@@ -326,6 +436,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.costs.complexity || "-"}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Totale Directe Kosten (€)</TableCell>
@@ -337,6 +448,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         </TableCell>
                                     );
                                 })}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Totale Indirecte Kosten (€)</TableCell>
@@ -348,6 +460,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         </TableCell>
                                     );
                                 })}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9', backgroundColor: "#f9f9f9" }}>
                                 <TableCell sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>Totale Kosten (€)</TableCell>
@@ -360,6 +473,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         </TableCell>
                                     );
                                 })}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Risicoreservering (%)</TableCell>
@@ -368,11 +482,12 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.costs.risicoreservering)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={emptyCellSx} />
                             </TableRow>
 
                             {/* 1. Wonen en leefomgeving */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     1. Wonen en leefomgeving
                                 </TableCell>
                             </TableRow>
@@ -383,6 +498,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.intersectingPanden?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>BAG panden [m²]</TableCell>
@@ -391,6 +507,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingPandenArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Invloedzone BAG panden [aantal]</TableCell>
@@ -399,6 +516,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.intersectingPandenBuffer?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Invloedzone BAG panden [m²]</TableCell>
@@ -407,6 +525,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingPandenBufferArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Percelen [aantal]</TableCell>
@@ -415,6 +534,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.intersectingPercelen?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Percelen [m²]</TableCell>
@@ -423,6 +543,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingPercelenArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Erven [aantal]</TableCell>
@@ -431,6 +552,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.intersectingErven?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle="BGT - onbegroeid terreindeel" /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Erven [m²]</TableCell>
@@ -439,11 +561,12 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingErvenArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle="BGT - onbegroeid terreindeel" /></TableCell>
                             </TableRow>
 
                             {/* 2. Natuur */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     2. Natuur
                                 </TableCell>
                             </TableRow>
@@ -454,6 +577,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingNatura2000)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>GNN [m²]</TableCell>
@@ -462,6 +586,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingGNN)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>NBP beheertype [m²]</TableCell>
@@ -470,6 +595,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingBeheertypeArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Beheertypen [naam]</TableCell>
@@ -478,11 +604,12 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.intersectingBeheertypen?.join(", ") || "-"}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} /></TableCell>
                             </TableRow>
 
                             {/* 3. Verkeer */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     3. Verkeer
                                 </TableCell>
                             </TableRow>
@@ -493,6 +620,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingWegdelen2dRuimtebeslag)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>BGT afritten [m²]</TableCell>
@@ -501,6 +629,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.intersectingInritten2dRuimtebeslag)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>BGT afritten [aantal]</TableCell>
@@ -509,11 +638,12 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.intersectingInritten2dRuimtebeslagCount?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} /></TableCell>
                             </TableRow>
 
                             {/* 4. Uitvoering */}
                             <TableRow>
-                                <TableCell colSpan={snapshots.length + 1} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
+                                <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     4. Uitvoering
                                 </TableCell>
                             </TableRow>
@@ -524,6 +654,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.uitvoeringszoneWegoppervlak)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Panden in uitvoeringszone [aantal]</TableCell>
@@ -532,6 +663,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.uitvoeringszonePanden?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Panden in uitvoeringszone [m²]</TableCell>
@@ -540,6 +672,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.uitvoeringszonePandenArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Percelen in uitvoeringszone [aantal]</TableCell>
@@ -548,6 +681,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {s.projectJSON.effects.uitvoeringszonePercelen?.length || ""}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Percelen in uitvoeringszone [m²]</TableCell>
@@ -556,6 +690,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.uitvoeringszonePercelenArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>Natura 2000 in uitvoeringszone [m²]</TableCell>
@@ -564,6 +699,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.uitvoeringszoneNatura2000)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>GNN in uitvoeringszone [m²]</TableCell>
@@ -572,6 +708,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.uitvoeringszoneGNN)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} /></TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>NBP beheertype in uitvoeringszone [m²]</TableCell>
@@ -580,6 +717,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                         {formatNumber(s.projectJSON.effects.uitvoeringszoneBeheertypeArea)}
                                     </TableCell>
                                 ))}
+                                <TableCell sx={btnCellSx}><LayerMenuButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} /></TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
