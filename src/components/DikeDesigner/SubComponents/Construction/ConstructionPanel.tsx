@@ -168,8 +168,11 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                     <Select
                         value={model.constructionModel.structureType}
                         onChange={(e) => model.constructionModel.structureType = e.target.value as string}
-                        label="Type constructie"
+                        displayEmpty
                     >
+                        <MenuItem value="" disabled>
+                            <em>Selecteer een type constructie</em>
+                        </MenuItem>
                         {model.constructionModel.structureTypes.map((type) => (
                             <MenuItem key={type} value={type}>
                                 {type}
@@ -247,7 +250,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                 
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Button
-                        disabled={!hasSelectedLine || model.constructionModel.depth === null || isNaN(model.constructionModel.depth)}
+                        disabled={!hasSelectedLine || !model.constructionModel.structureType || model.constructionModel.depth === null || isNaN(model.constructionModel.depth)}
                         color="primary"
                         onClick={handleCreateConstruction}
                         variant="contained"

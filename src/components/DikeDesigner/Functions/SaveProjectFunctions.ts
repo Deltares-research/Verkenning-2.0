@@ -79,7 +79,7 @@ export interface ProjectJSON {
     };
     constructions: {
         structureType: string;
-        depth: number;
+        depth: number | null;
         useOffset: boolean;
         offsetDistance: number;
         offsetSide: 'left' | 'right';
@@ -232,8 +232,8 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea || null,
         },
         constructions: {
-            structureType: model.constructionModel?.structureType || "Heavescherm",
-            depth: model.constructionModel?.depth || 5,
+            structureType: model.constructionModel?.structureType || "",
+            depth: model.constructionModel?.depth ?? null,
             useOffset: model.constructionModel?.useOffset || false,
             offsetDistance: model.constructionModel?.offsetDistance || 0,
             offsetSide: model.constructionModel?.offsetSide || 'right',
@@ -400,7 +400,7 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         // Load costs
         if (costs && model.costModel) {
             model.costModel.complexity = costs.complexity || "makkelijke maatregel";
-            model.costModel.depth = costs.depth || 5;
+            model.costModel.depth = costs.depth ?? null;
             
             // Directly assign cost properties from saved dict format
             if (costs.directCostGroundWork) {

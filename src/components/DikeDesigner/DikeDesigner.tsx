@@ -1290,9 +1290,8 @@ const DikeDesigner = (
                             <CostCalculationPanel model={model} />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={4}>
-                            <ComparisonChartAndTablePanel 
+                            <ComparisonChartAndTablePanel
                                 model={model}
-                                onLoadDesign={() => setValue(0)}
                             />
                         </CustomTabPanel>
                     </Box>

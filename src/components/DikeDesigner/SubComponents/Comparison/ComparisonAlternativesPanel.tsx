@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
 import Paper from "@vertigis/web/ui/Paper";
@@ -6,7 +6,8 @@ import Typography from "@vertigis/web/ui/Typography";
 import Box from "@vertigis/web/ui/Box";
 import Tooltip from "@mui/material/Tooltip";
 import { useWatchAndRerender } from "@vertigis/web/ui";
-import { Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
+import { Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon, CheckCircle as CheckCircleIcon, FileDownload as FileDownloadIcon } from "@mui/icons-material";
+import * as XLSX from "xlsx";
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import type { ProjectJSON } from "../../Functions/SaveProjectFunctions";
 import LoadOptionDialog from "../Dimensions/LoadOptionDialog";
@@ -25,18 +26,19 @@ import {
 
 interface ComparisonAlternativesPanelProps {
     model: DikeDesignerModel;
-    onLoadDesign?: () => void;
 }
 
-const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = ({ model, onLoadDesign }) => {
+const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = ({ model }) => {
     const designFileInputRef = useRef<HTMLInputElement>(null);
     const [loadOptionDialogOpen, setLoadOptionDialogOpen] = useState(false);
     const [pendingProjectData, setPendingProjectData] = useState<ProjectJSON | null>(null);
 
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
+    useWatchAndRerender(model, "designName");
     const snapshots = model.comparisonSnapshots || [];
     const layerVisibility = model.comparisonModel.layerVisibility;
+    const activeDesign = model.designName || "";
 
     // Sync visibility state with actual layer visibility
     useEffect(() => {
@@ -81,8 +83,122 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         event.target.value = "";
     };
 
+    const exportToExcel = useCallback(() => {
+        const rows: any[][] = [];
+        const sectionRowIndices: number[] = [];
+        const colCount = snapshots.length + 1;
+
+        // Title row
+        rows.push(["Vergelijkingstabel", ...snapshots.map(() => "")]);
+        const titleRowIdx = 0;
+
+        // Empty separator row
+        rows.push([]);
+
+        // Header row
+        rows.push(["Criterium", ...snapshots.map((s) => s.name)]);
+        const headerRowIdx = rows.length - 1;
+
+        const addSection = (title: string) => {
+            rows.push([]);  // empty row before section
+            sectionRowIndices.push(rows.length);
+            rows.push([title, ...snapshots.map(() => "")]);
+        };
+        const addRow = (label: string, values: (string | number)[]) => rows.push([label, ...values]);
+        const num = (v: any): number | string => { if (v == null) return ""; const n = Number(v); return isNaN(n) ? "" : Math.round(n); };
+        const count = (v: any[] | null | undefined): number | string => (v != null ? v.length : "");
+        const sumValues = (obj: any): number => Object.values(obj || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number;
+
+        addSection("Ontwerpwaarden");
+        addRow("Trajectlengte (m)", snapshots.map((s) => num(s.projectJSON.designValues.trajectLength)));
+        addRow("Volumeverschil (m\u00B3)", snapshots.map((s) => num(s.projectJSON.designValues.volumeDifference)));
+        addRow("Uitgravingsvolume (m\u00B3)", snapshots.map((s) => num(s.projectJSON.designValues.excavationVolume)));
+        addRow("Opvulvolume (m\u00B3)", snapshots.map((s) => num(s.projectJSON.designValues.fillVolume)));
+        addRow("2D Oppervlakte (m\u00B2)", snapshots.map((s) => num(s.projectJSON.designValues.area2d)));
+        addRow("3D Oppervlakte (m\u00B2)", snapshots.map((s) => num(s.projectJSON.designValues.area3d)));
+
+        addSection("Constructie");
+        addRow("Type constructie", snapshots.map((s) => s.projectJSON.constructions?.structureType || ""));
+        addRow("Onderkant constructie t.o.v. NAP (m)", snapshots.map((s) => num(s.projectJSON.constructions?.depth)));
+        addRow("Offset gebruikt", snapshots.map((s) => s.projectJSON.constructions?.useOffset ? "Ja" : "Nee"));
+        addRow("Offset afstand (m)", snapshots.map((s) => s.projectJSON.constructions?.useOffset ? num(s.projectJSON.constructions?.offsetDistance) : ""));
+        addRow("Offset zijde", snapshots.map((s) => s.projectJSON.constructions?.useOffset ? (s.projectJSON.constructions?.offsetSide === 'left' ? 'Links' : 'Rechts') : ""));
+
+        addSection("Kosten");
+        addRow("Complexiteit", snapshots.map((s) => s.projectJSON.costs.complexity || ""));
+        addRow("Totale Directe Kosten (\u20AC)", snapshots.map((s) => Math.round(sumValues(s.projectJSON.costs.directCostGroundWork) + sumValues(s.projectJSON.costs.directCostStructures))));
+        addRow("Totale Indirecte Kosten (\u20AC)", snapshots.map((s) => Math.round(sumValues(s.projectJSON.costs.indirectConstructionCosts) + sumValues(s.projectJSON.costs.engineeringCosts) + sumValues(s.projectJSON.costs.otherCosts))));
+        addRow("Totale Kosten (\u20AC)", snapshots.map((s) => Math.round(sumValues(s.projectJSON.costs.directCostGroundWork) + sumValues(s.projectJSON.costs.directCostStructures) + sumValues(s.projectJSON.costs.indirectConstructionCosts) + sumValues(s.projectJSON.costs.engineeringCosts) + sumValues(s.projectJSON.costs.otherCosts))));
+        addRow("Risicoreservering (%)", snapshots.map((s) => num(s.projectJSON.costs.risicoreservering)));
+
+        addSection("1. Wonen en leefomgeving");
+        addRow("BAG panden [aantal]", snapshots.map((s) => count(s.projectJSON.effects.intersectingPanden)));
+        addRow("BAG panden [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingPandenArea)));
+        addRow("Invloedzone BAG panden [aantal]", snapshots.map((s) => count(s.projectJSON.effects.intersectingPandenBuffer)));
+        addRow("Invloedzone BAG panden [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingPandenBufferArea)));
+        addRow("Percelen [aantal]", snapshots.map((s) => count(s.projectJSON.effects.intersectingPercelen)));
+        addRow("Percelen [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingPercelenArea)));
+        addRow("Erven [aantal]", snapshots.map((s) => count(s.projectJSON.effects.intersectingErven)));
+        addRow("Erven [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingErvenArea)));
+
+        addSection("2. Natuur");
+        addRow("Natura 2000 [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingNatura2000)));
+        addRow("GNN [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingGNN)));
+        addRow("NBP beheertype [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingBeheertypeArea)));
+        addRow("Beheertypen [naam]", snapshots.map((s) => s.projectJSON.effects.intersectingBeheertypen?.join(", ") || ""));
+
+        addSection("3. Verkeer");
+        addRow("BGT wegdelen [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingWegdelen2dRuimtebeslag)));
+        addRow("BGT afritten [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.intersectingInritten2dRuimtebeslag)));
+        addRow("BGT afritten [aantal]", snapshots.map((s) => count(s.projectJSON.effects.intersectingInritten2dRuimtebeslagCount)));
+
+        addSection("4. Uitvoering");
+        addRow("Wegoppervlak in uitvoeringszone [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.uitvoeringszoneWegoppervlak)));
+        addRow("Panden in uitvoeringszone [aantal]", snapshots.map((s) => count(s.projectJSON.effects.uitvoeringszonePanden)));
+        addRow("Panden in uitvoeringszone [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.uitvoeringszonePandenArea)));
+        addRow("Percelen in uitvoeringszone [aantal]", snapshots.map((s) => count(s.projectJSON.effects.uitvoeringszonePercelen)));
+        addRow("Percelen in uitvoeringszone [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.uitvoeringszonePercelenArea)));
+        addRow("Natura 2000 in uitvoeringszone [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.uitvoeringszoneNatura2000)));
+        addRow("GNN in uitvoeringszone [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.uitvoeringszoneGNN)));
+        addRow("NBP beheertype in uitvoeringszone [m\u00B2]", snapshots.map((s) => num(s.projectJSON.effects.uitvoeringszoneBeheertypeArea)));
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+
+        // Set column widths: first column wide for labels, rest for data
+        ws["!cols"] = [
+            { wch: 42 },
+            ...snapshots.map(() => ({ wch: 22 })),
+        ];
+
+        // Merge title row across all columns
+        ws["!merges"] = [
+            { s: { r: titleRowIdx, c: 0 }, e: { r: titleRowIdx, c: colCount - 1 } },
+            // Merge section header rows across all columns
+            ...sectionRowIndices.map((rowIdx) => ({
+                s: { r: rowIdx, c: 0 },
+                e: { r: rowIdx, c: colCount - 1 },
+            })),
+        ];
+
+        // Apply number format to numeric data cells
+        const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+        for (let r = range.s.r; r <= range.e.r; r++) {
+            for (let c = 1; c <= range.e.c; c++) {
+                const addr = XLSX.utils.encode_cell({ r, c });
+                const cell = ws[addr];
+                if (cell && typeof cell.v === "number") {
+                    cell.z = "#,##0";
+                }
+            }
+        }
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Vergelijking");
+        XLSX.writeFile(wb, `vergelijkingstabel_${new Date().toISOString().split("T")[0]}.xlsx`);
+    }, [snapshots]);
+
     return (
-        <Box style={{ padding: "20px", height: "100%", overflow: "auto" }}>
+        <Box style={{ padding: "20px", height: "100%", overflow: "auto", display: "flex", flexDirection: "column" }}>
             <Stack spacing={3}>
                 {/* Header */}
                 <Box>
@@ -172,24 +288,45 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                             Geïmporteerde Alternatieven ({snapshots.length})
                         </Typography>
                         <Stack spacing={2}>
-                            {snapshots.map((snapshot) => (
+                            {snapshots.map((snapshot) => {
+                                const isActive = snapshot.name === activeDesign;
+                                return (
                                 <Paper
                                     key={snapshot.id}
-                                    elevation={1}
+                                    elevation={isActive ? 3 : 1}
                                     style={{
                                         padding: "14px 16px",
-                                        border: "1px solid #e5e7eb",
+                                        border: isActive ? "2px solid #1565C0" : "1px solid #e5e7eb",
                                         borderRadius: "10px",
-                                        background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
-                                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                                        background: isActive
+                                            ? "linear-gradient(180deg, #e3f2fd 0%, #f0f7ff 100%)"
+                                            : "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
+                                        boxShadow: isActive ? "0 2px 8px rgba(21,101,192,0.15)" : "0 1px 2px rgba(0,0,0,0.04)",
                                     }}
                                 >
                                     <Stack spacing={1.5}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
                                             <Box style={{ flex: 1, minWidth: 0 }}>
-                                                <Typography variant="subtitle1" style={{ fontWeight: 600, marginBottom: "4px" }}>
-                                                    {snapshot.name}
-                                                </Typography>
+                                                <Box style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                                    <Typography variant="subtitle1" style={{ fontWeight: 600 }}>
+                                                        {snapshot.name}
+                                                    </Typography>
+                                                    {isActive && (
+                                                        <Typography
+                                                            variant="caption"
+                                                            style={{
+                                                                backgroundColor: "#1565C0",
+                                                                color: "#fff",
+                                                                padding: "1px 8px",
+                                                                borderRadius: "10px",
+                                                                fontSize: "10px",
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            Actief
+                                                        </Typography>
+                                                    )}
+                                                </Box>
                                                 <Box style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                                     <Typography variant="caption" style={{ color: "#888", fontSize: "12px" }}>
                                                         Berekend: {formatDateTime(snapshot.projectJSON.metadata?.lastModified || snapshot.projectJSON.metadata?.createdAt)}
@@ -304,7 +441,8 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                     color="primary"
                                                     size="small"
                                                     startIcon={<UploadIcon />}
-                                                    onClick={() => loadSnapshot(model, snapshot, onLoadDesign)}
+                                                    onClick={() => loadSnapshot(model, snapshot)}
+                                                    disabled={isActive}
                                                     fullWidth
                                                     sx={{
                                                         justifyContent: "center",
@@ -317,7 +455,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         }
                                                     }}
                                                 >
-                                                    Laden
+                                                    {isActive ? "Geladen" : "Laden"}
                                                 </Button>
                                                 <Button
                                                     variant="outlined"
@@ -343,7 +481,8 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                         </Stack>
                                     </Stack>
                                 </Paper>
-                            ))}
+                                );
+                            })}
                         </Stack>
                     </Box>
                 )}
@@ -360,6 +499,24 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                     </Paper>
                 )}
             </Stack>
+
+            {/* Export button - always at the bottom */}
+            <Box style={{ marginTop: "auto", paddingTop: "16px" }}>
+                <Button
+                    variant="outlined"
+                    startIcon={<FileDownloadIcon />}
+                    onClick={exportToExcel}
+                    fullWidth
+                    disabled={snapshots.length < 2}
+                    sx={{
+                        textTransform: "none",
+                        fontWeight: 500,
+                        borderRadius: "6px",
+                    }}
+                >
+                    Exporteer naar Excel
+                </Button>
+            </Box>
         </Box>
     );
 };
