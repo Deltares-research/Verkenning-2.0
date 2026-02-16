@@ -44,7 +44,9 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
         // Create main chart
         const chart = container.children.push(
             am5percent.PieChart.new(root, {
-                tooltip: am5.Tooltip.new(root, {})
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{category}: {valuePercentTotal.formatNumber('0.00')}%"
+                })
             })
         );
 
@@ -53,17 +55,35 @@ const CostPieChart: React.FC<Props> = ({ data }) => {
             am5percent.PieSeries.new(root, {
                 valueField: "value",
                 categoryField: "category",
-                alignLabels: false
+                alignLabels: true
             })
         );
 
         series.labels.template.setAll({
-            textType: "circular",
-            radius: 4,
-            fontSize: 14
+            fontSize: 13,
+            text: "{category}: {valuePercentTotal.formatNumber('0.00')}%",
+            maxWidth: 150,
+            oversizedBehavior: "truncate"
         });
-        
-        series.ticks.template.set("visible", false);
+
+        // Hide labels for very small slices to prevent clutter
+        series.labels.template.adapters.add("visible", (visible, target) => {
+            const dataItem = target.dataItem;
+            if (dataItem) {
+                const pct = dataItem.get("valuePercentTotal" as any);
+                if (typeof pct === "number" && pct < 2) return false;
+            }
+            return visible ?? true;
+        });
+        series.ticks.template.adapters.add("visible", (visible, target) => {
+            const dataItem = target.dataItem;
+            if (dataItem) {
+                const pct = dataItem.get("valuePercentTotal" as any);
+                if (typeof pct === "number" && pct < 2) return false;
+            }
+            return visible ?? true;
+        });
+
         series.slices.template.set("toggleKey", "none");
 
         // Create sub chart

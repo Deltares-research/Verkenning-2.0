@@ -316,7 +316,7 @@ export const addCurrentDesignSnapshot = (model: DikeDesignerModel): void => {
             id: `comparison-add-${snapshot.id}`,
             title: "Succes",
             message: `Huidig ontwerp "${snapshot.name}" is toegevoegd aan de vergelijking.`,
-            disableTimeouts: true
+            disableTimeouts: false
         });
     } catch (error) {
         console.error("Error capturing current design:", error);
@@ -337,7 +337,7 @@ export const handleLoadFull = (model: DikeDesignerModel, pendingProjectData: Pro
         id: `comparison-loadfull-${snapshot.id}`,
         title: "Succes",
         message: `Ontwerp "${snapshot.name}" is toegevoegd met alle waarden.`,
-        disableTimeouts: true,
+        disableTimeouts: false,
     });
 };
 
@@ -358,7 +358,7 @@ export const handleLoadAndRecalculate = async (model: DikeDesignerModel, pending
         id: `comparison-recalc-add-${snapshot.id}`,
         title: "Succes",
         message: `Ontwerp "${snapshot.name}" is herberekend en toegevoegd.`,
-        disableTimeouts: true,
+        disableTimeouts: false,
     });
 };
 
@@ -387,7 +387,7 @@ export const handleRecalculateSnapshot = async (model: DikeDesignerModel, snapsh
             id: `comparison-recalc-${snapshot.id}`,
             title: "Succes",
             message: `Ontwerp "${snapshot.name}" is herberekend.`,
-            disableTimeouts: true,
+            disableTimeouts: false,
         });
     } catch (error) {
         console.error("Error recalculating snapshot:", error);
@@ -584,7 +584,6 @@ export const exportComparison = (snapshots: DesignSnapshot[]): void => {
 export const loadSnapshot = (
     model: DikeDesignerModel,
     snapshot: DesignSnapshot,
-    onLoadDesign?: () => void
 ): void => {
     try {
         model.designName = snapshot.name;
@@ -630,18 +629,11 @@ export const loadSnapshot = (
             model.loading = false;
         }, 100);
 
-        // Call the callback to switch to the next tab if provided
-        if (onLoadDesign) {
-            setTimeout(() => {
-                onLoadDesign();
-            }, 200);
-        }
-
         model.messages.commands.ui.displayNotification.execute({
             id: `comparison-load-${snapshot.id}`,
             title: "Succes",
-            message: `Ontwerp "${snapshot.name}" is geladen. Ga naar het 'Dimensioneer grondlichaam' tabblad.`,
-            disableTimeouts: true,
+            message: `Ontwerp "${snapshot.name}" is geladen.`,
+            disableTimeouts: false,
         });
     } catch (error) {
         console.error("Error loading snapshot:", error);

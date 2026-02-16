@@ -571,9 +571,9 @@ export async function calculateVolume(model): Promise<void> {
 
             // Show success message
             model.messages.commands.ui.displayNotification.execute({
-                message: `Ontwerp berekening voltooid. \nTotaal: ${result.volume.total_volume.toFixed(2)} m³\nOpvullen: ${result.volume.fill_volume.toFixed(2)} m³\nUitgraven: ${result.volume.excavation_volume.toFixed(2)} m³\nBerekeningsduur: ${result.calculation_time}s`,
+                message: `Ontwerp berekening voltooid. \nTotaal: ${Math.round(result.volume.total_volume).toLocaleString("nl-NL")} m³\nOpvullen: ${Math.round(result.volume.fill_volume).toLocaleString("nl-NL")} m³\nUitgraven: ${Math.round(result.volume.excavation_volume).toLocaleString("nl-NL")} m³\nBerekeningsduur: ${result.calculation_time}s`,
                 title: "Volume Berekening Geslaagd",
-                disableTimeouts: true
+                disableTimeouts: false
             });
 
         } catch (fetchError: unknown) {
@@ -983,7 +983,7 @@ export async function createFreeCrossSection(model) {
     model.messages.commands.ui.displayNotification.execute({
         message: `Teken de dwarsdoorsnede door twee punten op de kaart aan te klikken.`,
         title: "Vrije Dwarsdoorsnede Tekenen",
-        disableTimeouts: true
+        disableTimeouts: false
     });
 
     model.startDrawingLine(model.graphicsLayerCrossSection).then(() => {
@@ -1260,7 +1260,7 @@ export async function locateDwpProfile(model) {
     model.messages.commands.ui.displayNotification.execute({
         message: `Klik op de locatie waar het dwarsprofiel moet worden geplaatst.`,
         title: "Dwarsprofiel Locatie",
-        disableTimeouts: true
+        disableTimeouts: false
     });
 
     // clean up previous graphics

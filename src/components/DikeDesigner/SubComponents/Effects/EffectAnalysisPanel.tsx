@@ -1,6 +1,7 @@
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Tooltip from "@mui/material/Tooltip";
 import Stack from "@vertigis/web/ui/Stack"
 import Button from "@vertigis/web/ui/Button";
 import Alert from "@vertigis/web/ui/Alert";
@@ -15,7 +16,7 @@ import FormLabel from "@vertigis/web/ui/FormLabel";
 import { stackStyle } from "../../../styles";
 
 import { useWatchAndRerender } from "@vertigis/web/ui";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import { handleEffectAnalysis } from "../../Functions/EffectFunctions";
@@ -61,24 +62,117 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
         return <span style={{ fontSize: "12px" }}>{label}</span>;
     };
 
-    // Helper component to display just the toggle button
-    const LayerToggleButton: React.FC<{ layerTitle: string }> = ({ layerTitle }) => {
-        const layer = model.map.allLayers.items.find((layer: any) => layer.title === layerTitle);
+    // Layer popover menu (position: fixed, same pattern as NestedLayerList)
+    interface LayerPopoverProps {
+        layerTitle: string;
+        anchorEl: HTMLElement;
+        onClose: () => void;
+    }
+
+    const LayerPopover: React.FC<LayerPopoverProps> = ({ layerTitle, anchorEl, onClose }) => {
+        const menuRef = useRef<HTMLDivElement>(null);
+        const layer = model.map.allLayers.items.find((l: any) => l.title === layerTitle);
         const isVisible = layer?.visible ?? false;
-        
+
+        useEffect(() => {
+            const handler = (e: MouseEvent) => {
+                if (
+                    menuRef.current &&
+                    !menuRef.current.contains(e.target as Node) &&
+                    !anchorEl.contains(e.target as Node)
+                ) {
+                    onClose();
+                }
+            };
+            document.addEventListener("mousedown", handler);
+            return () => document.removeEventListener("mousedown", handler);
+        }, [anchorEl, onClose]);
+
+        const rect = anchorEl.getBoundingClientRect();
+
         return (
-            <Button
-                size="small"
-                onClick={() => toggleLayerVisibility(layerTitle)}
-                sx={{ padding: "4px", minWidth: "32px", height: "24px" }}
-                title={isVisible ? "Laag verbergen" : "Laag tonen"}
+            <div
+                ref={menuRef}
+                style={{
+                    position: "fixed",
+                    top: rect.bottom + 4,
+                    right: window.innerWidth - rect.right,
+                    zIndex: 1300,
+                    background: "#fff",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.08)",
+                    minWidth: 180,
+                    padding: "4px 0",
+                }}
             >
-                {isVisible ? (
-                    <VisibilityIcon sx={{ fontSize: "16px" }} />
-                ) : (
-                    <VisibilityOffIcon sx={{ fontSize: "16px" }} />
+                <button
+                    onClick={() => {
+                        toggleLayerVisibility(layerTitle);
+                        onClose();
+                    }}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        padding: "8px 16px",
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        fontSize: 13,
+                        color: "inherit",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.04)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                >
+                    {isVisible
+                        ? <VisibilityOffIcon sx={{ fontSize: 18, opacity: 0.7 }} />
+                        : <VisibilityIcon sx={{ fontSize: 18, opacity: 0.7 }} />
+                    }
+                    {isVisible ? "Laag verbergen" : "Laag tonen"}
+                </button>
+            </div>
+        );
+    };
+
+    // Three-dot menu button per row
+    const LayerMenuButton: React.FC<{ layerTitle: string }> = ({ layerTitle }) => {
+        const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+        return (
+            <>
+                <Tooltip title="Opties" placement="left" slotProps={{ tooltip: { sx: { fontSize: '13px' } } }}>
+                    <button
+                        onClick={(e) => setAnchorEl(anchorEl ? null : e.currentTarget)}
+                        style={{
+                            width: 26,
+                            height: 26,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1px solid #1976d2",
+                            background: "none",
+                            cursor: "pointer",
+                            borderRadius: "50%",
+                            fontSize: 16,
+                            color: "#1976d2",
+                            padding: 0,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(25,118,210,0.08)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                    >
+                        &#8942;
+                    </button>
+                </Tooltip>
+                {anchorEl && (
+                    <LayerPopover
+                        layerTitle={layerTitle}
+                        anchorEl={anchorEl}
+                        onClose={() => setAnchorEl(null)}
+                    />
                 )}
-            </Button>
+            </>
         );
     };
     useWatchAndRerender(model, "effectsCalculated")
@@ -153,9 +247,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="BAG panden" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPanden?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPandenArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{Math.round(model.intersectingPandenArea).toLocaleString("nl-NL")}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -163,9 +257,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label={`Invloedzone BAG panden (${model.pandenBufferDistance} m)`} />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPandenBuffer?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPandenBufferArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{Math.round(model.intersectingPandenBufferArea).toLocaleString("nl-NL")}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
                                 </TableCell>
                             </TableRow>
                             {/* <TableRow>
@@ -177,9 +271,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="Percelen geen eigendom Waterschap [aantal]" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPercelen?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingPercelenArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{Math.round(model.intersectingPercelenArea).toLocaleString("nl-NL")}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -187,9 +281,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="Erven [aantal]" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingErven?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingErvenArea.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{Math.round(model.intersectingErvenArea).toLocaleString("nl-NL")}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle="BGT - onbegroeid terreindeel" />
+                                    <LayerMenuButton layerTitle="BGT - onbegroeid terreindeel" />
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -212,27 +306,27 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="Natura 2000 [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingNatura2000?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingNatura2000 != null ? Math.round(model.intersectingNatura2000).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="GNN [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingGNN?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingGNN != null ? Math.round(model.intersectingGNN).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="NBP beheertype [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingBeheertypeArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingBeheertypeArea != null ? Math.round(model.intersectingBeheertypeArea).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -241,7 +335,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingBeheertypen?.map((item) => item).join(", ")}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -263,18 +357,18 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="BGT wegdelen [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingWegdelen2dRuimtebeslag?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingWegdelen2dRuimtebeslag != null ? Math.round(model.intersectingWegdelen2dRuimtebeslag).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
                                     <LayerLabel label="BGT afritten [m²]" />
                                 </TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingInritten2dRuimtebeslag?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingInritten2dRuimtebeslag != null ? Math.round(model.intersectingInritten2dRuimtebeslag).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -283,7 +377,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.intersectingInritten2dRuimtebeslagCount?.length}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bgt_afritten", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -307,9 +401,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="Wegoppervlak in uitvoeringszone" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneWegoppervlak?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneWegoppervlak != null ? Math.round(model.uitvoeringszoneWegoppervlak).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bgt_wegdeel", "BGT - wegdeel")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -317,9 +411,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="Panden binnen invloedscontour" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePanden?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePandenArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePandenArea != null ? Math.round(model.uitvoeringszonePandenArea).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("bag_panden", "BAG 3D")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -327,9 +421,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="Percelen binnen invloedscontour" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelen?.length}</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelenArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelenArea != null ? Math.round(model.uitvoeringszonePercelenArea).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("kadastrale_percelen", "DKK - perceel")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -337,9 +431,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="Natura 2000 binnen invloedscontour" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneNatura2000?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneNatura2000 != null ? Math.round(model.uitvoeringszoneNatura2000).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("natura2000", "Natura 2000")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -347,9 +441,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="GNN binnen invloedscontour" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneGNN?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneGNN != null ? Math.round(model.uitvoeringszoneGNN).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("gnn", "Groene Ontwikkelingszone en Gelders NatuurNetwerk")} />
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -357,9 +451,9 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                                     <LayerLabel label="NBP beheertype binnen invloedscontour" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneBeheertypeArea?.toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneBeheertypeArea != null ? Math.round(model.uitvoeringszoneBeheertypeArea).toLocaleString("nl-NL") : ""}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", textAlign: "center", border: 0 }}>
-                                    <LayerToggleButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
+                                    <LayerMenuButton layerTitle={getDisplayLayer("nbp_beheertype", model.natuurbeheerplanLayerName)} />
                                 </TableCell>
                             </TableRow>
                         </TableBody>
