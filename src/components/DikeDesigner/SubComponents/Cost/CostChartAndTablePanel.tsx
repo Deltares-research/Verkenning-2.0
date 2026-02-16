@@ -812,7 +812,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
         </>
           )}
 
-          {/* Tab 1: Table Only */}
+          {/* Tab 1: Kostenverdeling (Pie Chart Only) */}
           {currentTab === 1 && (
             <Box sx={{
               flex: "1",
@@ -836,106 +836,69 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   gap: 1
                 }}
               >
-                📊 Kostenoverzicht
+                📈 Kostenverdeling
               </Typography>
-
-              <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-                <CostTable />
+              <Box sx={{ flexGrow: 1, minHeight: 200, height: "100%", display: "flex" }}>
+                <Paper sx={{
+                  padding: 2,
+                  height: "100%",
+                  width: "100%",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "auto"
+                }}>
+                  <CostPieChart data={pieData} />
+                </Paper>
               </Box>
             </Box>
           )}
 
-          {/* Tab 1: Kostenverdeling (Pie Chart) */}
-          {currentTab === 1 && (
+          {/* Tab 2: Kostenbereik (Stacked Bar Chart Only) */}
+          {currentTab === 2 && (
             <Box sx={{
               flex: "1",
               display: "flex",
-              flexDirection: "row",
+              flexDirection: "column",
               overflow: "hidden",
               minWidth: 0,
-              gap: 2
+              backgroundColor: "#f9f9f9",
+              borderRadius: "8px",
+              p: 2
             }}>
-              {/* Pie Chart Section - Takes 70% */}
-              <Box sx={{
-                flex: "1 1 70%",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                backgroundColor: "#f9f9f9",
-                borderRadius: "8px",
-                p: 2
-              }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
-                    color: "#1976d2",
-                    fontSize: "14px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1
-                  }}
-                >
-                  📈 Kostenverdeling
-                </Typography>
-                <Box sx={{ flexGrow: 1, minHeight: 200, height: "100%", display: "flex" }}>
-                  <Paper sx={{
-                    padding: 2,
-                    height: "100%",
-                    width: "100%",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "auto"
-                  }}>
-                    <CostPieChart data={pieData} />
-                  </Paper>
-                </Box>
-              </Box>
-
-          {/* Tab 2: Kostenbereik (Bar Chart) */}
-              <Box sx={{
-                flex: "1%",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                minWidth: 0
-              }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
-                    color: "#1976d2",
-                    fontSize: "14px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1
-                  }}
-                >
-                  📊 Kostenbereik per categorie
-                </Typography>
-                <Box sx={{ flexGrow: 1, minHeight: 200, display: "flex" }}>
-                  <Paper sx={{
-                    padding: 2,
-                    height: "100%",
-                    width: "100%",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "auto"
-                  }}>
-                    <CostRangeStackedBar
-                      bouwKosten={model.costModel.constructionCost.totalConstructionCost}
-                      engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
-                      overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
-                      vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
-                    />
-                  </Paper>
-                </Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 2,
+                  fontWeight: 600,
+                  color: "#1976d2",
+                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1
+                }}
+              >
+                📊 Kostenbereik per categorie
+              </Typography>
+              <Box sx={{ flexGrow: 1, minHeight: 200, display: "flex" }}>
+                <Paper sx={{
+                  padding: 2,
+                  height: "100%",
+                  width: "100%",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "auto"
+                }}>
+                  <CostRangeStackedBar
+                    bouwKosten={model.costModel.constructionCost.totalConstructionCost}
+                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
+                    overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
+                    vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
+                  />
+                </Paper>
               </Box>
             </Box>
           )}
