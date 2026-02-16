@@ -682,58 +682,17 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
           
           {/* Tab 0: Overview - Table Only */}
           {currentTab === 0 && (
-            <>
-              {/* Table Panel - Takes 2/3 */}
-              <Box sx={{
-                flex: "2 1 66%",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            minWidth: 0,
-            backgroundColor: "#f9f9f9",
-            borderRadius: "8px",
-            p: 2
-          }}>
-            {/* Section Header */}
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                fontWeight: 600,
-                color: "#1976d2",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: 1
-              }}
-            >
-              📊 Kostenoverzicht
-            </Typography>
-
-            <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-              <CostTable />
-            </Box>
-          </Box>
-
-          {/* Charts Panel - Takes 1/3 */}
-          <Box sx={{
-            flex: "1 1 33%",
-            display: "flex",
-            flexDirection: "row",
-            overflow: "hidden",
-            minWidth: 0,
-            gap: 2
-          }}>
-            {/* Pie Chart Section - Takes 70% */}
             <Box sx={{
-              flex: "1 1 70%",
+              flex: "1",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              minWidth: 0,
               backgroundColor: "#f9f9f9",
               borderRadius: "8px",
               p: 2
             }}>
+              {/* Section Header */}
               <Typography
                 variant="h6"
                 sx={{
@@ -746,70 +705,13 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   gap: 1
                 }}
               >
-                📈 Kostenverdeling
+                📊 Kostenoverzicht
               </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 200, height: "100%", display: "flex" }}>
-                <Paper sx={{
-                  padding: 2,
-                  height: "100%",
-                  width: "100%",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "auto"
-                }}>
-                  <CostPieChart data={pieData} />
-                </Paper>
-              </Box>
-            </Box>
 
-            {/* Stacked Bar Chart Section - Takes 30% */}
-            <Box sx={{
-              flex: "1 1 30%",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              backgroundColor: "#f9f9f9",
-              borderRadius: "8px",
-              p: 2
-            }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 2,
-                  fontWeight: 600,
-                  color: "#1976d2",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1
-                }}
-              >
-                📊 Kostenbereik per categorie
-              </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 200, display: "flex" }}>
-                <Paper sx={{
-                  padding: 2,
-                  height: "100%",
-                  width: "100%",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "auto"
-                }}>
-                  <CostRangeStackedBar
-                    bouwKosten={model.costModel.constructionCost.totalConstructionCost}
-                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
-                    overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
-                    vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
-                  />
-                </Paper>
+              <Box sx={{ flexGrow: 1, overflow: "auto" }}>
+                <CostTable />
               </Box>
             </Box>
-          </Box>
-        </>
           )}
 
           {/* Tab 1: Kostenverdeling (Pie Chart Only) */}
