@@ -282,7 +282,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                     variant="contained"
                     color="primary"
                     startIcon={<InsightsIcon />}
-                    onClick={handleCreateCrossSection()}
+                    onClick={() => handleCreateCrossSection()()}
                     fullWidth
                     sx={buttonWithIconStyle}
                 >
@@ -313,7 +313,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     Lengte traject [m]
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
-                                    {model.lineLength ?? "-"}
+                                    {model.lineLength != null ? Math.round(Number(model.lineLength)).toLocaleString("nl-NL") : "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -321,7 +321,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     Verschil [m³]
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
-                                    {model.totalVolumeDifference ?? "-"}
+                                    {model.totalVolumeDifference != null ? Math.round(Number(model.totalVolumeDifference)).toLocaleString("nl-NL") : "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -329,7 +329,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     Uitgraven [m³]
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
-                                    {model.excavationVolume ?? "-"}
+                                    {model.excavationVolume != null ? Math.round(Number(model.excavationVolume)).toLocaleString("nl-NL") : "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -337,7 +337,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     Opvullen [m³]
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
-                                    {model.fillVolume ?? "-"}
+                                    {model.fillVolume != null ? Math.round(Number(model.fillVolume)).toLocaleString("nl-NL") : "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -345,7 +345,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     2D Oppervlakte [m²]
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
-                                    {model.total2dArea ?? "-"}
+                                    {model.total2dArea != null ? Math.round(Number(model.total2dArea)).toLocaleString("nl-NL") : "-"}
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -353,7 +353,7 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                                     3D Oppervlakte [m²]
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">
-                                    {model.total3dArea ?? "-"}
+                                    {model.total3dArea != null ? Math.round(Number(model.total3dArea)).toLocaleString("nl-NL") : "-"}
                                 </TableCell>
                             </TableRow>
                         </TableBody>

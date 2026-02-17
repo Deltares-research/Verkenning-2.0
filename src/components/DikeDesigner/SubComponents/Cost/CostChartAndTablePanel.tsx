@@ -18,270 +18,71 @@ import Table from "@vertigis/web/ui/Table";
 import TableBody from "@vertigis/web/ui/TableBody";
 import TableCell from "@vertigis/web/ui/TableCell";
 import TableContainer from "@vertigis/web/ui/Box";
-// import TableHead from "@vertigis/web/ui/TableHead";
+import TableHead from "@vertigis/web/ui/TableHead";
 import TableRow from "@vertigis/web/ui/TableRow";
 import Collapse from "@vertigis/web/ui/Collapse";
 import React, { useState } from "react";
-import { TableHead } from "@mui/material"
 
 import CostPieChart from "./CostPieChart";
 import CostRangeStackedBar from "./CostRangeStackedBar";
-import { CostItem, SurchargeCostItem } from "./CostModel";
 
+// Collapsible row for sub-items
+const SubRow: React.FC<{ label: string; value: number }> = ({ label, value }) => (
+  <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+    <TableCell sx={{ fontSize: "12px", color: "#64748b", paddingTop: 1, paddingBottom: 1, border: 0 }}>{label}</TableCell>
+    <TableCell sx={{ fontSize: "12px", color: "#0f172a", border: 0 }} align="right">
+      {value.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+    </TableCell>
+  </TableRow>
+);
 
 interface CollapsibleSectionProps {
-  title: string
-  total?: number
-  children: React.ReactNode
-  level?: number
-  showDetailHeader?: boolean
-  detailHeaderLabels?: {
-    costPost?: string
-    quantity?: string
-    unitCost?: string
-    total?: string
-  }
-  subHeaderName?: string       // optional name for subheader row
-  subHeaderTotal?: number      // optional total for subheader row
-  subHeader2Name?: string      // optional name for second subheader row
-  subHeader2Total?: number     // optional total for second subheader row
+  title: string;
+  total?: number;
+  children: React.ReactNode;
 }
 
-export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
-  title,
-  total,
-  children,
-  level = 0,
-  showDetailHeader = false,
-  detailHeaderLabels,
-  subHeaderName,
-  subHeaderTotal,
-  subHeader2Name,  // consider removing if not needed anymore
-  subHeader2Total, // consider removing if not needed anymore
-}) => {
-  const [open, setOpen] = useState(level === 0)
-  const paddingLeft = 2 + level * 2
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, total, children }) => {
+  const [open, setOpen] = useState(false);
 
   return (
-    <>
+    <React.Fragment>
       {/* Header row */}
-      <TableRow>
-        <TableCell width={48}>
-          {children ? (
-            <IconButton size="small" onClick={() => setOpen((o) => !o)}>
-              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-            </IconButton>
-          ) : null}
+      <TableRow sx={{ borderBottom: '1px solid #e2e8f0' }}>
+        <TableCell sx={{ width: 50, border: 0 }}>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
         </TableCell>
-
-        <TableCell
-          sx={{
-            fontWeight: level === 0 ? 700 : 600,
-            fontSize: level === 0 ? 14 : 13,
-            pl: paddingLeft,
-            color: "#0f172a",
-          }}
-        >
+        <TableCell sx={{ fontSize: 13, fontWeight: 600, color: "#0f172a", paddingTop: 1.5, paddingBottom: 1.5, border: 0 }}>
           {title}
         </TableCell>
-
-        <TableCell align="right" sx={{ fontWeight: 600 }}>
-          {total !== undefined
-            ? total.toLocaleString("nl-NL", {
-                style: "currency",
-                currency: "EUR",
-                maximumFractionDigits: 0,
-              })
-            : ""}
+        <TableCell align="right" sx={{ fontSize: 13, fontWeight: 600, color: "#0f172a", paddingTop: 1.5, paddingBottom: 1.5, border: 0 }}>
+          {total !== undefined ? total.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }) : ""}
         </TableCell>
       </TableRow>
 
-      {/* Collapsible content */}
+      {/* Children rows in collapsible section */}
       <TableRow>
-        <TableCell colSpan={3} sx={{ p: 0, borderBottom: 0 }}>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0, borderBottom: 0 }} colSpan={3}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ width: "100%" }}>
-              <Table size="small">
-                {/* Detail column headers */}
-                {showDetailHeader && (
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600, pl: 6 }}>
-                        {detailHeaderLabels?.costPost ?? "Kostenpost"}
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                        {detailHeaderLabels?.quantity ?? "Hoeveelheid"}
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                        {detailHeaderLabels?.unitCost ?? "Eenheidsprijs"}
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                        {detailHeaderLabels?.total ?? "Totaal"}
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Optional subheader row */}
-                    {subHeaderName && subHeaderTotal !== undefined && (
-                      <TableRow>
-                        <TableCell
-                          sx={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            pl: 6,
-                            color: "#475569",
-                          }}
-                        >
-                          {subHeaderName}
-                        </TableCell>
-                        <TableCell />
-                        <TableCell />
-                        <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                          {subHeaderTotal.toLocaleString("nl-NL", {
-                            style: "currency",
-                            currency: "EUR",
-                            maximumFractionDigits: 0,
-                          })}
-                        </TableCell>
-                      </TableRow>
-                    )}
-
-                    {/* Optional second subheader row */}
-                    {subHeader2Name && subHeader2Total !== undefined && (
-                      <TableRow>
-                        <TableCell
-                          sx={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            pl: 6,
-                            color: "#475569",
-                          }}
-                        >
-                          {subHeader2Name}
-                        </TableCell>
-                        <TableCell />
-                        <TableCell />
-                        <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                          {subHeader2Total.toLocaleString("nl-NL", {
-                            style: "currency",
-                            currency: "EUR",
-                            maximumFractionDigits: 0,
-                          })}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableHead>
-                )}
-
-                <TableBody>{children}</TableBody>
+            <Box sx={{ margin: 1 }}>
+              <Table size="small" aria-label="details">
+                <TableBody>
+                  {children}
+                </TableBody>
               </Table>
             </Box>
           </Collapse>
         </TableCell>
       </TableRow>
-    </>
-  )
-}
-
-interface SubHeaderRowProps {
-  label: string
-  total?: number
-}
-
-const SubHeaderRow: React.FC<SubHeaderRowProps> = ({ label, total }) => {
-  return (
-    <TableRow>
-      <TableCell
-        colSpan={4}
-        sx={{
-          fontSize: 11,
-          fontWeight: 700,
-          pl: 6,
-          pt: 2,
-          pb: 0.5,
-          color: "#475569",
-          borderBottom: 0,
-        }}
-      >
-        {label}
-        {total !== undefined && (
-          <span style={{ float: 'right' }}>
-            {total.toLocaleString("nl-NL", {
-              style: "currency",
-              currency: "EUR",
-              maximumFractionDigits: 0,
-            })}
-          </span>
-        )}
-      </TableCell>
-    </TableRow>
-  )
-}
-
-interface SubRowProps { label: string; item?: CostItem | SurchargeCostItem; value?: number }
-
-const SubRow: React.FC<SubRowProps> = ({ label, item, value }) => {
-  const total = item ? Number(item.value ?? 0) : Number(value ?? 0)
-  const isSurchargeItem = !!item && typeof item === "object" && "surcharge_percentage" in (item as any)
-
-  const quantity = !isSurchargeItem && item ? Number((item as CostItem).quantity) : NaN
-  const unitCost = !isSurchargeItem && item ? Number((item as CostItem).unit_cost) : NaN
-  const unit = !isSurchargeItem ? (item as CostItem | undefined)?.unit ?? "" : ""
-
-  const surchargeRaw = isSurchargeItem ? Number((item as any).surcharge_percentage) : NaN
-  const surchargeDisplay = Number.isFinite(surchargeRaw) ? (surchargeRaw <= 1 ? surchargeRaw * 100 : surchargeRaw) : NaN
-  const baseCost = isSurchargeItem ? Number((item as any).base_cost) : NaN
-
-  return (
-    <TableRow>
-      {/* Kostenpost */}
-      <TableCell sx={{ fontSize: 10, pl: 6 }}>
-        {label}
-      </TableCell>
-
-      {/* Hoeveelheid */}
-      <TableCell align="right" sx={{ fontSize: 10 }}>
-        {isSurchargeItem
-          ? (Number.isFinite(surchargeDisplay)
-              ? `${surchargeDisplay.toLocaleString("nl-NL", { maximumFractionDigits: 2 })} %`
-              : "-")
-          : (item && Number.isFinite(quantity)
-              ? `${Math.round(quantity).toLocaleString("nl-NL", {
-                  maximumFractionDigits: 0,
-                })}${unit ? ` [${unit}]` : ""}`
-              : "-")}
-      </TableCell>
-
-      {/* Eenheidsprijs */}
-      <TableCell align="right" sx={{ fontSize: 10 }}>
-        {isSurchargeItem
-          ? (Number.isFinite(baseCost)
-              ? baseCost.toLocaleString("nl-NL", {
-                  style: "currency",
-                  currency: "EUR",
-                  maximumFractionDigits: 0,
-                })
-              : "-")
-          : (item && Number.isFinite(unitCost)
-              ? unitCost.toLocaleString("nl-NL", {
-                  style: "currency",
-                  currency: "EUR",
-                  maximumFractionDigits: 2,
-                })
-              : "-")}
-      </TableCell>
-
-      {/* Totaal */}
-      <TableCell align="right" sx={{ fontSize: 10 }}>
-        {total.toLocaleString("nl-NL", {
-          style: "currency",
-          currency: "EUR",
-          maximumFractionDigits: 0,
-        })}
-      </TableCell>
-    </TableRow>
-  )
-}
-
+    </React.Fragment>
+  );
+};
 
 interface CostChartAndTablePanelProps {
   setPanelVisible: (visible: boolean) => void;
@@ -309,267 +110,6 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
 
   // Get pie chart data from model
   const pieData = model.costModel.getPieChartData();
-
-  const CostTable: React.FC = () => (
-    <TableContainer component={Paper} sx={{
-      boxShadow: "none",
-      backgroundColor: "#fafafa"
-    }}>
-      <Table aria-label="collapsible table">
-        <TableHead>
-          <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
-            <TableCell sx={{
-              border: 0,
-              width: 50,
-              backgroundColor: "#fafafa"
-            }} />
-            <TableCell sx={{
-              fontSize: "14px",
-              fontWeight: 500,
-              color: "#000000",
-              border: 0,
-              backgroundColor: "#fafafa"
-            }}>
-              Categorie
-            </TableCell>
-            <TableCell align="right" sx={{
-              fontSize: "14px",
-              fontWeight: 500,
-              color: "#000000",
-              border: 0,
-              backgroundColor: "#fafafa"
-            }}>
-              Kosten (€)
-            </TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {/* Bouwkosten (BK) */}
-          <CollapsibleSection
-            title="Bouwkosten (BK)"
-            total={model.costModel.constructionCost.totalConstructionCost}
-          >
-            {/* Directe Bouwkosten (DBK) */}
-            <CollapsibleSection
-              title="Directe Bouwkosten (DBK)"
-              total={model.costModel.indirectConstructionCosts.totalDirectCosts}
-              level={1}
-              showDetailHeader
-
-            >
-              <SubHeaderRow label="Grondversterking" total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}/>
-              <SubRow label="Opruimen terrein" item={model.costModel.directCostGroundWork.opruimenTerrein}/>
-              <SubRow label="Maaien terreinen" item={model.costModel.directCostGroundWork.maaienTerreinen}/>
-              <SubRow label="Afgraven grasbekleding" item={model.costModel.directCostGroundWork.afgravenGrasbekleding}/>
-              <SubRow label="Afgraven kleilaag" item={model.costModel.directCostGroundWork.afgravenKleilaag}/>
-              <SubRow label="Herkeuren kleilaag" item={model.costModel.directCostGroundWork.herkeurenKleilaag} />
-              <SubRow label="Aanvullen kern" item={model.costModel.directCostGroundWork.aanvullenKern}/>
-              <SubRow label="Profieleren dijkkern" item={model.costModel.directCostGroundWork.profielerenDijkkern}/>
-              <SubRow label="Aanbrengen nieuwe kleilaag" item={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaag}/>
-              <SubRow label="Profieleren van nieuwe kleilaag" item={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaag}/>
-              <SubRow label="Hergebruik teelaarde" item={model.costModel.directCostGroundWork.hergebruikTeelaarde}/>
-              <SubRow label="Aanvullen teelaarde" item={model.costModel.directCostGroundWork.aanvullenTeelaarde}/>
-              <SubRow label="Profieleren nieuwe graslaag" item={model.costModel.directCostGroundWork.profielerenNieuweGraslaag}/>
-              <SubRow label="Inzaaien nieuwe toplaag" item={model.costModel.directCostGroundWork.inzaaienNieuweToplaag}/>
-
-              <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
-              <SubRow label={model.constructionModel.structureType} item={model.costModel.directCostStructures.structureDetails}/>
-
-              <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
-              <SubRow label="Verwijderen weg" item={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg}/>
-              <SubRow label="Aanleggen weg" item={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg}/>
-              <SubRow label="Verwijderen fietspad" item={model.costModel.directCostInfrastructure.verwijderenFietspad}/>
-              <SubRow label="Aanleggen fietspad" item={model.costModel.directCostInfrastructure.aanleggenFietspad}/>
-
-
-            </CollapsibleSection>
-
-            {/* Indirecte Bouwkosten (IBK) */}
-            <CollapsibleSection
-              title="Indirecte Bouwkosten (IBK)"
-              total={model.costModel.indirectConstructionCosts.totalIndirectCosts}
-              level={1}
-              showDetailHeader
-              detailHeaderLabels={{
-                costPost: "Kostenpost",
-                quantity: "Opslag (%)",
-                unitCost: "Basis",
-                total: "Totaal",
-              }}
-            >
-              <SubRow label="Eenmalige algemen bouwplaats, uitvoerings en projectmanagementkosten" item={model.costModel.indirectConstructionCosts.pmCost} />
-              <SubRow label="Algemene kosten (AK)" item={model.costModel.indirectConstructionCosts.generalCost} />
-              <SubRow label="Winst & risico (WR)" item={model.costModel.indirectConstructionCosts.riskProfit} />
-            </CollapsibleSection>
-          </CollapsibleSection>
-
-          {/* Engineeringkosten (EK) */}
-          <CollapsibleSection
-            title="Engineeringkosten (EK)"
-            total={model.costModel.engineeringCosts.totalEngineeringCosts}
-          >
-            {/* Directe engineeringkosten */}
-            <CollapsibleSection
-              title="Directe engineeringkosten"
-              total={model.costModel.engineeringCosts.totalDirectEngineeringCost}
-              level={1}
-              showDetailHeader
-              detailHeaderLabels={{
-                costPost: "Kostenpost",
-                quantity: "Opslag (%)",
-                unitCost: "Basis",
-                total: "Totaal",
-              }}
-            >
-              <SubRow label="Engineeringskosten opdrachtgever (EPK)" item={model.costModel.engineeringCosts.epkCost} />
-              <SubRow label="Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)" item={model.costModel.engineeringCosts.designCost} />
-              <SubRow label="Onderzoeken (archeologie, explosievent, LNC)" item={model.costModel.engineeringCosts.researchCost} />
-            </CollapsibleSection>
-
-            {/* Indirecte engineering kosten */}
-            <CollapsibleSection
-              title="Indirecte engineering kosten"
-              total={model.costModel.engineeringCosts.totalIndirectEngineeringCosts}
-              level={1}
-              showDetailHeader
-              detailHeaderLabels={{
-                costPost: "Kostenpost",
-                quantity: "Opslag (%)",
-                unitCost: "Basis",
-                total: "Totaal",
-              }}
-            >
-              <SubRow label="Algemene kosten (AK)" item={model.costModel.engineeringCosts.generalCost} />
-              <SubRow label="Risico & winst (WR)" item={model.costModel.engineeringCosts.riskProfit} />
-
-            </CollapsibleSection>
-          </CollapsibleSection>
-
-          {/* Overige bijkomende kosten */}
-          <CollapsibleSection
-            title="Overige bijkomende kosten"
-            total={model.costModel.otherCosts.totalGeneralCosts}
-          >
-            {/* Directe overige bijkomende kosten */}
-            <CollapsibleSection
-              title="Directe overige bijkomende kosten"
-              total={model.costModel.otherCosts.totalDirectGeneralCosts}
-              level={1}
-              showDetailHeader
-              detailHeaderLabels={{
-                costPost: "Kostenpost",
-                quantity: "Opslag (%)",
-                unitCost: "Basis",
-                total: "Totaal",
-              }}
-            >
-              <SubRow label="Vergunningen, heffingen en verzekering" item={model.costModel.otherCosts.insurances} />
-              <SubRow label="Kabels & leidingen" item={model.costModel.otherCosts.cablesPipes} />
-              <SubRow label="Planschade & inpassingsmaatregelen" item={model.costModel.otherCosts.damages} />
-            </CollapsibleSection>
-
-            {/* Indirecte overige bijkomende kosten */}
-            <CollapsibleSection
-              title="Indirecte overige bijkomende kosten"
-              total={model.costModel.otherCosts.totalIndirectGeneralCosts}
-              level={1}
-              showDetailHeader
-              detailHeaderLabels={{
-                costPost: "Kostenpost",
-                quantity: "Opslag (%)",
-                unitCost: "Basis",
-                total: "Totaal",
-              }}
-            >
-              <SubRow label="Algemene kosten (AK)" item={model.costModel.otherCosts.generalCost} />
-              <SubRow label="Risico & winst (WR)" item={model.costModel.otherCosts.riskProfit} />
-
-            </CollapsibleSection>
-          </CollapsibleSection>
-
-          {/* Subtotaal investeringkosten */}
-          <CollapsibleSection
-            title="Subtotaal investeringkosten"
-            total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
-          >
-            <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
-          </CollapsibleSection>
-
-          {/* Bottom summary rows */}
-          <TableRow>
-            <TableCell width={48} />
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                fontSize: 14,
-                pl: 2,
-                color: "#0f172a",
-                borderTop: "2px solid #e0e0e0",
-                pt: 2,
-              }}
-            >
-              Investeringskosten excl. BTW
-            </TableCell>
-            <TableCell
-              align="right"
-              sx={{
-                fontWeight: 700,
-                fontSize: 14,
-                borderTop: "2px solid #e0e0e0",
-                pt: 2,
-              }}
-            >
-              {model.costModel.totalExcludingBTW.toLocaleString("nl-NL", {
-                style: "currency",
-                currency: "EUR",
-                maximumFractionDigits: 0,
-              })}
-            </TableCell>
-          </TableRow>
-
-          <TableRow>
-            <TableCell width={48} />
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                fontSize: 14,
-                pl: 2,
-                color: "#0f172a",
-              }}
-            >
-              Investeringskosten incl. BTW
-            </TableCell>
-            <TableCell
-              align="right"
-              sx={{
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              {model.costModel.totalIncludingBTW.toLocaleString("nl-NL", {
-                style: "currency",
-                currency: "EUR",
-                maximumFractionDigits: 0,
-              })}
-            </TableCell>
-          </TableRow>
-
-          <CollapsibleSection
-            title="Vastgoedkosten"
-            total={model.costModel.realEstateCosts.totalRealEstateCosts}
-            showDetailHeader
-          >
-            <SubRow label="Direct benoemd" item={model.costModel.realEstateCosts.directBenoemdItem}  />
-            <SubRow label="Direct niet benoemd" item={model.costModel.realEstateCosts.directNietBenoemdItem} />
-            <SubRow label="Indirect" item={model.costModel.realEstateCosts.indirectItem}  />
-            <SubRow label="Risico" item={model.costModel.realEstateCosts.riskItem} />
-
-          </CollapsibleSection>
-        </TableBody>
-      </Table>
-    </TableContainer>
-  )
 
   return (
     <>
@@ -634,8 +174,8 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
         <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#ffffff' }}>
           <Tabs value={currentTab} onChange={handleTabChange} aria-label="cost view tabs">
             <Tab label="Overzicht" sx={{ fontSize: '12px' }} />
-            <Tab label="Tabel" sx={{ fontSize: '12px' }} />
-            <Tab label="Grafieken" sx={{ fontSize: '12px' }} />
+            <Tab label="Kostenverdeling" sx={{ fontSize: '12px' }} />
+            <Tab label="Kostenbereik" sx={{ fontSize: '12px' }} />
           </Tabs>
         </Box>
 
@@ -679,143 +219,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               </Typography>
             </Box>
           )}
-
-          {/* Tab 0: Overview - Table (2/3) + Charts (1/3) */}
+          
+          {/* Tab 0: Overview - Table Only */}
           {currentTab === 0 && (
-            <>
-              {/* Table Panel - Takes 2/3 */}
-              <Box sx={{
-                flex: "2 1 66%",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            minWidth: 0,
-            backgroundColor: "#f9f9f9",
-            borderRadius: "8px",
-            p: 2
-          }}>
-            {/* Section Header */}
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: 2, 
-                fontWeight: 600, 
-                color: "#1976d2",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: 1
-              }}
-            >
-              📊 Kostenoverzicht
-            </Typography>
-            
-            <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-              <CostTable />
-            </Box>
-          </Box>
-
-          {/* Charts Panel - Takes 1/3 */}
-          <Box sx={{
-            flex: "1 1 33%",
-            display: "flex",
-            flexDirection: "row",
-            overflow: "hidden",
-            minWidth: 0,
-            gap: 2
-          }}>
-            {/* Pie Chart Section - Takes 70% */}
-            <Box sx={{
-              flex: "1 1 70%",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              backgroundColor: "#f9f9f9",
-              borderRadius: "8px",
-              p: 2
-            }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 2,
-                  fontWeight: 600,
-                  color: "#1976d2",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1
-                }}
-              >
-                📈 Kostenverdeling
-              </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 200, height: "100%", display: "flex" }}>
-                <Paper sx={{
-                  padding: 2,
-                  height: "100%",
-                  width: "100%",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "auto"
-                }}>
-                  <CostPieChart data={pieData} />
-                </Paper>
-              </Box>
-            </Box>
-
-            {/* Stacked Bar Chart Section - Takes 30% */}
-            <Box sx={{
-              flex: "1 1 30%",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              backgroundColor: "#f9f9f9",
-              borderRadius: "8px",
-              p: 2
-            }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 2,
-                  fontWeight: 600,
-                  color: "#1976d2",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1
-                }}
-              >
-                📊 Kostenbereik per categorie
-              </Typography>
-              <Box sx={{ flexGrow: 1, minHeight: 200, display: "flex" }}>
-                <Paper sx={{
-                  padding: 2,
-                  height: "100%",
-                  width: "100%",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "auto"
-                }}>
-                  <CostRangeStackedBar
-                    bouwKosten={model.costModel.constructionCost.totalConstructionCost}
-                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
-                    overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
-                    vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
-                  />
-                </Paper>
-              </Box>
-            </Box>
-          </Box>
-        </>
-          )}
-
-          {/* Tab 1: Table Only */}
-          {currentTab === 1 && (
-            <Box sx={{
-              flex: "1",
+            <Box sx={{ 
+              flex: "1", 
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
@@ -824,11 +232,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               borderRadius: "8px",
               p: 2
             }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 2,
-                  fontWeight: 600,
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2, 
+                  fontWeight: 600, 
                   color: "#1976d2",
                   fontSize: "14px",
                   display: "flex",
@@ -838,26 +246,129 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               >
                 📊 Kostenoverzicht
               </Typography>
-
+              
               <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-                <CostTable />
+                <TableContainer component={Paper} sx={{ 
+                  boxShadow: "none",
+                  backgroundColor: "#fafafa"
+                }}>
+                  <Table aria-label="collapsible table">
+                    <TableHead>
+                      <TableRow sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                        <TableCell sx={{ 
+                          border: 0,
+                          width: 50,
+                          backgroundColor: "#fafafa"
+                        }} />
+                        <TableCell sx={{ 
+                          fontSize: "14px", 
+                          fontWeight: 500,
+                          color: "#000000",
+                          border: 0,
+                          backgroundColor: "#fafafa"
+                        }}>
+                          Categorie
+                        </TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontSize: "14px", 
+                          fontWeight: 500,
+                          color: "#000000",
+                          border: 0,
+                          backgroundColor: "#fafafa"
+                        }}>
+                          Kosten (€)
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                  <TableBody>
+                    {/* Directe kosten grondwerk */}
+                    <CollapsibleSection
+                      title="Benoemde Directe BouwKosten - Grondwerk"
+                      total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}
+                    >
+                      <SubRow label="Voorbereiding" value={model.costModel.directCostGroundWork.preparationCost} />
+                      <SubRow label="Afgraven grasbekleding" value={model.costModel.directCostGroundWork.afgravenGrasbekledingCost} />
+                      <SubRow label="Afgraven kleilaag" value={model.costModel.directCostGroundWork.afgravenKleilaagCost} />
+                      <SubRow label="Herkeuren kleilaag" value={model.costModel.directCostGroundWork.herkeurenKleilaagCost} />
+                      <SubRow label="Aanvullen kern" value={model.costModel.directCostGroundWork.aanvullenKernCost} />
+                      <SubRow label="Profieleren dijkkern" value={model.costModel.directCostGroundWork.profielerenDijkkernCost} />
+                      <SubRow label="Aanbrengen nieuwe kleilaag" value={model.costModel.directCostGroundWork.aanbrengenNieuweKleilaagCost} />
+                      <SubRow label="Profieleren van nieuwe kleilaag" value={model.costModel.directCostGroundWork.profielerenVanNieuweKleilaagCost} />
+                      <SubRow label="Hergebruik teelaarde" value={model.costModel.directCostGroundWork.hergebruikTeelaardeCost} />
+                      <SubRow label="Aanvullen teelaarde" value={model.costModel.directCostGroundWork.aanvullenTeelaardeCost} />
+                      <SubRow label="Profieleren nieuwe graslaag" value={model.costModel.directCostGroundWork.profielerenNieuweGraslaagCost} />
+                    </CollapsibleSection>
+
+                    {/* Directe kosten constructies */}
+                    <CollapsibleSection
+                      title="Benoemde Directe BouwKosten - constructies"
+                      total={model.costModel.directCostStructures.totaleBDBKconstructie}
+                    >
+                        <SubRow label="BDBK" value={model.costModel.directCostStructures.totaleBDBKconstructie} />
+
+                    </CollapsibleSection>
+
+                    {/* Bouwkosten grondwerk */}
+                    <CollapsibleSection
+                      title="Indirecte BouwKosten"
+                      total={model.costModel.indirectConstructionCosts.indirectCosts}
+                    >
+                      <SubRow label="PM kosten" value={model.costModel.indirectConstructionCosts.pmCost} />
+                      <SubRow label="Algemene kosten" value={model.costModel.indirectConstructionCosts.generalCost} />
+                      <SubRow label="Risico & winst" value={model.costModel.indirectConstructionCosts.riskProfit} />
+                    </CollapsibleSection>
+
+                    {/* Engineeringkosten */}
+                    <CollapsibleSection
+                      title="Engineeringkosten"
+                      total={model.costModel.engineeringCosts.totalEngineeringCosts}
+                    >
+                      <SubRow label="EPK kosten" value={model.costModel.engineeringCosts.epkCost} />
+                      <SubRow label="Schets voor definitief ontwerp" value={model.costModel.engineeringCosts.designCost} />
+                      <SubRow label="Onderzoeken" value={model.costModel.engineeringCosts.researchCost} />
+                      <SubRow label="Algemene kosten" value={model.costModel.engineeringCosts.generalCost} />
+                      <SubRow label="Risico & winst" value={model.costModel.engineeringCosts.riskProfit} />
+                    </CollapsibleSection>
+
+                    {/* Overige bijkomende kosten */}
+                    <CollapsibleSection
+                      title="Overige bijkomende kosten"
+                      total={model.costModel.otherCosts.totalGeneralCosts}
+                    >
+                      <SubRow label="Vergunningen" value={model.costModel.otherCosts.insurances} />
+                      <SubRow label="Kabels & leidingen" value={model.costModel.otherCosts.cablesPipes} />
+                      <SubRow label="Planschade" value={model.costModel.otherCosts.damages} />
+                      <SubRow label="Algemene kosten" value={model.costModel.otherCosts.generalCost} />
+                      <SubRow label="Risico & winst" value={model.costModel.otherCosts.riskProfit} />
+                    </CollapsibleSection>
+
+                    {/* Vastgoedkosten */}
+                    <CollapsibleSection
+                      title="Vastgoedkosten"
+                      total={model.costModel.realEstateCosts.totalRealEstateCosts}
+                    >
+                      <SubRow label="Wegen" value={model.costModel.realEstateCosts.roadCost} />
+                      <SubRow label="Panden" value={model.costModel.realEstateCosts.houseCost} />
+                    </CollapsibleSection>
+                  </TableBody>
+                </Table>
+              </TableContainer>
               </Box>
             </Box>
           )}
 
-          {/* Tab 2: Charts Only */}
-          {currentTab === 2 && (
-            <Box sx={{
-              flex: "1",
+          {/* Tab 1: Kostenverdeling (Pie Chart) */}
+          {currentTab === 1 && (
+            <Box sx={{ 
+              flex: "1", 
               display: "flex",
-              flexDirection: "row",
+              flexDirection: "column",
               overflow: "hidden",
-              minWidth: 0,
-              gap: 2
+              minWidth: 0
             }}>
-              {/* Pie Chart Section - Takes 70% */}
+              {/* Pie Chart Section */}
               <Box sx={{
-                flex: "1 1 70%",
+                flex: "1 1 100%",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
@@ -865,11 +376,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 borderRadius: "8px",
                 p: 2
               }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    mb: 2, 
+                    fontWeight: 600, 
                     color: "#1976d2",
                     fontSize: "14px",
                     display: "flex",
@@ -880,7 +391,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   📈 Kostenverdeling
                 </Typography>
                 <Box sx={{ flexGrow: 1, minHeight: 200, height: "100%", display: "flex" }}>
-                  <Paper sx={{
+                  <Paper sx={{ 
                     padding: 2,
                     height: "100%",
                     width: "100%",
@@ -894,10 +405,21 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   </Paper>
                 </Box>
               </Box>
+            </Box>
+          )}
 
-              {/* Stacked Bar Chart Section - Takes 30% */}
+          {/* Tab 2: Kostenbereik (Bar Chart) */}
+          {currentTab === 2 && (
+            <Box sx={{ 
+              flex: "1", 
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              minWidth: 0
+            }}>
+              {/* Stacked Bar Chart Section */}
               <Box sx={{
-                flex: "1 1 30%",
+                flex: "1 1 100%",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
@@ -905,11 +427,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                 borderRadius: "8px",
                 p: 2
               }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    mb: 2, 
+                    fontWeight: 600, 
                     color: "#1976d2",
                     fontSize: "14px",
                     display: "flex",
@@ -920,7 +442,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   📊 Kostenbereik per categorie
                 </Typography>
                 <Box sx={{ flexGrow: 1, minHeight: 200, display: "flex" }}>
-                  <Paper sx={{
+                  <Paper sx={{ 
                     padding: 2,
                     height: "100%",
                     width: "100%",
@@ -931,7 +453,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                     overflow: "auto"
                   }}>
                     <CostRangeStackedBar
-                      bouwKosten={model.costModel.constructionCost.totalConstructionCost}
+                      bouwKosten={model.costModel.indirectConstructionCosts.totalCosts}
                       engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
                       overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
                       vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}

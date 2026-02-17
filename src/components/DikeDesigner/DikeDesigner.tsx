@@ -573,6 +573,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.graphicsLayerRuimtebeslag3d.removeAll();
+        model.graphicsLayerUitvoeringszone.removeAll();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;
@@ -1289,9 +1290,8 @@ const DikeDesigner = (
                             <CostCalculationPanel model={model} />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={4}>
-                            <ComparisonChartAndTablePanel 
+                            <ComparisonChartAndTablePanel
                                 model={model}
-                                onLoadDesign={() => setValue(0)}
                             />
                         </CustomTabPanel>
                     </Box>

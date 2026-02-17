@@ -5,13 +5,12 @@ import type DikeDesignerModel from "../../DikeDesignerModel";
 
 interface ComparisonChartAndTablePanelProps {
     model: DikeDesignerModel;
-    onLoadDesign?: () => void;
 }
 
-const ComparisonChartAndTablePanel: React.FC<ComparisonChartAndTablePanelProps> = ({ model, onLoadDesign }) => {
+const ComparisonChartAndTablePanel: React.FC<ComparisonChartAndTablePanelProps> = ({ model }) => {
     return (
         <Box style={{ height: "100%", overflow: "hidden" }}>
-            <ComparisonAlternativesPanel model={model} onLoadDesign={onLoadDesign} />
+            <ComparisonAlternativesPanel model={model} />
         </Box>
     );
 };

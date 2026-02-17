@@ -52,6 +52,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
     const xAxis = chart.xAxes.push(
         am5xy.ValueAxis.new(root, {
+            extraTooltipPrecision: 2,
             renderer: am5xy.AxisRendererX.new(root, {}),
             tooltip: am5.Tooltip.new(root, {}),
         })
@@ -59,6 +60,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
 
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
+            extraTooltipPrecision: 2,
             renderer: am5xy.AxisRendererY.new(root, {}),
             tooltip: am5.Tooltip.new(root, {}),
         })
@@ -81,7 +83,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             valueYField: "hoogte",
             valueXField: "afstand",
             tooltip: am5.Tooltip.new(root, {
-                labelText: "{valueY}",
+                labelText: "{valueY.formatNumber('#.00')}",
             }),
         })
     );
@@ -302,7 +304,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             valueYField: "hoogte",
             valueXField: "afstand",
             tooltip: am5.Tooltip.new(root, {
-                labelText: "Grond hoogte: {valueY}",
+                labelText: "Grond hoogte: {valueY.formatNumber('#.00')} m NAP",
             }),
             stroke: am5.color(0xff9900),
         })
@@ -324,7 +326,7 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             valueXField: "afstand",
             stroke: am5.color(0x800080), // purple
             tooltip: am5.Tooltip.new(root, {
-                labelText: "{valueY}",
+                labelText: "{valueY.formatNumber('#.00')}",
             }),
         })
     );
@@ -454,7 +456,10 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         strokeWidth: 2,
     });
 
-    chart.set("cursor", am5xy.XYCursor.new(root, {}));
+    chart.set("cursor", am5xy.XYCursor.new(root, {
+        xAxis: xAxis,
+        yAxis: yAxis,
+    }));
     let cursor = chart.get("cursor");
 
     // Add X-axis scrollbar
@@ -552,6 +557,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
     const xAxis = chart.xAxes.push(
         am5xy.ValueAxis.new(root, {
+            extraTooltipPrecision: 2,
             renderer: am5xy.AxisRendererX.new(root, {}),
             tooltip: am5.Tooltip.new(root, {}),
         })
@@ -559,6 +565,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
 
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
+            extraTooltipPrecision: 2,
             renderer: am5xy.AxisRendererY.new(root, {}),
             tooltip: am5.Tooltip.new(root, {}),
         })
@@ -581,7 +588,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
             valueYField: "hoogte",
             valueXField: "afstand",
             tooltip: am5.Tooltip.new(root, {
-                labelText: "Grond hoogte: {valueY}",
+                labelText: "Grond hoogte: {valueY.formatNumber('#.00')} m NAP",
             }),
             stroke: am5.color(0xff9900),
         })
@@ -602,7 +609,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
             valueYField: "hoogte",
             valueXField: "afstand",
             tooltip: am5.Tooltip.new(root, {
-                labelText: "Ontwerp hoogte: {valueY}",
+                labelText: "Ontwerp hoogte: {valueY.formatNumber('#.00')}",
             }),
             stroke: am5.color(0x888888)
         })
@@ -627,7 +634,7 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
             valueXField: "afstand",
             stroke: am5.color(0x800080), // purple
             tooltip: am5.Tooltip.new(root, {
-                labelText: "{valueY}",
+                labelText: "{valueY.formatNumber('#.00')}",
             }),
         })
     );
@@ -693,7 +700,10 @@ export function initializeCrossSectionChart(model, crossSectionChartContainerRef
         strokeWidth: 2,
     });
 
-    chart.set("cursor", am5xy.XYCursor.new(root, {}));
+    chart.set("cursor", am5xy.XYCursor.new(root, {
+        xAxis: xAxis,
+        yAxis: yAxis,
+    }));
     let cursor = chart.get("cursor");
 
     // Add X-axis scrollbar

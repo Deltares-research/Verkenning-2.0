@@ -15,7 +15,7 @@ import MenuItem from "@vertigis/web/ui/MenuItem";
 
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile, setDwpLocation, createCrossSection } from "../../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, setDwpLocation, createCrossSection, createFreeCrossSection } from "../../Functions/DesignFunctions";
 
 interface ButtonToolbarProps {
   model: any;
@@ -75,8 +75,8 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       model.graphicsLayerPoint.removeAll();
       model.graphicsLayerCrossSection.removeAll();
       
-      // Start drawing a free cross section line
-      createCrossSection(model);
+      // Create free cross section (user draws any line they want)
+      createFreeCrossSection(model);
     } else if (option === 'lengte_aanpassen') {
       handleToggleLengthSlider();
     }
@@ -240,26 +240,28 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           </Button>
         </Tooltip>
 
-        <Tooltip title="Benoem locatie" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleDwpLocationMenuClick}
-            color={model.selectingDwpLocation ? "secondary" : "primary"}
-            disabled={!model.selectingDwpLocation}
-            sx={{
-              height: '40px',
-              ...(model.selectingDwpLocation ? {
-                fontWeight: 'bold',
-                boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
-                '&:hover': {
-                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
-                }
-              } : {})
-            }}
-          >
-            <LocationOnIcon />
-          </Button>
+        <Tooltip title={model.selectingDwpLocation ? "Benoem locatie" : "Selecteer een punt uit het dwarsprofiel om de locatie te benoemen"} placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+          <span>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleDwpLocationMenuClick}
+              color={model.selectingDwpLocation ? "secondary" : "primary"}
+              disabled={!model.selectingDwpLocation}
+              sx={{
+                height: '40px',
+                ...(model.selectingDwpLocation ? {
+                  fontWeight: 'bold',
+                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+                  }
+                } : {})
+              }}
+            >
+              <LocationOnIcon />
+            </Button>
+          </span>
         </Tooltip>
 
         <Button
