@@ -16,6 +16,7 @@ import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
 import Box from "@vertigis/web/ui/Box";
 import Button from "@vertigis/web/ui/Button";
@@ -59,6 +60,7 @@ import {
     exportDesignLayer2DAsGeoJSON,
     exportRuimteslagLayerAsGeoJSON,
     exportInputLinesAsGeoJSON,
+    exportConstructionLineAsGeoJSON,
 } from "./Functions/ExportFunctions";
 
 import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
@@ -292,6 +294,9 @@ const DikeDesigner = (
                 case 'ruimtebeslag':
                     handleExportRuimtebeslag();
                     break;
+                case 'constructionline':
+                    handleExportConstructionLine();
+                    break;
             }
         });
     };
@@ -301,6 +306,7 @@ const DikeDesigner = (
         { value: '3d', label: '3D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
         { value: '2d', label: '2D ontwerpdata', disabled: !model.graphicsLayerTemp?.graphics.length },
         { value: 'ruimtebeslag', label: '2D ruimtebeslag', disabled: !model.graphicsLayerTemp?.graphics.length },
+        { value: 'constructionline', label: 'Constructielijn', disabled: !model.constructionModel?.graphicsLayerConstructionLine?.graphics.length },
     ];
 
     const seriesRef = useRef<am5xy.LineSeries | null>(null);
@@ -646,6 +652,10 @@ const DikeDesigner = (
 
     const handleExportInputLine = () => {
         exportInputLinesAsGeoJSON(model)
+    }
+
+    const handleExportConstructionLine = () => {
+        exportConstructionLineAsGeoJSON(model)
     }
 
     const handleSaveDesign = async () => {
@@ -1027,6 +1037,49 @@ const DikeDesigner = (
                                 </Button>
                             </Box>
                         </Tooltip>
+
+                        {/* Download Button */}
+                        <Tooltip title="Geodata downloaden" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<CloudDownloadIcon />}
+                                    onClick={handleOpenDownloadDialog}
+                                    disabled={!designName}
+                                    fullWidth={sidebarExpanded}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: "#fff",
+                                        color: designName ? "#0078d4" : "#ccc",
+                                        textTransform: "none",
+                                        fontSize: sidebarExpanded ? "13px" : "0px",
+                                        fontWeight: 600,
+                                        boxShadow: "none",
+                                        transition: "all 0.2s ease",
+                                        borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                        borderLeft: designName ? "3px solid #0078d4" : "3px solid #e5e7eb",
+                                        justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                        paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                        minWidth: sidebarExpanded ? "auto" : "44px",
+                                        width: sidebarExpanded ? "100%" : "44px",
+                                        height: "44px",
+                                        "&:hover": designName ? {
+                                            backgroundColor: "#f5f7fa",
+                                            boxShadow: "none",
+                                            borderColor: "#0078d4",
+                                        } : {},
+                                    }}
+                                >
+                                    {sidebarExpanded ? "Downloaden" : ""}
+                                </Button>
+                            </Box>
+                        </Tooltip>
                     </Stack>
 
                     {/* Global Status Indicator */}
@@ -1275,7 +1328,6 @@ const DikeDesigner = (
                                 handleClearDesign={handleClearDesign}
                                 handleCreateCrossSection={handleCreateCrossSection}
                                 handleSaveWithDialog={handleSaveWithDialog}
-                                handleOpenDownloadDialog={handleOpenDownloadDialog}
                                 designName={designName}
                             />
                         </CustomTabPanel>
