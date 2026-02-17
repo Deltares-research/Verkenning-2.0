@@ -79,6 +79,7 @@ export interface DikeDesignerModelProperties extends ComponentModelProperties {
 export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerModelProperties> {
 
     designName: string = "";
+    activeSnapshotId: string = "";
     constructionModel: ConstructionModel = new ConstructionModel();
     costModel: CostModel = new CostModel();
     comparisonModel: ComparisonModel = new ComparisonModel();

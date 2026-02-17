@@ -73,7 +73,7 @@ export const ensureSnapshotLayer = (
 
     // For mesh and constructionLine, check if this is the current design
     if (type === "mesh" && model.graphicsLayerMesh) {
-        const isCurrentSnapshot = model.designName === snapshot.name;
+        const isCurrentSnapshot = model.activeSnapshotId === snapshot.id;
         if (isCurrentSnapshot) {
             compModel.snapshotLayers[snapshot.id] = {
                 ...compModel.snapshotLayers[snapshot.id],
@@ -84,7 +84,7 @@ export const ensureSnapshotLayer = (
     }
 
     if (type === "constructionLine" && model.constructionModel?.graphicsLayerConstructionLine) {
-        const isCurrentSnapshot = model.designName === snapshot.name;
+        const isCurrentSnapshot = model.activeSnapshotId === snapshot.id;
         if (isCurrentSnapshot) {
             compModel.snapshotLayers[snapshot.id] = {
                 ...compModel.snapshotLayers[snapshot.id],
@@ -239,7 +239,7 @@ export const toggleSnapshotLayerVisibility = (
     console.log(`Toggle ${type} for snapshot ${snapshot.id} (${snapshot.name})`);
 
     const compModel = model.comparisonModel;
-    const isCurrentSnapshot = model.designName === snapshot.name;
+    const isCurrentSnapshot = model.activeSnapshotId === snapshot.id;
     console.log(`Is current snapshot: ${isCurrentSnapshot}, model.designName: ${model.designName}`);
 
     // Handle current design's existing layers
@@ -310,6 +310,7 @@ export const addCurrentDesignSnapshot = (model: DikeDesignerModel): void => {
 
         const newSnapshots = [...model.comparisonSnapshots, snapshot];
         model.comparisonSnapshots = newSnapshots;
+        model.activeSnapshotId = snapshot.id;
         console.log("Updated comparison snapshots, total:", newSnapshots.length);
 
         model.messages.commands.ui.displayNotification.execute({
@@ -587,6 +588,7 @@ export const loadSnapshot = (
 ): void => {
     try {
         model.designName = snapshot.name;
+        model.activeSnapshotId = snapshot.id;
         loadProjectFromJSON(model, snapshot.projectJSON);
 
         // Turn on mesh by default after loading
@@ -652,6 +654,7 @@ export const initializeComparison = (model: DikeDesignerModel): void => {
             const projectData = buildProjectJSON(model);
             const snapshot = createSnapshot(projectData, true); // Current design is already calculated
             model.comparisonSnapshots = [snapshot];
+            model.activeSnapshotId = snapshot.id;
 
             // Turn on mesh by default for the first alternative
             if (model.graphicsLayerMesh) {
@@ -666,7 +669,7 @@ export const initializeComparison = (model: DikeDesignerModel): void => {
     const currentSnapshots = model.comparisonSnapshots || [];
     if (currentSnapshots.length > 0) {
         const currentSnapshot = currentSnapshots[0];
-        const isCurrentDesign = model.designName === currentSnapshot.name;
+        const isCurrentDesign = model.activeSnapshotId === currentSnapshot.id;
         if (isCurrentDesign) {
             model.comparisonModel.layerVisibility = {
                 ...model.comparisonModel.layerVisibility,
@@ -685,7 +688,7 @@ export const syncVisibilityState = (model: DikeDesignerModel): void => {
     const snapshots = model.comparisonSnapshots || [];
     if (snapshots.length > 0) {
         const currentSnapshot = snapshots[0];
-        const isCurrentDesign = model.designName === currentSnapshot.name;
+        const isCurrentDesign = model.activeSnapshotId === currentSnapshot.id;
         if (isCurrentDesign) {
             const currentState: LayerVisibilityState = {
                 ruimtebeslag2d: model.graphicsLayerRuimtebeslag?.visible ?? false,

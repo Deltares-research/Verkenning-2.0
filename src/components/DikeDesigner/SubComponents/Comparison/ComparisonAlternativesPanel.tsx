@@ -35,10 +35,10 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
 
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
-    useWatchAndRerender(model, "designName");
+    useWatchAndRerender(model, "activeSnapshotId");
     const snapshots = model.comparisonSnapshots || [];
     const layerVisibility = model.comparisonModel.layerVisibility;
-    const activeDesign = model.designName || "";
+    const activeSnapshotId = model.activeSnapshotId || "";
 
     // Sync visibility state with actual layer visibility
     useEffect(() => {
@@ -289,7 +289,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                         </Typography>
                         <Stack spacing={2}>
                             {snapshots.map((snapshot) => {
-                                const isActive = snapshot.name === activeDesign;
+                                const isActive = snapshot.id === activeSnapshotId;
                                 return (
                                 <Paper
                                     key={snapshot.id}

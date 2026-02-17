@@ -42,9 +42,9 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
     const [isMaximized, setIsMaximized] = useState(false);
     const [currentTab, setCurrentTab] = useState(0);
     useWatchAndRerender(model, "comparisonSnapshots");
-    useWatchAndRerender(model, "designName");
+    useWatchAndRerender(model, "activeSnapshotId");
     const snapshots = model.comparisonSnapshots || [];
-    const activeDesign = model.designName || "";
+    const activeSnapshotId = model.activeSnapshotId || "";
 
     const formatNumber = (value: any): string => {
         if (value == null) return "";
@@ -244,9 +244,9 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                     <Typography variant="h6" sx={{ fontWeight: 600, margin: 0, fontSize: "12px", color: "white" }}>
                         Vergelijkingstabel
                     </Typography>
-                    {activeDesign && (
+                    {activeSnapshotId && (
                         <Typography sx={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", fontStyle: "italic" }}>
-                            Actief ontwerp: {activeDesign}
+                            Actief ontwerp: {snapshots.find((s) => s.id === activeSnapshotId)?.name || ""}
                         </Typography>
                     )}
                 </Box>
@@ -289,7 +289,7 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                     Ontwerp
                                 </TableCell>
                                 {snapshots.map((snapshot) => {
-                                    const isActive = snapshot.name === activeDesign;
+                                    const isActive = snapshot.id === activeSnapshotId;
                                     return (
                                         <TableCell
                                             key={snapshot.id}
