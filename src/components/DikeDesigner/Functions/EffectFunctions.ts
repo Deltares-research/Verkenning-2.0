@@ -4,6 +4,7 @@ import Polygon from "@arcgis/core/geometry/Polygon";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
+import * as XLSX from "xlsx";
 
 import * as intersectionOperator from "@arcgis/core/geometry/operators/intersectionOperator";
 import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/multiPartToSinglePartOperator";
@@ -812,4 +813,91 @@ export async function getIntersectingAreaInExecutionZone(model, layerTitle, wher
         return 0;
     }
 }
+
+export const downloadEffectsTableExcel = (model: any) => {
+    const num = (v: any): number | string => {
+        if (v == null) return "";
+        const n = Number(v);
+        return isNaN(n) ? "" : Math.round(n);
+    };
+    const count = (v: any[] | null | undefined): number | string => (v != null ? v.length : "");
+
+    const rows: any[][] = [];
+    const sectionRowIndices: number[] = [];
+
+    // Title
+    rows.push(["Effectenanalyse"]);
+    const titleRowIdx = 0;
+    rows.push([]);
+
+    // Helper to add section headers
+    const addSection = (title: string) => {
+        rows.push([]);
+        sectionRowIndices.push(rows.length);
+        rows.push([title, "", ""]);
+    };
+
+    // 1. Wonen en leefomgeving
+    addSection("1. Wonen en leefomgeving");
+    rows.push(["", "Aantal", "Oppervlakte [m\u00B2]"]);
+    rows.push(["BAG panden", count(model.intersectingPanden), num(model.intersectingPandenArea)]);
+    rows.push([`Invloedzone BAG panden (${model.pandenBufferDistance || 10} m)`, count(model.intersectingPandenBuffer), num(model.intersectingPandenBufferArea)]);
+    rows.push(["Percelen geen eigendom Waterschap", count(model.intersectingPercelen), num(model.intersectingPercelenArea)]);
+    rows.push(["Erven", count(model.intersectingErven), num(model.intersectingErvenArea)]);
+
+    // 2. Natuur
+    addSection("2. Natuur");
+    rows.push(["", "Oppervlakte [m\u00B2]"]);
+    rows.push(["Natura 2000", num(model.intersectingNatura2000)]);
+    rows.push(["GNN", num(model.intersectingGNN)]);
+    rows.push(["NBP beheertype", num(model.intersectingBeheertypeArea)]);
+    rows.push(["Beheertypen", model.intersectingBeheertypen?.join(", ") || ""]);
+
+    // 3. Verkeer
+    addSection("3. Verkeer");
+    rows.push(["", "Oppervlakte [m\u00B2]"]);
+    rows.push(["BGT wegdelen", num(model.intersectingWegdelen2dRuimtebeslag)]);
+    rows.push(["BGT afritten [m\u00B2]", num(model.intersectingInritten2dRuimtebeslag)]);
+    rows.push(["BGT afritten [aantal]", count(model.intersectingInritten2dRuimtebeslagCount)]);
+
+    // 4. Uitvoering
+    addSection(`4. Uitvoering (buffer: ${model.uitvoeringszoneBufferDistance || 10}m)`);
+    rows.push(["", "Aantal", "Oppervlakte [m\u00B2]"]);
+    rows.push(["Wegoppervlak in uitvoeringszone", "-", num(model.uitvoeringszoneWegoppervlak)]);
+    rows.push(["Panden binnen invloedscontour", count(model.uitvoeringszonePanden), num(model.uitvoeringszonePandenArea)]);
+    rows.push(["Percelen binnen invloedscontour", count(model.uitvoeringszonePercelen), num(model.uitvoeringszonePercelenArea)]);
+    rows.push(["Natura 2000 binnen invloedscontour", "-", num(model.uitvoeringszoneNatura2000)]);
+    rows.push(["GNN binnen invloedscontour", "-", num(model.uitvoeringszoneGNN)]);
+    rows.push(["NBP beheertype binnen invloedscontour", "-", num(model.uitvoeringszoneBeheertypeArea)]);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    ws["!cols"] = [{ wch: 42 }, { wch: 18 }, { wch: 22 }];
+
+    ws["!merges"] = [
+        { s: { r: titleRowIdx, c: 0 }, e: { r: titleRowIdx, c: 2 } },
+        ...sectionRowIndices.map((rowIdx) => ({
+            s: { r: rowIdx, c: 0 },
+            e: { r: rowIdx, c: 2 },
+        })),
+    ];
+
+    // Number formatting
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+    for (let r = range.s.r; r <= range.e.r; r++) {
+        for (let c = 1; c <= range.e.c; c++) {
+            const addr = XLSX.utils.encode_cell({ r, c });
+            const cell = ws[addr];
+            if (cell && typeof cell.v === "number") {
+                cell.z = "#,##0";
+            }
+        }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Effectenanalyse");
+
+    const prefix = model.designName ? `${model.designName}_` : "";
+    XLSX.writeFile(wb, `${prefix}effectenanalyse.xlsx`);
+};
 
