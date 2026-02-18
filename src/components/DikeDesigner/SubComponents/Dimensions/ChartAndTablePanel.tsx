@@ -246,7 +246,15 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           }
         }}
       >
-        {model.dwpLocations.map((location) => (
+        {model.dwpLocations
+          .filter((location) => {
+            // Allow the location currently assigned to this point
+            const currentLocatie = model.chartData?.[model.selectedPointIndex]?.locatie;
+            if (location === currentLocatie) return true;
+            // Hide locations already used by other points
+            return !model.chartData?.some((d) => d.locatie === location);
+          })
+          .map((location) => (
           <MenuItem
             key={location}
             onClick={() => handleLocationSelect(location as string)}

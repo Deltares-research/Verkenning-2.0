@@ -92,17 +92,53 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     };
 
     const handleZoomToSnapshot = (snapshot: any) => {
-        const layer = ensureSnapshotLayer(model, snapshot, "design3d");
-        if (!layer || !layer.graphics.length || !model.view) return;
+        if (!model.view) return;
 
-        let unionExtent: __esri.Extent | null = null;
-        layer.graphics.forEach((graphic: any) => {
-            if (graphic.geometry?.extent) {
-                unionExtent = unionExtent ? unionExtent.union(graphic.geometry.extent) : graphic.geometry.extent;
+        // For the active/current design, zoom to live model layers directly
+        const isCurrentDesign = snapshot.id === activeSnapshotId;
+        if (isCurrentDesign) {
+            const liveLayers = [
+                model.graphicsLayerRuimtebeslag3d,
+                model.graphicsLayer3dPolygon,
+                model.graphicsLayerRuimtebeslag,
+                model.graphicsLayerLine,
+                model.graphicsLayerCrossSection,
+            ];
+            let unionExtent: __esri.Extent | null = null;
+            for (const layer of liveLayers) {
+                if (layer?.graphics?.length) {
+                    layer.graphics.forEach((graphic: any) => {
+                        if (graphic.geometry?.extent) {
+                            unionExtent = unionExtent ? unionExtent.union(graphic.geometry.extent) : graphic.geometry.extent;
+                        }
+                    });
+                }
             }
-        });
-        if (unionExtent) {
-            model.view.goTo(unionExtent.expand(1.3));
+            if (unionExtent) {
+                model.view.goTo(unionExtent.expand(1.3));
+                return;
+            }
+        }
+
+        // For imported snapshots, try layer types in order of preference
+        const layerTypes: Array<"design3d" | "ruimtebeslag2d" | "constructionLine"> = ["design3d", "ruimtebeslag2d", "constructionLine"];
+        for (const type of layerTypes) {
+            const geoms = snapshot.projectJSON.geometries?.[type];
+            if (geoms?.length) {
+                const layer = ensureSnapshotLayer(model, snapshot, type);
+                if (layer && layer.graphics.length) {
+                    let unionExtent: __esri.Extent | null = null;
+                    layer.graphics.forEach((graphic: any) => {
+                        if (graphic.geometry?.extent) {
+                            unionExtent = unionExtent ? unionExtent.union(graphic.geometry.extent) : graphic.geometry.extent;
+                        }
+                    });
+                    if (unionExtent) {
+                        model.view.goTo(unionExtent.expand(1.3));
+                        return;
+                    }
+                }
+            }
         }
     };
 
@@ -368,13 +404,13 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                 </Box>
                                             </Box>
                                             <Box style={{ display: "flex", gap: "6px", alignSelf: "flex-start" }}>
-                                                <Tooltip title="Zoom naar alternatief" placement="top">
+                                                <Tooltip title="Zoom naar alternatief" placement="top" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
                                                     <Button
                                                         variant="outlined"
                                                         color="primary"
                                                         size="small"
                                                         onClick={() => handleZoomToSnapshot(snapshot)}
-                                                        disabled={!snapshot.projectJSON.geometries?.design3d?.length}
+                                                        disabled={snapshot.id !== activeSnapshotId && !snapshot.projectJSON.geometries?.design3d?.length && !snapshot.projectJSON.geometries?.ruimtebeslag2d?.length && !snapshot.projectJSON.geometries?.constructionLine?.length}
                                                         sx={{ minWidth: "36px", padding: "4px 8px" }}
                                                     >
                                                         <ZoomInMapIcon style={{ fontSize: "18px" }} />
