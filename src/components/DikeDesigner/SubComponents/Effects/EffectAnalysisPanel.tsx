@@ -1,4 +1,5 @@
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Tooltip from "@mui/material/Tooltip";
@@ -19,7 +20,7 @@ import { useWatchAndRerender } from "@vertigis/web/ui";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { handleEffectAnalysis } from "../../Functions/EffectFunctions";
+import { handleEffectAnalysis, downloadEffectsTableExcel } from "../../Functions/EffectFunctions";
 
 interface EffectAnalysisPanelProps {
     model: DikeDesignerModel;
@@ -222,6 +223,18 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                     disabled={!model.graphicsLayerRuimtebeslag?.graphics.length}
                 >
                     Voer effectenanalyse uit
+                </Button>
+
+                <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<CloudDownloadIcon />}
+                    onClick={() => downloadEffectsTableExcel(model)}
+                    fullWidth
+                    sx={{ mt: 1 }}
+                    disabled={!model.effectsCalculated || model.loading}
+                >
+                    Download effectenoverzicht (Excel)
                 </Button>
 
                 {!model.effectsCalculated && (

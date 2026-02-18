@@ -1,5 +1,6 @@
 import React from "react";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
 import Stack from "@vertigis/web/ui/Stack";
 import Button from "@vertigis/web/ui/Button";
@@ -12,13 +13,14 @@ import { stackStyle } from "../../../styles";
 import { useWatchAndRerender } from "@vertigis/web/ui";
 
 import type DikeDesignerModel from "../../DikeDesignerModel";
-import { handleCostCalculation } from "../../Functions/CostFunctions";
+import { downloadCostTableExcel, handleCostCalculation } from "../../Functions/CostFunctions";
 
 interface CostCalculationPanelProps {
   model: DikeDesignerModel;
+  onDownloadDatasets?: () => void;
 }
 
-const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) => {
+const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDownloadDatasets }) => {
   useWatchAndRerender(model, "effectsCalculated");
   useWatchAndRerender(model, "costsCalculated");
   useWatchAndRerender(model.costModel, "directCostGroundWork");
@@ -84,6 +86,30 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
         sx={{ mt: 2 }}
       >
         Toon kostenoverzicht & grafieken
+      </Button>
+
+      <Button
+        variant="outlined"
+        color="primary"
+        startIcon={<CloudDownloadIcon />}
+        onClick={() => downloadCostTableExcel(model)}
+        fullWidth
+        sx={{ mt: 1 }}
+        disabled={!model.costsCalculated || model.loading}
+      >
+        Download kostenoverzicht (Excel)
+      </Button>
+
+
+      <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<CloudDownloadIcon />}
+          onClick={onDownloadDatasets}
+          fullWidth
+          sx={{ mt: 1 }}
+        >
+          Download kentallen (.csv)
       </Button>
     </Stack>
   );

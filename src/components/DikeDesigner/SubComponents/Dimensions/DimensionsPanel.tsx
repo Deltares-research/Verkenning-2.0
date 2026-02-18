@@ -1,5 +1,4 @@
 import ClearIcon from "@mui/icons-material/Clear";
-import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import EditIcon from "@mui/icons-material/Edit";
 import FilterIcon from "@mui/icons-material/Filter";
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -57,7 +56,6 @@ interface DimensionsPanelProps {
     handleCreateDesign: () => void;
     handleClearDesign: () => void;
     handleSaveWithDialog: () => void;
-    handleOpenDownloadDialog: () => void;
     designName: string;
 }
 
@@ -77,7 +75,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
     handleCreateDesign,
     handleClearDesign,
     handleSaveWithDialog,
-    handleOpenDownloadDialog,
     designName,
 }) => {
 
@@ -359,28 +356,6 @@ const DimensionsPanel: React.FC<DimensionsPanelProps> = ({
                         </TableBody>
                     </Table>
                 </TableContainer>
-            </Stack>
-            <Stack 
-                spacing={1.5} 
-                sx={{
-                    ...stackStyle,
-                    opacity: hasReferenceLine ? 1 : 0.5,
-                    pointerEvents: hasReferenceLine ? 'auto' : 'none'
-                }}
-            >
-                <FormLabel>Stap 4: bestanden downloaden</FormLabel>
-                
-                <Button
-                    disabled={!hasReferenceLine || !designName}
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<CloudDownloadIcon />}
-                    onClick={handleOpenDownloadDialog}
-                    fullWidth
-                    sx={buttonWithIconStyle}
-                >
-                    Download geselecteerd
-                </Button>
             </Stack>
             {/* <Stack 
                 spacing={1.5} 

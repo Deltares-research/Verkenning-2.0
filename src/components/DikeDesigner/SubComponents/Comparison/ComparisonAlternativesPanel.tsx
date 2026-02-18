@@ -6,7 +6,7 @@ import Typography from "@vertigis/web/ui/Typography";
 import Box from "@vertigis/web/ui/Box";
 import Tooltip from "@mui/material/Tooltip";
 import { useWatchAndRerender } from "@vertigis/web/ui";
-import { Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon, CheckCircle as CheckCircleIcon, FileDownload as FileDownloadIcon } from "@mui/icons-material";
+import { Assessment as AssessmentIcon, Upload as UploadIcon, Autorenew as AutorenewIcon, CheckCircle as CheckCircleIcon, FileDownload as FileDownloadIcon, ZoomInMap as ZoomInMapIcon } from "@mui/icons-material";
 import * as XLSX from "xlsx";
 import type DikeDesignerModel from "../../DikeDesignerModel";
 import type { ProjectJSON } from "../../Functions/SaveProjectFunctions";
@@ -22,6 +22,7 @@ import {
     loadSnapshot,
     initializeComparison,
     syncVisibilityState,
+    ensureSnapshotLayer,
 } from "./ComparisonFunctions";
 
 interface ComparisonAlternativesPanelProps {
@@ -33,12 +34,19 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     const [loadOptionDialogOpen, setLoadOptionDialogOpen] = useState(false);
     const [pendingProjectData, setPendingProjectData] = useState<ProjectJSON | null>(null);
 
+    const [, forceUpdate] = useState(0);
+
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
     useWatchAndRerender(model, "activeSnapshotId");
     const snapshots = model.comparisonSnapshots || [];
     const layerVisibility = model.comparisonModel.layerVisibility;
     const activeSnapshotId = model.activeSnapshotId || "";
+
+    const handleToggleVisibility = (snapshot: any, type: "ruimtebeslag2d" | "design3d" | "constructionLine" | "mesh") => {
+        toggleSnapshotLayerVisibility(model, snapshot, type);
+        forceUpdate(n => n + 1);
+    };
 
     // Sync visibility state with actual layer visibility
     useEffect(() => {
@@ -81,6 +89,57 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
             setLoadOptionDialogOpen(true);
         });
         event.target.value = "";
+    };
+
+    const handleZoomToSnapshot = (snapshot: any) => {
+        if (!model.view) return;
+
+        // For the active/current design, zoom to live model layers directly
+        const isCurrentDesign = snapshot.id === activeSnapshotId;
+        if (isCurrentDesign) {
+            const liveLayers = [
+                model.graphicsLayerRuimtebeslag3d,
+                model.graphicsLayer3dPolygon,
+                model.graphicsLayerRuimtebeslag,
+                model.graphicsLayerLine,
+                model.graphicsLayerCrossSection,
+            ];
+            let unionExtent: __esri.Extent | null = null;
+            for (const layer of liveLayers) {
+                if (layer?.graphics?.length) {
+                    layer.graphics.forEach((graphic: any) => {
+                        if (graphic.geometry?.extent) {
+                            unionExtent = unionExtent ? unionExtent.union(graphic.geometry.extent) : graphic.geometry.extent;
+                        }
+                    });
+                }
+            }
+            if (unionExtent) {
+                model.view.goTo(unionExtent.expand(1.3));
+                return;
+            }
+        }
+
+        // For imported snapshots, try layer types in order of preference
+        const layerTypes: Array<"design3d" | "ruimtebeslag2d" | "constructionLine"> = ["design3d", "ruimtebeslag2d", "constructionLine"];
+        for (const type of layerTypes) {
+            const geoms = snapshot.projectJSON.geometries?.[type];
+            if (geoms?.length) {
+                const layer = ensureSnapshotLayer(model, snapshot, type);
+                if (layer && layer.graphics.length) {
+                    let unionExtent: __esri.Extent | null = null;
+                    layer.graphics.forEach((graphic: any) => {
+                        if (graphic.geometry?.extent) {
+                            unionExtent = unionExtent ? unionExtent.union(graphic.geometry.extent) : graphic.geometry.extent;
+                        }
+                    });
+                    if (unionExtent) {
+                        model.view.goTo(unionExtent.expand(1.3));
+                        return;
+                    }
+                }
+            }
+        }
     };
 
     const exportToExcel = useCallback(() => {
@@ -344,15 +403,28 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                     )}
                                                 </Box>
                                             </Box>
-                                            <Button
-                                                variant="outlined"
-                                                color="error"
-                                                size="small"
-                                                onClick={() => removeSnapshot(model, snapshot.id)}
-                                                style={{ alignSelf: "flex-start" }}
-                                            >
-                                                Verwijder
-                                            </Button>
+                                            <Box style={{ display: "flex", gap: "6px", alignSelf: "flex-start" }}>
+                                                <Tooltip title="Zoom naar alternatief" placement="top" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={() => handleZoomToSnapshot(snapshot)}
+                                                        disabled={snapshot.id !== activeSnapshotId && !snapshot.projectJSON.geometries?.design3d?.length && !snapshot.projectJSON.geometries?.ruimtebeslag2d?.length && !snapshot.projectJSON.geometries?.constructionLine?.length}
+                                                        sx={{ minWidth: "36px", padding: "4px 8px" }}
+                                                    >
+                                                        <ZoomInMapIcon style={{ fontSize: "18px" }} />
+                                                    </Button>
+                                                </Tooltip>
+                                                <Button
+                                                    variant="outlined"
+                                                    color="error"
+                                                    size="small"
+                                                    onClick={() => removeSnapshot(model, snapshot.id)}
+                                                >
+                                                    Verwijder
+                                                </Button>
+                                            </Box>
                                         </Box>
                                         <Stack spacing={1}>
                                             <Box style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
@@ -364,7 +436,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         variant={layerVisibility[snapshot.id]?.ruimtebeslag2d ? "contained" : "outlined"}
                                                         color="primary"
                                                         size="small"
-                                                        onClick={() => toggleSnapshotLayerVisibility(model, snapshot, "ruimtebeslag2d")}
+                                                        onClick={() => handleToggleVisibility(snapshot, "ruimtebeslag2d")}
                                                         sx={{
                                                             minWidth: "70px",
                                                             textTransform: "none",
@@ -382,7 +454,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         variant={layerVisibility[snapshot.id]?.design3d ? "contained" : "outlined"}
                                                         color="primary"
                                                         size="small"
-                                                        onClick={() => toggleSnapshotLayerVisibility(model, snapshot, "design3d")}
+                                                        onClick={() => handleToggleVisibility(snapshot, "design3d")}
                                                         sx={{
                                                             minWidth: "70px",
                                                             textTransform: "none",
@@ -400,7 +472,11 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         variant={layerVisibility[snapshot.id]?.constructionLine ? "contained" : "outlined"}
                                                         color="primary"
                                                         size="small"
-                                                        onClick={() => toggleSnapshotLayerVisibility(model, snapshot, "constructionLine")}
+                                                        disabled={isActive
+                                                            ? !model.constructionModel?.graphicsLayerConstructionLine?.graphics?.length
+                                                            : !snapshot.projectJSON.constructions?.drawnConstructionLine && !snapshot.projectJSON.constructions?.structures?.length
+                                                        }
+                                                        onClick={() => handleToggleVisibility(snapshot, "constructionLine")}
                                                         sx={{
                                                             minWidth: "90px",
                                                             textTransform: "none",
@@ -418,7 +494,7 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
                                                         variant={layerVisibility[snapshot.id]?.mesh ? "contained" : "outlined"}
                                                         color="primary"
                                                         size="small"
-                                                        onClick={() => toggleSnapshotLayerVisibility(model, snapshot, "mesh")}
+                                                        onClick={() => handleToggleVisibility(snapshot, "mesh")}
                                                         sx={{
                                                             minWidth: "85px",
                                                             textTransform: "none",

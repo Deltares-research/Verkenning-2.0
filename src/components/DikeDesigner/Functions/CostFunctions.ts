@@ -11,6 +11,7 @@ import * as multiPartToSinglePartOperator from "@arcgis/core/geometry/operators/
 import AreaMeasurementAnalysis from "@arcgis/core/analysis/AreaMeasurementAnalysis";
 import * as meshUtils from "@arcgis/core/geometry/support/meshUtils";
 import { IndirectConstructionCosts, DirectCostGroundWork, EngineeringCosts, OtherCosts, RealEstateCosts,  } from "../SubComponents/Cost/CostModel";
+import * as XLSX from "xlsx";
 // import Query from "@arcgis/core/rest/support/Query";
 
 
@@ -143,6 +144,7 @@ export const handleCostCalculation = async (
             const otherCosts = result["breakdown"]["Overige bijkomende kosten"];
             const realEstateCosts = result["breakdown"]["Vastgoedkosten"];
             const risicoreservering = result["breakdown"]["Risicoreservering"];
+
             
             model.costModel.risicoreservering = Number(risicoreservering['value'] ?? 0);
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
@@ -154,7 +156,6 @@ export const handleCostCalculation = async (
             model.costModel.otherCosts.fromApi(otherCosts);
             model.costModel.realEstateCosts.fromApi(realEstateCosts);
 
-    
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",
@@ -184,5 +185,191 @@ export const handleCostCalculation = async (
         model.loading = false;
         model.costsCalculated = true;
     }
+};
+
+type CostExportRow = {
+    Pad: string;
+    Kostenpost?: string;
+    Type: "Subtotaal" | "Item" | "Totaal";
+    Hoeveelheid?: number;
+    Eenheid?: string;
+    Eenheidsprijs?: number;
+    "Opslag (%)"?: number;
+    Basis?: number;
+    Totaal: number;
+};
+
+const toNumber = (value: unknown): number => {
+    const num = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(num) ? num : 0;
+};
+
+const getSurchargePercent = (raw: unknown): number | undefined => {
+    const num = typeof raw === "number" ? raw : Number(raw);
+    if (!Number.isFinite(num)) return undefined;
+    return num <= 1 ? num * 100 : num;
+};
+
+const isSurchargeItem = (item: any): item is { value?: unknown; base_cost?: unknown; surcharge_percentage?: unknown } => {
+    return !!item && typeof item === "object" && "surcharge_percentage" in item;
+};
+
+export const downloadCostTableExcel = (model: any) => {
+    const rows: CostExportRow[] = [];
+
+    const addSubtotal = (path: string, total: unknown, type: CostExportRow["Type"] = "Subtotaal") => {
+        rows.push({
+            Pad: path,
+            Type: type,
+            Totaal: toNumber(total),
+        });
+    };
+
+    const addItem = (path: string, label: string, item: any) => {
+        if (!item) return;
+
+        if (isSurchargeItem(item)) {
+            rows.push({
+                Pad: path,
+                Kostenpost: label,
+                Type: "Item",
+                "Opslag (%)": getSurchargePercent(item.surcharge_percentage),
+                Basis: item.base_cost !== undefined ? toNumber(item.base_cost) : undefined,
+                Totaal: toNumber(item.value),
+            });
+            return;
+        }
+
+        rows.push({
+            Pad: path,
+            Kostenpost: label,
+            Type: "Item",
+            Hoeveelheid: item.quantity !== undefined ? toNumber(item.quantity) : undefined,
+            Eenheid: item.unit ?? undefined,
+            Eenheidsprijs: item.unit_cost !== undefined ? toNumber(item.unit_cost) : undefined,
+            Totaal: toNumber(item.value),
+        });
+    };
+
+    const addValueItem = (path: string, label: string, value: unknown) => {
+        rows.push({
+            Pad: path,
+            Kostenpost: label,
+            Type: "Item",
+            Totaal: toNumber(value),
+        });
+    };
+
+    const costModel = model?.costModel;
+    if (!costModel) {
+        model?.messages?.commands?.ui?.displayNotification?.execute?.({
+            message: "Geen kostenmodel beschikbaar om te exporteren.",
+            title: "Export mislukt",
+        });
+        return;
+    }
+
+    // Bouwkosten
+    addSubtotal("Bouwkosten (BK)", costModel.constructionCost?.totalConstructionCost);
+    addSubtotal("Bouwkosten (BK) > Directe Bouwkosten (DBK)", costModel.indirectConstructionCosts?.totalDirectCosts);
+    addSubtotal(
+        "Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking",
+        costModel.directCostGroundWork?.totaleBDBKGrondwerk
+    );
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Opruimen terrein", costModel.directCostGroundWork?.opruimenTerrein);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Maaien terreinen", costModel.directCostGroundWork?.maaienTerreinen);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Afgraven grasbekleding", costModel.directCostGroundWork?.afgravenGrasbekleding);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Afgraven kleilaag", costModel.directCostGroundWork?.afgravenKleilaag);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Herkeuren kleilaag", costModel.directCostGroundWork?.herkeurenKleilaag);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Aanvullen kern", costModel.directCostGroundWork?.aanvullenKern);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Profieleren dijkkern", costModel.directCostGroundWork?.profielerenDijkkern);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Aanbrengen nieuwe kleilaag", costModel.directCostGroundWork?.aanbrengenNieuweKleilaag);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Profieleren van nieuwe kleilaag", costModel.directCostGroundWork?.profielerenVanNieuweKleilaag);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Hergebruik teelaarde", costModel.directCostGroundWork?.hergebruikTeelaarde);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Aanvullen teelaarde", costModel.directCostGroundWork?.aanvullenTeelaarde);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Profieleren nieuwe graslaag", costModel.directCostGroundWork?.profielerenNieuweGraslaag);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking", "Inzaaien nieuwe toplaag", costModel.directCostGroundWork?.inzaaienNieuweToplaag);
+
+    addSubtotal(
+        "Bouwkosten (BK) > Directe Bouwkosten (DBK) > Constructies",
+        costModel.directCostStructures?.totaleBDBKConstructie
+    );
+    addItem(
+        "Bouwkosten (BK) > Directe Bouwkosten (DBK) > Constructies",
+        model?.constructionModel?.structureType ?? "Constructie",
+        costModel.directCostStructures?.structureDetails
+    );
+
+    addSubtotal(
+        "Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur",
+        costModel.directCostInfrastructure?.totaleBDBKInfra
+    );
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur", "Verwijderen weg", costModel.directCostInfrastructure?.opbrekenRegionaleWeg);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur", "Aanleggen weg", costModel.directCostInfrastructure?.leverenEnAanbrengenRegionaleWeg);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur", "Verwijderen fietspad", costModel.directCostInfrastructure?.verwijderenFietspad);
+    addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur", "Aanleggen fietspad", costModel.directCostInfrastructure?.aanleggenFietspad);
+
+    addSubtotal("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", costModel.indirectConstructionCosts?.totalIndirectCosts);
+    addItem("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", "Eenmalige algemene bouwplaats-, uitvoerings- en projectmanagementkosten", costModel.indirectConstructionCosts?.pmCost);
+    addItem("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", "Algemene kosten (AK)", costModel.indirectConstructionCosts?.generalCost);
+    addItem("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", "Winst & risico (WR)", costModel.indirectConstructionCosts?.riskProfit);
+
+    // Engineeringkosten
+    addSubtotal("Engineeringkosten (EK)", costModel.engineeringCosts?.totalEngineeringCosts);
+    addSubtotal("Engineeringkosten (EK) > Directe engineeringkosten", costModel.engineeringCosts?.totalDirectEngineeringCost);
+    addItem("Engineeringkosten (EK) > Directe engineeringkosten", "Engineeringskosten opdrachtgever (EPK)", costModel.engineeringCosts?.epkCost);
+    addItem("Engineeringkosten (EK) > Directe engineeringkosten", "Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)", costModel.engineeringCosts?.designCost);
+    addItem("Engineeringkosten (EK) > Directe engineeringkosten", "Onderzoeken (archeologie, explosieven, LNC)", costModel.engineeringCosts?.researchCost);
+    addSubtotal("Engineeringkosten (EK) > Indirecte engineering kosten", costModel.engineeringCosts?.totalIndirectEngineeringCosts);
+    addItem("Engineeringkosten (EK) > Indirecte engineering kosten", "Algemene kosten (AK)", costModel.engineeringCosts?.generalCost);
+    addItem("Engineeringkosten (EK) > Indirecte engineering kosten", "Risico & winst (WR)", costModel.engineeringCosts?.riskProfit);
+
+    // Overige bijkomende kosten
+    addSubtotal("Overige bijkomende kosten", costModel.otherCosts?.totalGeneralCosts);
+    addSubtotal("Overige bijkomende kosten > Directe overige bijkomende kosten", costModel.otherCosts?.totalDirectGeneralCosts);
+    addItem("Overige bijkomende kosten > Directe overige bijkomende kosten", "Vergunningen, heffingen en verzekering", costModel.otherCosts?.insurances);
+    addItem("Overige bijkomende kosten > Directe overige bijkomende kosten", "Kabels & leidingen", costModel.otherCosts?.cablesPipes);
+    addItem("Overige bijkomende kosten > Directe overige bijkomende kosten", "Planschade & inpassingsmaatregelen", costModel.otherCosts?.damages);
+    addSubtotal("Overige bijkomende kosten > Indirecte overige bijkomende kosten", costModel.otherCosts?.totalIndirectGeneralCosts);
+    addItem("Overige bijkomende kosten > Indirecte overige bijkomende kosten", "Algemene kosten (AK)", costModel.otherCosts?.generalCost);
+    addItem("Overige bijkomende kosten > Indirecte overige bijkomende kosten", "Risico & winst (WR)", costModel.otherCosts?.riskProfit);
+
+    // Subtotaal investeringkosten + risico
+    const subtotalInvestment =
+        toNumber(costModel.constructionCost?.totalConstructionCost) +
+        toNumber(costModel.engineeringCosts?.totalEngineeringCosts) +
+        toNumber(costModel.otherCosts?.totalGeneralCosts);
+    addSubtotal("Subtotaal investeringkosten", subtotalInvestment);
+    addValueItem("Subtotaal investeringkosten", "Objectoverstijgende risico's", costModel.risicoreservering);
+
+    // Totalen
+    addSubtotal("Investeringskosten excl. BTW", costModel.totalExcludingBTW, "Totaal");
+    addSubtotal("Investeringskosten incl. BTW", costModel.totalIncludingBTW, "Totaal");
+
+    // Vastgoedkosten
+    addSubtotal("Vastgoedkosten", costModel.realEstateCosts?.totalRealEstateCosts);
+    addItem("Vastgoedkosten", "Direct benoemd", costModel.realEstateCosts?.directBenoemdItem);
+    addItem("Vastgoedkosten", "Direct niet benoemd", costModel.realEstateCosts?.directNietBenoemdItem);
+    addItem("Vastgoedkosten", "Indirect", costModel.realEstateCosts?.indirectItem);
+    addItem("Vastgoedkosten", "Risico", costModel.realEstateCosts?.riskItem);
+
+    const headerOrder: Array<keyof CostExportRow> = [
+        "Pad",
+        "Kostenpost",
+        "Type",
+        "Hoeveelheid",
+        "Eenheid",
+        "Eenheidsprijs",
+        "Opslag (%)",
+        "Basis",
+        "Totaal",
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(rows, { header: headerOrder as string[] });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kosten");
+
+    const fileName = "kostenoverzicht.xlsx";
+    XLSX.writeFile(wb, fileName);
 };
 
