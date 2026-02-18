@@ -432,7 +432,10 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               <SubRow label="Inzaaien nieuwe toplaag" item={model.costModel.directCostGroundWork.inzaaienNieuweToplaag}/>
 
               <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
-              <SubRow label={model.constructionModel.structureType} item={model.costModel.directCostStructures.structureDetails}/>
+              <SubRow
+                label={`${model.constructionModel.structureType ?? ""} ${model.costModel.directCostStructures.structureDetails?.dimension ?? ""}`.trim()}
+                item={model.costModel.directCostStructures.structureDetails}
+              />
 
               <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
               <SubRow label="Verwijderen weg" item={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg}/>
