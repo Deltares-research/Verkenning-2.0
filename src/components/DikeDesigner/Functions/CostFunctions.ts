@@ -144,6 +144,7 @@ export const handleCostCalculation = async (
             const otherCosts = result["breakdown"]["Overige bijkomende kosten"];
             const realEstateCosts = result["breakdown"]["Vastgoedkosten"];
             const risicoreservering = result["breakdown"]["Risicoreservering"];
+
             
             model.costModel.risicoreservering = Number(risicoreservering['value'] ?? 0);
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
@@ -155,7 +156,6 @@ export const handleCostCalculation = async (
             model.costModel.otherCosts.fromApi(otherCosts);
             model.costModel.realEstateCosts.fromApi(realEstateCosts);
 
-    
 
             model.messages.commands.ui.displayNotification.execute({
                 message: "Kosten berekening succesvol voltooid.",

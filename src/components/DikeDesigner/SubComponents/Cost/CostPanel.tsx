@@ -17,9 +17,10 @@ import { downloadCostTableExcel, handleCostCalculation } from "../../Functions/C
 
 interface CostCalculationPanelProps {
   model: DikeDesignerModel;
+  onDownloadDatasets?: () => void;
 }
 
-const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) => {
+const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDownloadDatasets }) => {
   useWatchAndRerender(model, "effectsCalculated");
   useWatchAndRerender(model, "costsCalculated");
   useWatchAndRerender(model.costModel, "directCostGroundWork");
@@ -87,6 +88,7 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
         Toon kostenoverzicht & grafieken
       </Button>
 
+<<<<<<< Updated upstream
       <Button
         variant="outlined"
         color="primary"
@@ -98,6 +100,20 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model }) =>
       >
         Download kostenoverzicht (Excel)
       </Button>
+=======
+      {onDownloadDatasets && (
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<CloudDownloadIcon />}
+          onClick={onDownloadDatasets}
+          fullWidth
+          sx={{ mt: 1 }}
+        >
+          Download datasets
+        </Button>
+      )}
+>>>>>>> Stashed changes
     </Stack>
   );
 };
