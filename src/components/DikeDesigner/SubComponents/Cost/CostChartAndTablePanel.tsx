@@ -630,6 +630,59 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             <SubRow label="Risico" item={model.costModel.realEstateCosts.riskItem} />
 
           </CollapsibleSection>
+
+          <TableRow>
+            <TableCell width={48} />
+            <TableCell
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                pl: 2,
+                color: "#0f172a",
+                borderTop: "2px solid #e0e0e0",
+                pt: 2,
+              }}
+            >
+              Totaal investeringskosten + vastgoedkosten
+            </TableCell>
+            <TableCell
+              align="right"
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                borderTop: "2px solid #e0e0e0",
+                pt: 2,
+              }}
+            >
+              {(
+                model.costModel.totalExcludingBTW +
+                model.costModel.realEstateCosts.totalRealEstateCosts
+              ).toLocaleString("nl-NL", {
+                style: "currency",
+                currency: "EUR",
+                maximumFractionDigits: 0,
+              })}
+            </TableCell>
+            <TableCell
+              align="right"
+              sx={{
+                fontWeight: 700,
+                fontSize: 14,
+                borderTop: "2px solid #e0e0e0",
+                pt: 2,
+              }}
+            >
+              {(
+                model.costModel.totalIncludingBTW +
+                (model.costModel.realEstateCosts.totalRealEstateCostsIncludingBTW ??
+                  model.costModel.realEstateCosts.totalRealEstateCosts * 1.21)
+              ).toLocaleString("nl-NL", {
+                style: "currency",
+                currency: "EUR",
+                maximumFractionDigits: 0,
+              })}
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </TableContainer>
@@ -859,10 +912,22 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   overflow: "auto"
                 }}>
                   <CostRangeStackedBar
-                    bouwKosten={model.costModel.constructionCost.totalConstructionCost}
-                    engineering={model.costModel.engineeringCosts.totalEngineeringCosts}
-                    overigeBijkomende={model.costModel.otherCosts.totalGeneralCosts}
-                    vastgoed={model.costModel.realEstateCosts.totalRealEstateCosts}
+                    bouwKosten={
+                      model.costModel.constructionCost.totalConstructionCostIncludingBTW ??
+                      model.costModel.constructionCost.totalConstructionCost * 1.21
+                    }
+                    engineering={
+                      model.costModel.engineeringCosts.totalEngineeringCostsIncludingBTW ??
+                      model.costModel.engineeringCosts.totalEngineeringCosts * 1.21
+                    }
+                    overigeBijkomende={
+                      model.costModel.otherCosts.totalGeneralCostsIncludingBTW ??
+                      model.costModel.otherCosts.totalGeneralCosts * 1.21
+                    }
+                    vastgoed={
+                      model.costModel.realEstateCosts.totalRealEstateCostsIncludingBTW ??
+                      model.costModel.realEstateCosts.totalRealEstateCosts * 1.21
+                    }
                   />
                 </Paper>
               </Box>
