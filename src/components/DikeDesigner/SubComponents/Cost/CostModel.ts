@@ -56,7 +56,7 @@ const getCostValueExclBTW = (value: ApiCostValue | unknown, fallback = 0): numbe
 
 const getCostValueInclBTW = (value: ApiCostValue | unknown, fallback = 0): number => {
     if (typeof value === "number") {
-        return toFiniteNumber(value * 1.21, fallback);
+        return fallback;
     }
 
     if (value && typeof value === "object") {
@@ -65,10 +65,7 @@ const getCostValueInclBTW = (value: ApiCostValue | unknown, fallback = 0): numbe
             return toFiniteNumber(maybe.value_incl_BTW, fallback);
         }
 
-        const excl = getCostValueExclBTW(maybe, Number.NaN);
-        if (Number.isFinite(excl)) {
-            return toFiniteNumber(excl * 1.21, fallback);
-        }
+        return fallback;
     }
 
     return fallback;
@@ -124,6 +121,7 @@ export class DirectCostGroundWork {
     profielerenNieuweGraslaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     inzaaienNieuweToplaag: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totaleBDBKGrondwerk: number = 0
+    totaleBDBKGrondwerkIncludingBTW: number = 0
 
     // map API response to class properties
     fromApi(api: Record<string, CostItem | number> = {}) {
@@ -141,6 +139,7 @@ export class DirectCostGroundWork {
         this.profielerenNieuweGraslaag = api.profileren_nieuwe_toplaag as CostItem ?? this.profielerenNieuweGraslaag
         this.inzaaienNieuweToplaag = api.inzaaien_nieuwe_toplaag as CostItem ?? this.inzaaienNieuweToplaag
         this.totaleBDBKGrondwerk = getCostValueExclBTW(api.totale_BDBK_grondwerk)
+        this.totaleBDBKGrondwerkIncludingBTW = getCostValueInclBTW(api.totale_BDBK_grondwerk)
     }
 
     // convenience getters for value only
@@ -174,6 +173,7 @@ export class DirectCostGroundWork {
             profielerenNieuweGraslaag: this.profielerenNieuweGraslaag.value,
             inzaaienNieuweToplaag: this.inzaaienNieuweToplaag.value,
             totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
+            totaleBDBKGrondwerkIncludingBTW: this.totaleBDBKGrondwerkIncludingBTW,
         }
     }
 }
@@ -182,15 +182,18 @@ export class DirectCostGroundWork {
 export class DirectCostStructures {
     structureDetails: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totaleBDBKConstructie: number = 0;
+    totaleBDBKConstructieIncludingBTW: number = 0;
 
     fromApi(api: Record<string, CostItem | number> = {}) {
         this.structureDetails = api.directe_bouwkosten as CostItem || this.structureDetails;
         this.totaleBDBKConstructie = getCostValueExclBTW(api.totale_BDBK_constructie)
+        this.totaleBDBKConstructieIncludingBTW = getCostValueInclBTW(api.totale_BDBK_constructie)
     }
     toDict(): Record<string, number> {
         return {
             structureDetails: this.structureDetails.value,
             totaleBDBKConstructie: this.totaleBDBKConstructie,
+            totaleBDBKConstructieIncludingBTW: this.totaleBDBKConstructieIncludingBTW,
         };
     }
 }
@@ -201,6 +204,7 @@ export class DirectCostInfrastructure {
     verwijderenFietspad: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     aanleggenFietspad: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totaleBDBKInfra: number = 0;
+    totaleBDBKInfraIncludingBTW: number = 0;
 
     fromApi(api: Record<string, CostItem | number> = {}) {
         this.opbrekenRegionaleWeg = api.verwijderen_weg as CostItem || this.opbrekenRegionaleWeg;
@@ -208,6 +212,7 @@ export class DirectCostInfrastructure {
         this.verwijderenFietspad = api.verwijderen_fietspad as CostItem || this.verwijderenFietspad;
         this.aanleggenFietspad = api.aanleggen_fietspad as CostItem || this.aanleggenFietspad;
         this.totaleBDBKInfra = getCostValueExclBTW(api.totale_BDBK_infrastructuur)
+        this.totaleBDBKInfraIncludingBTW = getCostValueInclBTW(api.totale_BDBK_infrastructuur)
     }
     toDict(): Record<string, number> {
         return {
@@ -216,6 +221,7 @@ export class DirectCostInfrastructure {
             verwijderenFietspad: this.verwijderenFietspad.value,
             aanleggenFietspad: this.aanleggenFietspad.value,
             totaleBDBKInfra: this.totaleBDBKInfra,
+            totaleBDBKInfraIncludingBTW: this.totaleBDBKInfraIncludingBTW,
         };
     }
 }
@@ -300,7 +306,7 @@ export class ConstructionCost {
         this.totalConstructionCostIncludingBTW =
             getCostValueInclBTW(indirecte?.totale_bouwkosten, Number.NaN);
         if (!Number.isFinite(this.totalConstructionCostIncludingBTW)) {
-            this.totalConstructionCostIncludingBTW = getCostValueInclBTW(api.totale_bouwkosten, this.totalConstructionCost * 1.21);
+            this.totalConstructionCostIncludingBTW = getCostValueInclBTW(api.totale_bouwkosten, 0);
         }
     }   
     toDict(): Record<string, any> {
@@ -338,11 +344,11 @@ export class EngineeringCosts {
         this.riskProfit = normalizeSurchargeCostItem(api.winst_en_risico, this.riskProfit)
 
         this.totalDirectEngineeringCost = getCostValueExclBTW(api.direct_engineering_cost)
-        this.totalDirectEngineeringCostIncludingBTW = getCostValueInclBTW(api.direct_engineering_cost, this.totalDirectEngineeringCost * 1.21)
+        this.totalDirectEngineeringCostIncludingBTW = getCostValueInclBTW(api.direct_engineering_cost)
         this.totalIndirectEngineeringCosts = getCostValueExclBTW(api.indirect_engineering_cost)
-        this.totalIndirectEngineeringCostsIncludingBTW = getCostValueInclBTW(api.indirect_engineering_cost, this.totalIndirectEngineeringCosts * 1.21)
+        this.totalIndirectEngineeringCostsIncludingBTW = getCostValueInclBTW(api.indirect_engineering_cost)
         this.totalEngineeringCosts = getCostValueExclBTW(api.total_engineering_costs)
-        this.totalEngineeringCostsIncludingBTW = getCostValueInclBTW(api.total_engineering_costs, this.totalEngineeringCosts * 1.21)
+        this.totalEngineeringCostsIncludingBTW = getCostValueInclBTW(api.total_engineering_costs)
     }
 
     toDict(): Record<string, any> {
@@ -385,11 +391,11 @@ export class OtherCosts {
         this.riskProfit = normalizeSurchargeCostItem(api.risico_en_winst ?? api.winst_en_risico, this.riskProfit)
 
         this.totalDirectGeneralCosts = getCostValueExclBTW(api.direct_general_costs)
-        this.totalDirectGeneralCostsIncludingBTW = getCostValueInclBTW(api.direct_general_costs, this.totalDirectGeneralCosts * 1.21)
+        this.totalDirectGeneralCostsIncludingBTW = getCostValueInclBTW(api.direct_general_costs)
         this.totalIndirectGeneralCosts = getCostValueExclBTW(api.indirect_general_costs)
-        this.totalIndirectGeneralCostsIncludingBTW = getCostValueInclBTW(api.indirect_general_costs, this.totalIndirectGeneralCosts * 1.21)
+        this.totalIndirectGeneralCostsIncludingBTW = getCostValueInclBTW(api.indirect_general_costs)
         this.totalGeneralCosts = getCostValueExclBTW(api.total_general_costs)
-        this.totalGeneralCostsIncludingBTW = getCostValueInclBTW(api.total_general_costs, this.totalGeneralCosts * 1.21)
+        this.totalGeneralCostsIncludingBTW = getCostValueInclBTW(api.total_general_costs)
     }
 
     toDict(): Record<string, any> {
@@ -477,8 +483,7 @@ export class RealEstateCosts {
         );
         this.totalRealEstateCosts = getCostValueExclBTW(section?.total_real_estate_costs ?? section?.totalRealEstateCosts);
         this.totalRealEstateCostsIncludingBTW = getCostValueInclBTW(
-            section?.total_real_estate_costs ?? section?.totalRealEstateCosts,
-            this.totalRealEstateCosts * 1.21
+            section?.total_real_estate_costs ?? section?.totalRealEstateCosts
         );
     }
 
@@ -520,7 +525,8 @@ export default class CostModel extends ModelBase {
     engineeringCosts: EngineeringCosts = new EngineeringCosts();
     otherCosts: OtherCosts = new OtherCosts();
     realEstateCosts: RealEstateCosts = new RealEstateCosts();
-    risicoreservering: number = 0;    
+    risicoreservering: number = 0;
+    risicoreserveringIncludingBTW: number = 0;
 
     get totalExcludingBTW(): number {
         return (
@@ -532,18 +538,12 @@ export default class CostModel extends ModelBase {
     }
 
     get totalIncludingBTW(): number {
-        const constructionIncludingBTW =
-            this.constructionCost?.totalConstructionCostIncludingBTW ??
-            ((this.constructionCost?.totalConstructionCost ?? 0) * 1.21);
-        const engineeringIncludingBTW =
-            this.engineeringCosts?.totalEngineeringCostsIncludingBTW ??
-            ((this.engineeringCosts?.totalEngineeringCosts ?? 0) * 1.21);
-        const otherIncludingBTW =
-            this.otherCosts?.totalGeneralCostsIncludingBTW ??
-            ((this.otherCosts?.totalGeneralCosts ?? 0) * 1.21);
-        const risicoreserveringIncludingBTW = (this.risicoreservering ?? 0) * 1.21;
-
-        return constructionIncludingBTW + engineeringIncludingBTW + otherIncludingBTW + risicoreserveringIncludingBTW;
+        return (
+            (this.constructionCost?.totalConstructionCostIncludingBTW ?? 0) +
+            (this.engineeringCosts?.totalEngineeringCostsIncludingBTW ?? 0) +
+            (this.otherCosts?.totalGeneralCostsIncludingBTW ?? 0) +
+            (this.risicoreserveringIncludingBTW ?? 0)
+        );
     }
 
     // Converts the model into the API-ready nested dictionary
@@ -556,6 +556,7 @@ export default class CostModel extends ModelBase {
             "Engineeringkosten": this.engineeringCosts.toDict(),
             "Overige bijkomende kosten": this.otherCosts.toDict(),
             "Risicoreservering": this.risicoreservering,
+            "Risicoreservering inclusief BTW": this.risicoreserveringIncludingBTW,
             "Vastgoedkosten": this.realEstateCosts.toDict(),
             "Totaal exclusief BTW": this.totalExcludingBTW,
             "Totaal inclusief BTW": this.totalIncludingBTW,

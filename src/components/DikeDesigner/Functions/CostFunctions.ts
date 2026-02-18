@@ -147,6 +147,7 @@ export const handleCostCalculation = async (
 
             
             model.costModel.risicoreservering = Number(risicoreservering['value'] ?? 0);
+            model.costModel.risicoreserveringIncludingBTW = Number(risicoreservering['value_incl_BTW'] ?? 0);
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(directeBouwkosten["Directe kosten constructies"]);
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
@@ -221,12 +222,9 @@ const getInclusiveTotal = (value: unknown, explicitInclusive?: unknown): number 
         if (maybe.value_incl_BTW !== undefined) {
             return toNumber(maybe.value_incl_BTW);
         }
-        if (maybe.value !== undefined) {
-            return toNumber(maybe.value) * 1.21;
-        }
     }
 
-    return toNumber(value) * 1.21;
+    return 0;
 };
 
 const isSurchargeItem = (item: any): item is { value?: unknown; base_cost?: unknown; surcharge_percentage?: unknown } => {
@@ -425,7 +423,7 @@ export const downloadCostTableExcel = (model: any) => {
         "Subtotaal investeringkosten",
         "Objectoverstijgende risico's",
         costModel.risicoreservering,
-        toNumber(costModel.risicoreservering) * 1.21
+        costModel.risicoreserveringIncludingBTW
     );
 
     // Totalen

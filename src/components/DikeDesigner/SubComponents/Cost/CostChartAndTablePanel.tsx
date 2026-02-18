@@ -69,7 +69,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   const [open, setOpen] = useState(level === 0)
   const paddingLeft = 2 + level * 2
   const totalExcl = Number(total ?? 0)
-  const totalIncl = Number(totalIncludingBTW ?? (Number.isFinite(totalExcl) ? totalExcl * 1.21 : 0))
+  const totalIncl = Number(totalIncludingBTW ?? 0)
 
   const formatCurrency = (value: number) =>
     value.toLocaleString("nl-NL", {
@@ -157,7 +157,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                           {formatCurrency(subHeaderTotal)}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                          {formatCurrency(subHeaderTotal * 1.21)}
+                          {""}
                         </TableCell>
                       </TableRow>
                     )}
@@ -181,7 +181,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                           {formatCurrency(subHeader2Total)}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 11, fontWeight: 600 }}>
-                          {formatCurrency(subHeader2Total * 1.21)}
+                          {""}
                         </TableCell>
                       </TableRow>
                     )}
@@ -206,7 +206,7 @@ interface SubHeaderRowProps {
 
 const SubHeaderRow: React.FC<SubHeaderRowProps> = ({ label, total, totalIncludingBTW }) => {
   const totalExcl = Number(total ?? 0)
-  const totalIncl = Number(totalIncludingBTW ?? (Number.isFinite(totalExcl) ? totalExcl * 1.21 : 0))
+  const totalIncl = Number(totalIncludingBTW ?? 0)
 
   return (
     <TableRow>
@@ -256,7 +256,7 @@ const SubRow: React.FC<SubRowProps> = ({ label, item, value, valueIncludingBTW }
     : Number.NaN
   const totalIncl = Number.isFinite(totalInclFromItem)
     ? totalInclFromItem
-    : Number(valueIncludingBTW ?? (Number.isFinite(totalExcl) ? totalExcl * 1.21 : 0))
+    : Number(valueIncludingBTW ?? 0)
   const isSurchargeItem = !!item && typeof item === "object" && "surcharge_percentage" in (item as any)
 
   const quantity = !isSurchargeItem && item ? Number((item as CostItem).quantity) : NaN
@@ -416,7 +416,11 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               showDetailHeader
 
             >
-              <SubHeaderRow label="Grondversterking" total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}/>
+              <SubHeaderRow
+                label="Grondversterking"
+                total={model.costModel.directCostGroundWork.totaleBDBKGrondwerk}
+                totalIncludingBTW={model.costModel.directCostGroundWork.totaleBDBKGrondwerkIncludingBTW}
+              />
               <SubRow label="Opruimen terrein" item={model.costModel.directCostGroundWork.opruimenTerrein}/>
               <SubRow label="Maaien terreinen" item={model.costModel.directCostGroundWork.maaienTerreinen}/>
               <SubRow label="Afgraven grasbekleding" item={model.costModel.directCostGroundWork.afgravenGrasbekleding}/>
@@ -431,13 +435,21 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
               <SubRow label="Profieleren nieuwe graslaag" item={model.costModel.directCostGroundWork.profielerenNieuweGraslaag}/>
               <SubRow label="Inzaaien nieuwe toplaag" item={model.costModel.directCostGroundWork.inzaaienNieuweToplaag}/>
 
-              <SubHeaderRow label="Constructies" total={model.costModel.directCostStructures.totaleBDBKConstructie}/>
+              <SubHeaderRow
+                label="Constructies"
+                total={model.costModel.directCostStructures.totaleBDBKConstructie}
+                totalIncludingBTW={model.costModel.directCostStructures.totaleBDBKConstructieIncludingBTW}
+              />
               <SubRow
                 label={`${model.constructionModel.structureType ?? ""} ${model.costModel.directCostStructures.structureDetails?.dimension ?? ""}`.trim()}
                 item={model.costModel.directCostStructures.structureDetails}
               />
 
-              <SubHeaderRow label="Infrastructuur" total={model.costModel.directCostInfrastructure.totaleBDBKInfra}/>
+              <SubHeaderRow
+                label="Infrastructuur"
+                total={model.costModel.directCostInfrastructure.totaleBDBKInfra}
+                totalIncludingBTW={model.costModel.directCostInfrastructure.totaleBDBKInfraIncludingBTW}
+              />
               <SubRow label="Verwijderen weg" item={model.costModel.directCostInfrastructure.opbrekenRegionaleWeg}/>
               <SubRow label="Aanleggen weg" item={model.costModel.directCostInfrastructure.leverenEnAanbrengenRegionaleWeg}/>
               <SubRow label="Verwijderen fietspad" item={model.costModel.directCostInfrastructure.verwijderenFietspad}/>
@@ -566,12 +578,16 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             title="Subtotaal investeringkosten"
             total={model.costModel.constructionCost.totalConstructionCost + model.costModel.engineeringCosts.totalEngineeringCosts + model.costModel.otherCosts.totalGeneralCosts}
             totalIncludingBTW={
-              (model.costModel.constructionCost.totalConstructionCostIncludingBTW ?? model.costModel.constructionCost.totalConstructionCost * 1.21) +
-              (model.costModel.engineeringCosts.totalEngineeringCostsIncludingBTW ?? model.costModel.engineeringCosts.totalEngineeringCosts * 1.21) +
-              (model.costModel.otherCosts.totalGeneralCostsIncludingBTW ?? model.costModel.otherCosts.totalGeneralCosts * 1.21)
+              model.costModel.constructionCost.totalConstructionCostIncludingBTW +
+              model.costModel.engineeringCosts.totalEngineeringCostsIncludingBTW +
+              model.costModel.otherCosts.totalGeneralCostsIncludingBTW
             }
           >
-            <SubRow label="Objectoverstijgende risico's" value={model.costModel.risicoreservering} />
+            <SubRow
+              label="Objectoverstijgende risico's"
+              value={model.costModel.risicoreservering}
+              valueIncludingBTW={model.costModel.risicoreserveringIncludingBTW}
+            />
           </CollapsibleSection>
 
           {/* Bottom summary rows */}
@@ -677,8 +693,7 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
             >
               {(
                 model.costModel.totalIncludingBTW +
-                (model.costModel.realEstateCosts.totalRealEstateCostsIncludingBTW ??
-                  model.costModel.realEstateCosts.totalRealEstateCosts * 1.21)
+                model.costModel.realEstateCosts.totalRealEstateCostsIncludingBTW
               ).toLocaleString("nl-NL", {
                 style: "currency",
                 currency: "EUR",
@@ -915,22 +930,10 @@ const CostChartAndTablePanel: React.FC<CostChartAndTablePanelProps> = ({
                   overflow: "auto"
                 }}>
                   <CostRangeStackedBar
-                    bouwKosten={
-                      model.costModel.constructionCost.totalConstructionCostIncludingBTW ??
-                      model.costModel.constructionCost.totalConstructionCost * 1.21
-                    }
-                    engineering={
-                      model.costModel.engineeringCosts.totalEngineeringCostsIncludingBTW ??
-                      model.costModel.engineeringCosts.totalEngineeringCosts * 1.21
-                    }
-                    overigeBijkomende={
-                      model.costModel.otherCosts.totalGeneralCostsIncludingBTW ??
-                      model.costModel.otherCosts.totalGeneralCosts * 1.21
-                    }
-                    vastgoed={
-                      model.costModel.realEstateCosts.totalRealEstateCostsIncludingBTW ??
-                      model.costModel.realEstateCosts.totalRealEstateCosts * 1.21
-                    }
+                    bouwKosten={model.costModel.constructionCost.totalConstructionCostIncludingBTW}
+                    engineering={model.costModel.engineeringCosts.totalEngineeringCostsIncludingBTW}
+                    overigeBijkomende={model.costModel.otherCosts.totalGeneralCostsIncludingBTW}
+                    vastgoed={model.costModel.realEstateCosts.totalRealEstateCostsIncludingBTW}
                   />
                 </Paper>
               </Box>
