@@ -63,6 +63,8 @@ import {
     exportConstructionLineAsGeoJSON,
 } from "./Functions/ExportFunctions";
 
+import { downloadAllDatasets } from "./Functions/DatasetFunctions";
+
 import { initializeChart, initializeCrossSectionChart } from "./Functions/ChartFunctions";
 import { handleEffectAnalysis } from "./Functions/EffectFunctions";
 import { handleCostCalculation } from "./Functions/CostFunctions";
@@ -237,6 +239,35 @@ const DikeDesigner = (
         }
         
         saveProjectAsJSON(model);
+    };
+
+    const handleDownloadDatasets = async () => {
+        try {
+            if (!model.apiUrl || !model.apiKey) {
+                model.messages.commands.ui.alert.execute({
+                    title: "Configuratie fout",
+                    message: "API URL of API sleutel is niet geconfigureerd.",
+                });
+                return;
+            }
+
+            model.loading = true;
+            
+            await downloadAllDatasets(model.apiUrl, model.apiKey);
+            
+            model.messages.commands.ui.alert.execute({
+                title: "Datasets gedownload",
+                message: "Alle datasets zijn succesvol gedownload.",
+            });
+        } catch (error) {
+            console.error("Error downloading datasets:", error);
+            model.messages.commands.ui.alert.execute({
+                title: "Download fout",
+                message: "Er is een fout opgetreden bij het downloaden van datasets.",
+            });
+        } finally {
+            model.loading = false;
+        }
     };
 
     const handleFileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -1339,7 +1370,7 @@ const DikeDesigner = (
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={3}>
                             {/* TODO: Add Kosten panel content */}
-                            <CostCalculationPanel model={model} />
+                            <CostCalculationPanel model={model} onDownloadDatasets={handleDownloadDatasets} />
                         </CustomTabPanel>
                         <CustomTabPanel value={value} index={4}>
                             <ComparisonChartAndTablePanel
