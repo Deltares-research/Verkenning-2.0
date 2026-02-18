@@ -7,6 +7,7 @@ export interface StructureAttributes {
 
 export interface CostItem {
     value: number
+    value_incl_BTW?: number
     unit_cost: number
     quantity: number
     unit: string
@@ -21,6 +22,57 @@ export interface SurchargeCostItem {
     code: string
     description: string
 }
+
+type ApiCostValue =
+    | number
+    | {
+        value?: unknown;
+        value_excl_BTW?: unknown;
+        value_incl_BTW?: unknown;
+    };
+
+const toFiniteNumber = (value: unknown, fallback = 0): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const getCostValueExclBTW = (value: ApiCostValue | unknown, fallback = 0): number => {
+    if (typeof value === "number") {
+        return toFiniteNumber(value, fallback);
+    }
+
+    if (value && typeof value === "object") {
+        const maybe: any = value;
+        if (maybe.value_excl_BTW !== undefined) {
+            return toFiniteNumber(maybe.value_excl_BTW, fallback);
+        }
+        if (maybe.value !== undefined) {
+            return toFiniteNumber(maybe.value, fallback);
+        }
+    }
+
+    return fallback;
+};
+
+const getCostValueInclBTW = (value: ApiCostValue | unknown, fallback = 0): number => {
+    if (typeof value === "number") {
+        return toFiniteNumber(value * 1.21, fallback);
+    }
+
+    if (value && typeof value === "object") {
+        const maybe: any = value;
+        if (maybe.value_incl_BTW !== undefined) {
+            return toFiniteNumber(maybe.value_incl_BTW, fallback);
+        }
+
+        const excl = getCostValueExclBTW(maybe, Number.NaN);
+        if (Number.isFinite(excl)) {
+            return toFiniteNumber(excl * 1.21, fallback);
+        }
+    }
+
+    return fallback;
+};
 
 const normalizeSurchargeCostItem = (value: unknown, fallback: SurchargeCostItem): SurchargeCostItem => {
     const safeFallback: SurchargeCostItem =
@@ -88,7 +140,7 @@ export class DirectCostGroundWork {
         this.aanvullenTeelaarde = api.aanvullen_toplaag as CostItem ?? this.aanvullenTeelaarde
         this.profielerenNieuweGraslaag = api.profileren_nieuwe_toplaag as CostItem ?? this.profielerenNieuweGraslaag
         this.inzaaienNieuweToplaag = api.inzaaien_nieuwe_toplaag as CostItem ?? this.inzaaienNieuweToplaag
-        this.totaleBDBKGrondwerk = api.totale_BDBK_grondwerk as number ?? 0
+        this.totaleBDBKGrondwerk = getCostValueExclBTW(api.totale_BDBK_grondwerk)
     }
 
     // convenience getters for value only
@@ -133,7 +185,7 @@ export class DirectCostStructures {
 
     fromApi(api: Record<string, CostItem | number> = {}) {
         this.structureDetails = api.directe_bouwkosten as CostItem || this.structureDetails;
-        this.totaleBDBKConstructie = api.totale_BDBK_constructie as number ?? 0
+        this.totaleBDBKConstructie = getCostValueExclBTW(api.totale_BDBK_constructie)
     }
     toDict(): Record<string, number> {
         return {
@@ -155,7 +207,7 @@ export class DirectCostInfrastructure {
         this.leverenEnAanbrengenRegionaleWeg = api.aanleggen_weg as CostItem || this.leverenEnAanbrengenRegionaleWeg;
         this.verwijderenFietspad = api.verwijderen_fietspad as CostItem || this.verwijderenFietspad;
         this.aanleggenFietspad = api.aanleggen_fietspad as CostItem || this.aanleggenFietspad;
-        this.totaleBDBKInfra = api.totale_BDBK_infrastructuur as number ?? 0
+        this.totaleBDBKInfra = getCostValueExclBTW(api.totale_BDBK_infrastructuur)
     }
     toDict(): Record<string, number> {
         return {
@@ -200,14 +252,18 @@ export class IndirectConstructionCosts {
     generalCost: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' };
     riskProfit: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' };
     totalDirectCosts: number = 0;
+    totalDirectCostsIncludingBTW: number = 0;
     totalIndirectCosts: number = 0;
+    totalIndirectCostsIncludingBTW: number = 0;
 
     fromApi(api: Record<string, any> = {}) {
         this.pmCost = normalizeSurchargeCostItem(api.pm_kosten, this.pmCost);
         this.generalCost = normalizeSurchargeCostItem(api.algemene_kosten, this.generalCost);
         this.riskProfit = normalizeSurchargeCostItem(api.risico_en_winst ?? api.winst_en_risico, this.riskProfit);
-        this.totalDirectCosts = api.totale_directe_bouwkosten as number ?? 0;
-        this.totalIndirectCosts = api.indirecte_bouwkosten as number ?? 0;
+        this.totalDirectCosts = getCostValueExclBTW(api.totale_directe_bouwkosten);
+        this.totalDirectCostsIncludingBTW = getCostValueInclBTW(api.totale_directe_bouwkosten);
+        this.totalIndirectCosts = getCostValueExclBTW(api.indirecte_bouwkosten);
+        this.totalIndirectCostsIncludingBTW = getCostValueInclBTW(api.indirecte_bouwkosten);
     }
     
     toDict(): Record<string, any> {
@@ -216,7 +272,9 @@ export class IndirectConstructionCosts {
             generalCost: this.generalCost,
             riskProfit: this.riskProfit,
             totalDirectCosts: this.totalDirectCosts,
+            totalDirectCostsIncludingBTW: this.totalDirectCostsIncludingBTW,
             totalIndirectCosts: this.totalIndirectCosts,
+            totalIndirectCostsIncludingBTW: this.totalIndirectCostsIncludingBTW,
         };
     }
 }
@@ -225,6 +283,7 @@ export class ConstructionCost {
     directConstructionCost: DirectConstructionCost = new DirectConstructionCost();
     indirectConstructionCosts: IndirectConstructionCosts = new IndirectConstructionCosts();
     totalConstructionCost: number = 0;
+    totalConstructionCostIncludingBTW: number = 0;
 
     fromApi(api: Record<string, any> = {}) {
         const directe = api["Directe Bouwkosten"] || api["Directe bouwkosten"] || {};
@@ -233,15 +292,23 @@ export class ConstructionCost {
         this.directConstructionCost.fromApi(directe);
         this.indirectConstructionCosts.fromApi(indirecte);
         this.totalConstructionCost =
-            (indirecte?.totale_bouwkosten as number) ??
-            (api.totale_bouwkosten as number) ??
-            0;
+            getCostValueExclBTW(indirecte?.totale_bouwkosten, Number.NaN);
+        if (!Number.isFinite(this.totalConstructionCost)) {
+            this.totalConstructionCost = getCostValueExclBTW(api.totale_bouwkosten, 0);
+        }
+
+        this.totalConstructionCostIncludingBTW =
+            getCostValueInclBTW(indirecte?.totale_bouwkosten, Number.NaN);
+        if (!Number.isFinite(this.totalConstructionCostIncludingBTW)) {
+            this.totalConstructionCostIncludingBTW = getCostValueInclBTW(api.totale_bouwkosten, this.totalConstructionCost * 1.21);
+        }
     }   
     toDict(): Record<string, any> {
         return {
             directConstructionCost: this.directConstructionCost.toDict(),
             indirectConstructionCosts: this.indirectConstructionCosts.toDict(),
             totalConstructionCost: this.totalConstructionCost,
+            totalConstructionCostIncludingBTW: this.totalConstructionCostIncludingBTW,
         };
     }
 }
@@ -255,8 +322,11 @@ export class EngineeringCosts {
     riskProfit: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: ''}
 
     totalDirectEngineeringCost: number = 0;
+    totalDirectEngineeringCostIncludingBTW: number = 0;
     totalIndirectEngineeringCosts: number = 0;
+    totalIndirectEngineeringCostsIncludingBTW: number = 0;
     totalEngineeringCosts: number = 0;
+    totalEngineeringCostsIncludingBTW: number = 0;
 
 
     // map API response to class properties
@@ -267,9 +337,12 @@ export class EngineeringCosts {
         this.generalCost = normalizeSurchargeCostItem(api.algemene_kosten, this.generalCost)
         this.riskProfit = normalizeSurchargeCostItem(api.winst_en_risico, this.riskProfit)
 
-        this.totalDirectEngineeringCost = api.direct_engineering_cost as number ?? 0
-        this.totalIndirectEngineeringCosts = api.indirect_engineering_cost as number ?? 0
-        this.totalEngineeringCosts = api.total_engineering_costs as number ?? 0
+        this.totalDirectEngineeringCost = getCostValueExclBTW(api.direct_engineering_cost)
+        this.totalDirectEngineeringCostIncludingBTW = getCostValueInclBTW(api.direct_engineering_cost, this.totalDirectEngineeringCost * 1.21)
+        this.totalIndirectEngineeringCosts = getCostValueExclBTW(api.indirect_engineering_cost)
+        this.totalIndirectEngineeringCostsIncludingBTW = getCostValueInclBTW(api.indirect_engineering_cost, this.totalIndirectEngineeringCosts * 1.21)
+        this.totalEngineeringCosts = getCostValueExclBTW(api.total_engineering_costs)
+        this.totalEngineeringCostsIncludingBTW = getCostValueInclBTW(api.total_engineering_costs, this.totalEngineeringCosts * 1.21)
     }
 
     toDict(): Record<string, any> {
@@ -280,8 +353,11 @@ export class EngineeringCosts {
             generalCost: this.generalCost,
             riskProfit: this.riskProfit,
             totalDirectEngineeringCost: this.totalDirectEngineeringCost,
+            totalDirectEngineeringCostIncludingBTW: this.totalDirectEngineeringCostIncludingBTW,
             totalIndirectEngineeringCosts: this.totalIndirectEngineeringCosts,
+            totalIndirectEngineeringCostsIncludingBTW: this.totalIndirectEngineeringCostsIncludingBTW,
             totalEngineeringCosts: this.totalEngineeringCosts,
+            totalEngineeringCostsIncludingBTW: this.totalEngineeringCostsIncludingBTW,
         }
     }
 }
@@ -295,8 +371,11 @@ export class OtherCosts {
     riskProfit: SurchargeCostItem = { value: 0, base_cost: 0, surcharge_percentage: 0, code: '', description: '' }
 
     totalDirectGeneralCosts: number = 0;
+    totalDirectGeneralCostsIncludingBTW: number = 0;
     totalIndirectGeneralCosts: number = 0;
+    totalIndirectGeneralCostsIncludingBTW: number = 0;
     totalGeneralCosts: number = 0;
+    totalGeneralCostsIncludingBTW: number = 0;
 
     fromApi(api: Record<string, SurchargeCostItem | number> = {}) {
         this.insurances = normalizeSurchargeCostItem(api.vergunningen_verzekeringen, this.insurances)
@@ -305,9 +384,12 @@ export class OtherCosts {
         this.generalCost = normalizeSurchargeCostItem(api.algemene_kosten, this.generalCost)
         this.riskProfit = normalizeSurchargeCostItem(api.risico_en_winst ?? api.winst_en_risico, this.riskProfit)
 
-        this.totalDirectGeneralCosts = api.direct_general_costs as number ?? 0
-        this.totalIndirectGeneralCosts = api.indirect_general_costs as number ?? 0
-        this.totalGeneralCosts = api.total_general_costs as number ?? 0
+        this.totalDirectGeneralCosts = getCostValueExclBTW(api.direct_general_costs)
+        this.totalDirectGeneralCostsIncludingBTW = getCostValueInclBTW(api.direct_general_costs, this.totalDirectGeneralCosts * 1.21)
+        this.totalIndirectGeneralCosts = getCostValueExclBTW(api.indirect_general_costs)
+        this.totalIndirectGeneralCostsIncludingBTW = getCostValueInclBTW(api.indirect_general_costs, this.totalIndirectGeneralCosts * 1.21)
+        this.totalGeneralCosts = getCostValueExclBTW(api.total_general_costs)
+        this.totalGeneralCostsIncludingBTW = getCostValueInclBTW(api.total_general_costs, this.totalGeneralCosts * 1.21)
     }
 
     toDict(): Record<string, any> {
@@ -318,8 +400,11 @@ export class OtherCosts {
             generalCost: this.generalCost,
             riskProfit: this.riskProfit,
             totalDirectGeneralCosts: this.totalDirectGeneralCosts,
+            totalDirectGeneralCostsIncludingBTW: this.totalDirectGeneralCostsIncludingBTW,
             totalIndirectGeneralCosts: this.totalIndirectGeneralCosts,
+            totalIndirectGeneralCostsIncludingBTW: this.totalIndirectGeneralCostsIncludingBTW,
             totalGeneralCosts: this.totalGeneralCosts,
+            totalGeneralCostsIncludingBTW: this.totalGeneralCostsIncludingBTW,
         }
     }
 }
@@ -330,6 +415,7 @@ export class RealEstateCosts {
     indirectItem: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     riskItem: CostItem = { value: 0, unit_cost: 0, quantity: 0, unit: '', description: '', dimensions: '' }
     totalRealEstateCosts: number = 0;
+    totalRealEstateCostsIncludingBTW: number = 0;
     
 
     private normalizeCostItem(value: unknown, fallback: CostItem): CostItem {
@@ -389,7 +475,11 @@ export class RealEstateCosts {
             section?.real_estate_risk_cost ?? section?.realEstateRiskCost,
             this.riskItem
         );
-        this.totalRealEstateCosts = Number(section?.total_real_estate_costs ?? section?.totalRealEstateCosts ?? 0);
+        this.totalRealEstateCosts = getCostValueExclBTW(section?.total_real_estate_costs ?? section?.totalRealEstateCosts);
+        this.totalRealEstateCostsIncludingBTW = getCostValueInclBTW(
+            section?.total_real_estate_costs ?? section?.totalRealEstateCosts,
+            this.totalRealEstateCosts * 1.21
+        );
     }
 
   toDict(): Record<string, number> {
@@ -399,6 +489,7 @@ export class RealEstateCosts {
         indirectItem: this.indirectItem.value,
         riskItem: this.riskItem.value,
         totalRealEstateCosts: this.totalRealEstateCosts,
+                totalRealEstateCostsIncludingBTW: this.totalRealEstateCostsIncludingBTW,
     };
   }
 }
@@ -441,7 +532,18 @@ export default class CostModel extends ModelBase {
     }
 
     get totalIncludingBTW(): number {
-        return this.totalExcludingBTW * 1.21;
+        const constructionIncludingBTW =
+            this.constructionCost?.totalConstructionCostIncludingBTW ??
+            ((this.constructionCost?.totalConstructionCost ?? 0) * 1.21);
+        const engineeringIncludingBTW =
+            this.engineeringCosts?.totalEngineeringCostsIncludingBTW ??
+            ((this.engineeringCosts?.totalEngineeringCosts ?? 0) * 1.21);
+        const otherIncludingBTW =
+            this.otherCosts?.totalGeneralCostsIncludingBTW ??
+            ((this.otherCosts?.totalGeneralCosts ?? 0) * 1.21);
+        const risicoreserveringIncludingBTW = (this.risicoreservering ?? 0) * 1.21;
+
+        return constructionIncludingBTW + engineeringIncludingBTW + otherIncludingBTW + risicoreserveringIncludingBTW;
     }
 
     // Converts the model into the API-ready nested dictionary
