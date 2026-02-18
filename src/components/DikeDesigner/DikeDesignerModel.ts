@@ -166,6 +166,9 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
 
     isDrawingTaludlijn: boolean = false
     isPlacingDwpProfile: boolean = false
+    isNamingMode: boolean = false
+    bulletCircles: any[] = []
+    onNamingModePointClick: ((pointIndex: number, screenX: number, screenY: number) => void) | null = null
     rivierzijde: 'rechts' | 'links' = 'rechts';
     referentieLocatie: string = 'binnenkruin';
 

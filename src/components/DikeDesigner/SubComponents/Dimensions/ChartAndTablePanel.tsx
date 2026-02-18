@@ -15,13 +15,18 @@ import DialogActions from "@vertigis/web/ui/DialogActions";
 import Box from "@vertigis/web/ui/Box";
 import Button from "@vertigis/web/ui/Button";
 import IconButton from "@vertigis/web/ui/IconButton";
+import Menu from "@vertigis/web/ui/Menu";
+import MenuItem from "@vertigis/web/ui/MenuItem";
 import Paper from "@vertigis/web/ui/Paper";
 import Slider from "@vertigis/web/ui/Slider";
 import Tab from "@vertigis/web/ui/Tab";
 import Tabs from "@vertigis/web/ui/Tabs";
 import TextField from "@vertigis/web/ui/Input";
 import Typography from "@vertigis/web/ui/Typography";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+import { setDwpLocation } from "../../Functions/DesignFunctions";
+import { updateBulletColorsForNamingMode } from "../../Functions/ChartFunctions";
 
 import ButtonToolbar from "./ButtonToolbar";
 import DataTable from "./DataTable";
@@ -56,6 +61,31 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [showLengthSlider, setShowLengthSlider] = useState(false);
+  const [locationMenuPosition, setLocationMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const locationMenuOpen = Boolean(locationMenuPosition);
+
+  // Register callback for naming mode point clicks
+  useEffect(() => {
+    model.onNamingModePointClick = (pointIndex: number, screenX: number, screenY: number) => {
+      model.selectedPointIndex = pointIndex;
+      setLocationMenuPosition({ top: screenY, left: screenX });
+    };
+    return () => {
+      model.onNamingModePointClick = null;
+    };
+  }, [model]);
+
+  const handleLocationSelect = (location: string) => {
+    model.selectedDwpLocation = location;
+    setDwpLocation(model);
+    setLocationMenuPosition(null);
+    // Update bullet colors to reflect the newly named point (red → green)
+    updateBulletColorsForNamingMode(model);
+  };
+
+  const handleLocationMenuClose = () => {
+    setLocationMenuPosition(null);
+  };
 
   const handleAddRow = () => {
     const newRow = {
@@ -202,6 +232,30 @@ const ChartAndTablePanel: React.FC<ChartAndTablePanelProps> = ({
           </>
         )}
       </Paper>
+
+      {/* Location naming popup - appears near clicked chart point */}
+      <Menu
+        open={locationMenuOpen}
+        onClose={handleLocationMenuClose}
+        anchorReference="anchorPosition"
+        anchorPosition={locationMenuPosition ? { top: locationMenuPosition.top, left: locationMenuPosition.left } : undefined}
+        PaperProps={{
+          sx: {
+            minWidth: 200,
+            maxHeight: 300,
+          }
+        }}
+      >
+        {model.dwpLocations.map((location) => (
+          <MenuItem
+            key={location}
+            onClick={() => handleLocationSelect(location as string)}
+            selected={model.chartData?.[model.selectedPointIndex]?.locatie === location}
+          >
+            {(location as string).replace(/_/g, ' ')}
+          </MenuItem>
+        ))}
+      </Menu>
 
       {/* Length Slider Dialog */}
       <Dialog
