@@ -40,8 +40,7 @@ export default class ConstructionModel extends ModelBase {
     structureTypes: string[] = [
         "Heavescherm",
         "Verankerde damwand",
-        "Onverankerde damwand",
-        "Verticaal Zanddicht Geotextiel"
+        "Onverankerde damwand"
     ];
     structureType: string = "";
     depth: number | null = null;
