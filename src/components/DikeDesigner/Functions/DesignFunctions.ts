@@ -448,6 +448,10 @@ export async function calculateVolume(model): Promise<void> {
 
         console.log("Sending GeoJSON to API:", geojson);
 
+        const requestSchema = {
+            geojson: geojson,
+        };
+
         // Call the backend API
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
@@ -460,7 +464,7 @@ export async function calculateVolume(model): Promise<void> {
                     "Accept": "application/json",
                     "X-API-Key": model.apiKey,
                 },
-                body: JSON.stringify(geojson),
+                body: JSON.stringify(requestSchema),
                 signal: controller.signal,
                 mode: 'cors',
             });
@@ -476,7 +480,7 @@ export async function calculateVolume(model): Promise<void> {
             console.log("API calculation result:", result);
 
             // Update model with API results
-            model.totalVolumeDifference = result.volume.total_volume.toFixed(2);
+            model.totalVolumeDifference = result.volume.net_volume.toFixed(2);
             model.excavationVolume = result.volume.excavation_volume.toFixed(2);
             model.fillVolume = result.volume.fill_volume.toFixed(2);
 
@@ -564,14 +568,14 @@ export async function calculateVolume(model): Promise<void> {
             }
 
             console.log("Volume calculation complete:");
-            console.log("Total volume difference:", result.volume.total_volume, "m³");
+            console.log("Total volume difference:", result.volume.net_volume, "m³");
             console.log("Total cut volume:", result.volume.excavation_volume, "m³");
             console.log("Total fill volume:", result.volume.fill_volume, "m³");
             console.log("Calculation time:", result.calculation_time, "s");
 
             // Show success message
             model.messages.commands.ui.displayNotification.execute({
-                message: `Ontwerp berekening voltooid. \nTotaal: ${Math.round(result.volume.total_volume).toLocaleString("nl-NL")} m³\nOpvullen: ${Math.round(result.volume.fill_volume).toLocaleString("nl-NL")} m³\nUitgraven: ${Math.round(result.volume.excavation_volume).toLocaleString("nl-NL")} m³\nBerekeningsduur: ${result.calculation_time}s`,
+                message: `Ontwerp berekening voltooid. \nTotaal: ${Math.round(result.volume.net_volume).toLocaleString("nl-NL")} m³\nOpvullen: ${Math.round(result.volume.fill_volume).toLocaleString("nl-NL")} m³\nUitgraven: ${Math.round(result.volume.excavation_volume).toLocaleString("nl-NL")} m³\nBerekeningsduur: ${result.calculation_time}s`,
                 title: "Volume Berekening Geslaagd",
                 disableTimeouts: false
             });
