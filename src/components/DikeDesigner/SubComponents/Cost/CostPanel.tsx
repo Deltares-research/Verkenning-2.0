@@ -88,7 +88,6 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDo
         Toon kostenoverzicht & grafieken
       </Button>
 
-<<<<<<< Updated upstream
       <Button
         variant="outlined"
         color="primary"
@@ -100,9 +99,9 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDo
       >
         Download kostenoverzicht (Excel)
       </Button>
-=======
-      {onDownloadDatasets && (
-        <Button
+
+
+      <Button
           variant="outlined"
           color="primary"
           startIcon={<CloudDownloadIcon />}
@@ -110,10 +109,8 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDo
           fullWidth
           sx={{ mt: 1 }}
         >
-          Download datasets
-        </Button>
-      )}
->>>>>>> Stashed changes
+          Download kentallen (.csv)
+      </Button>
     </Stack>
   );
 };
