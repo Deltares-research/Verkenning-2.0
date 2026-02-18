@@ -95,8 +95,9 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
         strokeWidth: 2,
     });
 
-    // Store bullet references for highlighting
-    const bulletCircles = [];
+    // Store bullet references for highlighting on model
+    model.bulletCircles = [];
+    const bulletCircles = model.bulletCircles;
 
     // Add draggable bullets with snapping logic
     series.bullets.push((root, series, dataItem) => {
@@ -110,46 +111,86 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
             cursorOverStyle: "pointer",
         });
 
-        // Store reference to this bullet circle
+        // Store reference to this bullet circle with original colors and dataItem
+        (circle as any)._originalFill = root.interfaceColors.get("background");
+        (circle as any)._originalStroke = series.get("fill");
+        (circle as any)._dataItem = dataItem;
         bulletCircles.push(circle);
+
+        // If naming mode is active during chart init, apply naming colors
+        if (model.isNamingMode) {
+            const hasLoc = dataItem.dataContext["locatie"];
+            circle.set("fill", hasLoc ? am5.color(0x4caf50) : am5.color(0xff0000));
+            circle.set("stroke", am5.color(0xffffff));
+            circle.set("strokeWidth", 2);
+            circle.set("radius", 6);
+        }
 
         // Snap the coordinates to the nearest 0.5 meter
         const snapToGrid = (value: number, gridSize: number) => Math.round(value / gridSize) * gridSize;
 
         circle.events.on("click", (ev) => {
-            model.selectingDwpLocation = true;
-
             const clickedOid = dataItem.dataContext["oid"];
-
             const pointIndex = model.chartData.findIndex(
                 (d) => d.oid === clickedOid
             );
 
-            // Reset all bullets to default appearance
-            bulletCircles.forEach((bulletCircle) => {
-                if (bulletCircle !== circle) {
-                    bulletCircle.set("fill", root.interfaceColors.get("background"));
-                    bulletCircle.set("stroke", series.get("fill"));
-                    bulletCircle.set("strokeWidth", 2);
-                    bulletCircle.set("radius", 5);
+            if (model.isNamingMode) {
+                // In naming mode: show location selection popup near the clicked point
+                model.selectedPointIndex = pointIndex;
+                model.selectingDwpLocation = true;
+
+                // Reset other bullets to naming-mode colors (red/green)
+                bulletCircles.forEach((bulletCircle) => {
+                    if (bulletCircle !== circle) {
+                        const bcOid = (bulletCircle as any)._dataItem?.dataContext?.["oid"];
+                        const bcIndex = model.chartData.findIndex(d => d.oid === bcOid);
+                        const hasLoc = bcIndex >= 0 && model.chartData[bcIndex]?.locatie;
+                        bulletCircle.set("fill", hasLoc ? am5.color(0x4caf50) : am5.color(0xff0000));
+                        bulletCircle.set("stroke", am5.color(0xffffff));
+                        bulletCircle.set("strokeWidth", 2);
+                        bulletCircle.set("radius", 6);
+                    }
+                });
+
+                // Highlight the selected point as orange
+                circle.set("fill", am5.color(0xff6b35));
+                circle.set("stroke", am5.color(0xffffff));
+                circle.set("strokeWidth", 3);
+                circle.set("radius", 8);
+
+                // Get screen coordinates for popup positioning
+                if (model.onNamingModePointClick) {
+                    const containerRect = refs.chartContainerRef.current?.getBoundingClientRect();
+                    const screenX = (containerRect?.left || 0) + ev.point.x;
+                    const screenY = (containerRect?.top || 0) + ev.point.y;
+                    model.onNamingModePointClick(pointIndex, screenX, screenY);
                 }
-            });
+            } else {
+                // Normal mode: existing behavior
+                model.selectingDwpLocation = true;
 
-            // Highlight the selected bullet
-            circle.set("fill", am5.color(0xff6b35)); // Orange fill
-            circle.set("stroke", am5.color(0xffffff)); // White border
-            circle.set("strokeWidth", 3);
-            circle.set("radius", 8);
+                // Reset all bullets to default appearance
+                bulletCircles.forEach((bulletCircle) => {
+                    if (bulletCircle !== circle) {
+                        bulletCircle.set("fill", root.interfaceColors.get("background"));
+                        bulletCircle.set("stroke", series.get("fill"));
+                        bulletCircle.set("strokeWidth", 2);
+                        bulletCircle.set("radius", 5);
+                    }
+                });
 
-            // get location of point and set in dropdown
-            const pointLocation = model.chartData[pointIndex].locatie;
-            console.log("Point location:", pointLocation);
-            model.selectedDwpLocation = pointLocation;
-            model.selectedPointIndex = pointIndex;
+                // Highlight the selected bullet
+                circle.set("fill", am5.color(0xff6b35));
+                circle.set("stroke", am5.color(0xffffff));
+                circle.set("strokeWidth", 3);
+                circle.set("radius", 8);
 
-            // console.log("Selected point:", model.chartData[pointIndex]);
-            // console.log("Selected DWP location set to:", model.selectedDwpLocation);
-
+                // get location of point and set in dropdown
+                const pointLocation = model.chartData[pointIndex].locatie;
+                model.selectedDwpLocation = pointLocation;
+                model.selectedPointIndex = pointIndex;
+            }
         });
 
         // Add right-click context menu
@@ -361,6 +402,23 @@ export function initializeChart(model, activeTab, refs: { chartContainerRef; ser
     });
 
     chart.plotContainer.events.on("click", (ev) => {
+
+        if (model.isNamingMode) {
+            // In naming mode, background click just closes popup and resets bullet colors
+            model.selectedPointIndex = null;
+            model.selectingDwpLocation = false;
+            // Re-apply naming mode colors to all bullets
+            bulletCircles.forEach((bulletCircle) => {
+                const bcOid = (bulletCircle as any)._dataItem?.dataContext?.["oid"];
+                const bcIndex = model.chartData.findIndex(d => d.oid === bcOid);
+                const hasLoc = bcIndex >= 0 && model.chartData[bcIndex]?.locatie;
+                bulletCircle.set("fill", hasLoc ? am5.color(0x4caf50) : am5.color(0xff0000));
+                bulletCircle.set("stroke", am5.color(0xffffff));
+                bulletCircle.set("strokeWidth", 2);
+                bulletCircle.set("radius", 6);
+            });
+            return;
+        }
 
         model.selectedPointIndex = null;
         model.selectedDwpLocation = null;
@@ -1016,4 +1074,25 @@ function updateSlopeLabels(args: { model: any; root: any; chart: any; xAxis: any
 
         args.model.slopeLabels.push(label);
     }
+}
+
+export function updateBulletColorsForNamingMode(model) {
+    if (!model.bulletCircles) return;
+
+    model.bulletCircles.forEach((circle) => {
+        if (model.isNamingMode) {
+            const bcOid = (circle as any)._dataItem?.dataContext?.["oid"];
+            const bcIndex = model.chartData.findIndex(d => d.oid === bcOid);
+            const hasLoc = bcIndex >= 0 && model.chartData[bcIndex]?.locatie;
+            circle.set("fill", hasLoc ? am5.color(0x4caf50) : am5.color(0xff0000));
+            circle.set("stroke", am5.color(0xffffff));
+            circle.set("strokeWidth", 2);
+            circle.set("radius", 6);
+        } else {
+            circle.set("fill", (circle as any)._originalFill);
+            circle.set("stroke", (circle as any)._originalStroke);
+            circle.set("strokeWidth", 2);
+            circle.set("radius", 5);
+        }
+    });
 }

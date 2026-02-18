@@ -15,7 +15,8 @@ import MenuItem from "@vertigis/web/ui/MenuItem";
 
 import React, { useState } from "react";
 
-import { locateDwpProfile, clearDwpProfile, setDwpLocation, createCrossSection, createFreeCrossSection } from "../../Functions/DesignFunctions";
+import { locateDwpProfile, clearDwpProfile, createCrossSection, createFreeCrossSection } from "../../Functions/DesignFunctions";
+import { updateBulletColorsForNamingMode } from "../../Functions/ChartFunctions";
 
 interface ButtonToolbarProps {
   model: any;
@@ -28,9 +29,6 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   handleToggleLengthSlider,
   handleCreateDesign,
 }) => {
-  const [dwpLocationAnchorEl, setDwpLocationAnchorEl] = useState<null | HTMLElement>(null);
-  const dwpLocationOpen = Boolean(dwpLocationAnchorEl);
-  
   const [rivierzijdeAnchorEl, setRivierzijdeAnchorEl] = useState<null | HTMLElement>(null);
   const rivierzijdeOpen = Boolean(rivierzijdeAnchorEl);
 
@@ -51,12 +49,14 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   
   const hasReferenceLine = Boolean(model.graphicsLayerLine?.graphics.length);
 
-  const handleDwpLocationMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setDwpLocationAnchorEl(event.currentTarget);
-  };
-
-  const handleDwpLocationMenuClose = () => {
-    setDwpLocationAnchorEl(null);
+  const handleNamingModeToggle = () => {
+    model.isNamingMode = !model.isNamingMode;
+    if (model.isNamingMode) {
+      model.isDrawingTaludlijn = false;
+      model.isPlacingDwpProfile = false;
+    }
+    updateBulletColorsForNamingMode(model);
+    forceUpdate({});
   };
 
   const handleTrekDwpMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -81,12 +81,6 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
       handleToggleLengthSlider();
     }
     handleTrekDwpMenuClose();
-  };
-
-  const handleDwpLocationSelect = (location: string) => {
-    model.selectedDwpLocation = location;
-    setDwpLocation(model);
-    handleDwpLocationMenuClose();
   };
 
   const handleRivierzijdeMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -125,11 +119,15 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
   const handleOptionSelect = (option: 'taludlijn' | 'clear_taludlijn') => {
     // Reset all drawing modes
     model.isDrawingTaludlijn = false;
-    
+
     // Enable selected mode
     if (option === 'taludlijn') {
       model.isDrawingTaludlijn = true;
       model.isPlacingDwpProfile = false; // Deactivate teken profielpunten
+      if (model.isNamingMode) {
+        model.isNamingMode = false;
+        updateBulletColorsForNamingMode(model);
+      }
       model.userLinePoints = []; // Reset points when starting new taludlijn
       model.messages.commands.ui.displayNotification.execute({
         title: "Teken taludlijn",
@@ -176,6 +174,10 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
     if (option === 'teken') {
       model.isPlacingDwpProfile = true;
       model.isDrawingTaludlijn = false; // Deactivate tekenen taludlijn
+      if (model.isNamingMode) {
+        model.isNamingMode = false;
+        updateBulletColorsForNamingMode(model);
+      }
       model.messages.commands.ui.displayNotification.execute({
         title: "Teken profielpunten",
         message: "Klik op de grafiek om profielpunten te plaatsen",
@@ -240,28 +242,26 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           </Button>
         </Tooltip>
 
-        <Tooltip title={model.selectingDwpLocation ? "Benoem locatie" : "Selecteer een punt uit het dwarsprofiel om de locatie te benoemen"} placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
-          <span>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleDwpLocationMenuClick}
-              color={model.selectingDwpLocation ? "secondary" : "primary"}
-              disabled={!model.selectingDwpLocation}
-              sx={{
-                height: '40px',
-                ...(model.selectingDwpLocation ? {
-                  fontWeight: 'bold',
-                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
-                  '&:hover': {
-                    boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
-                  }
-                } : {})
-              }}
-            >
-              <LocationOnIcon />
-            </Button>
-          </span>
+        <Tooltip title={model.isNamingMode ? "Benoem locaties (actief - klik om te stoppen)" : "Benoem locaties"} placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+          <Button
+            variant={model.isNamingMode ? "contained" : "outlined"}
+            size="large"
+            onClick={handleNamingModeToggle}
+            color={model.isNamingMode ? "secondary" : "primary"}
+            disabled={!model.chartData?.length}
+            sx={{
+              height: '40px',
+              ...(model.isNamingMode ? {
+                fontWeight: 'bold',
+                boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 0 0 3px rgba(156, 39, 176, 0.4)'
+                }
+              } : {})
+            }}
+          >
+            <LocationOnIcon />
+          </Button>
         </Tooltip>
 
         <Button
@@ -299,23 +299,6 @@ const ButtonToolbar: React.FC<ButtonToolbarProps> = ({
           </Button>
         </Tooltip>
       </Box>
-
-      {/* DWP Location Menu */}
-      <Menu
-        anchorEl={dwpLocationAnchorEl}
-        open={dwpLocationOpen}
-        onClose={handleDwpLocationMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        PaperProps={{
-          sx: { minWidth: dwpLocationAnchorEl?.offsetWidth || 'auto' }
-        }}
-      >
-        {model.dwpLocations.map((location) => (
-          <MenuItem key={location} onClick={() => handleDwpLocationSelect(location as string)}>
-            {location.replace(/_/g, ' ')}
-          </MenuItem>
-        ))}
-      </Menu>
 
       {/* Trek Dwarsprofiel Menu */}
       <Menu
