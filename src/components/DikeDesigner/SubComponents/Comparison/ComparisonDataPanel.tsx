@@ -423,65 +423,114 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
                                 <TableCell sx={emptyCellSx} />
                             </TableRow>
 
-                            {/* Cost Data */}
+                            {/* Cost Data - SSK hoofdposten */}
                             <TableRow>
                                 <TableCell colSpan={snapshots.length + 2} sx={{ fontSize: "13px", fontWeight: 600, padding: "12px 8px", backgroundColor: "#f5f5f5", border: 0 }}>
                                     Kosten
                                 </TableCell>
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Complexiteit</TableCell>
-                                {snapshots.map((s) => (
-                                    <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
-                                        {s.projectJSON.costs.complexity || "-"}
-                                    </TableCell>
-                                ))}
-                                <TableCell sx={emptyCellSx} />
-                            </TableRow>
-                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Totale Directe Kosten (€)</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Bouwkosten (€)</TableCell>
                                 {snapshots.map((s) => {
-                                    const directTotal = (Object.values(s.projectJSON.costs.directCostGroundWork || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.directCostStructures || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
+                                    const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+                                    const bouwkosten = (Number(ic.totalDirectCosts) || 0) + (Number(ic.totalIndirectCosts) || 0);
                                     return (
                                         <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
-                                            {formatNumber(directTotal)}
+                                            {formatNumber(bouwkosten)}
                                         </TableCell>
                                     );
                                 })}
                                 <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Totale Indirecte Kosten (€)</TableCell>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Engineeringkosten (€)</TableCell>
                                 {snapshots.map((s) => {
-                                    const indirectTotal = (Object.values(s.projectJSON.costs.indirectConstructionCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.engineeringCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.otherCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
+                                    const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
                                     return (
                                         <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
-                                            {formatNumber(indirectTotal)}
+                                            {formatNumber(Number(ec.totalEngineeringCosts) || 0)}
+                                        </TableCell>
+                                    );
+                                })}
+                                <TableCell sx={emptyCellSx} />
+                            </TableRow>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Overige bijkomende kosten (€)</TableCell>
+                                {snapshots.map((s) => {
+                                    const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+                                    return (
+                                        <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
+                                            {formatNumber(Number(oc.totalGeneralCosts) || 0)}
                                         </TableCell>
                                     );
                                 })}
                                 <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9', backgroundColor: "#f9f9f9" }}>
-                                <TableCell sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>Totale Kosten (€)</TableCell>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>Subtotaal (€)</TableCell>
                                 {snapshots.map((s) => {
-                                    const directTotal = (Object.values(s.projectJSON.costs.directCostGroundWork || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.directCostStructures || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
-                                    const indirectTotal = (Object.values(s.projectJSON.costs.indirectConstructionCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.engineeringCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number) + (Object.values(s.projectJSON.costs.otherCosts || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number);
+                                    const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+                                    const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+                                    const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+                                    const subtotaal = (Number(ic.totalDirectCosts) || 0) + (Number(ic.totalIndirectCosts) || 0)
+                                        + (Number(ec.totalEngineeringCosts) || 0)
+                                        + (Number(oc.totalGeneralCosts) || 0);
                                     return (
                                         <TableCell key={s.id} align="right" sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>
-                                            {formatNumber(directTotal + indirectTotal)}
+                                            {formatNumber(subtotaal)}
                                         </TableCell>
                                     );
                                 })}
                                 <TableCell sx={emptyCellSx} />
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Risicoreservering (%)</TableCell>
-                                {snapshots.map((s) => (
-                                    <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
-                                        {formatNumber(s.projectJSON.costs.risicoreservering)}
-                                    </TableCell>
-                                ))}
+                                <TableCell sx={{ fontSize: "12px", border: 0 }}>Vastgoedkosten (€)</TableCell>
+                                {snapshots.map((s) => {
+                                    const re = s.projectJSON.costs.realEstateCosts as Record<string, any> || {};
+                                    return (
+                                        <TableCell key={s.id} align="right" sx={{ fontSize: "12px", border: 0 }}>
+                                            {formatNumber(Number(re.totalRealEstateCosts) || 0)}
+                                        </TableCell>
+                                    );
+                                })}
+                                <TableCell sx={emptyCellSx} />
+                            </TableRow>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9', backgroundColor: "#f9f9f9" }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>Totaal excl. BTW (€)</TableCell>
+                                {snapshots.map((s) => {
+                                    const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+                                    const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+                                    const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+                                    const re = s.projectJSON.costs.realEstateCosts as Record<string, any> || {};
+                                    const totaalExcl = (Number(ic.totalDirectCosts) || 0) + (Number(ic.totalIndirectCosts) || 0)
+                                        + (Number(ec.totalEngineeringCosts) || 0)
+                                        + (Number(oc.totalGeneralCosts) || 0)
+                                        + (Number(re.totalRealEstateCosts) || 0);
+                                    return (
+                                        <TableCell key={s.id} align="right" sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>
+                                            {formatNumber(totaalExcl)}
+                                        </TableCell>
+                                    );
+                                })}
+                                <TableCell sx={emptyCellSx} />
+                            </TableRow>
+                            <TableRow sx={{ borderBottom: '1px solid #f1f5f9', backgroundColor: "#f9f9f9" }}>
+                                <TableCell sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>Totaal incl. BTW (€)</TableCell>
+                                {snapshots.map((s) => {
+                                    const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+                                    const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+                                    const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+                                    const re = s.projectJSON.costs.realEstateCosts as Record<string, any> || {};
+                                    const totaalIncl = (Number(ic.totalDirectCostsIncludingBTW) || 0) + (Number(ic.totalIndirectCostsIncludingBTW) || 0)
+                                        + (Number(ec.totalEngineeringCostsIncludingBTW) || 0)
+                                        + (Number(oc.totalGeneralCostsIncludingBTW) || 0)
+                                        + (Number(re.totalRealEstateCostsIncludingBTW) || 0);
+                                    return (
+                                        <TableCell key={s.id} align="right" sx={{ fontSize: "12px", fontWeight: 600, border: 0 }}>
+                                            {formatNumber(totaalIncl)}
+                                        </TableCell>
+                                    );
+                                })}
                                 <TableCell sx={emptyCellSx} />
                             </TableRow>
 
