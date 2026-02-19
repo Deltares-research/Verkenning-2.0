@@ -48,6 +48,16 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             })
         );
 
+        yAxis.children.unshift(
+            am5.Label.new(root, {
+                text: "Kosten incl. BTW (€)",
+                rotation: -90,
+                y: am5.p50,
+                centerX: am5.p50,
+                centerY: am5.p50,
+            })
+        );
+
         // Data with lower / expected / upper range (±10%)
         const data = [
             {
@@ -92,7 +102,7 @@ const CostRangeStackedBar: React.FC<CostRangeStackedBarProps> = ({
             );
 
             series.columns.template.setAll({
-                tooltipText: "{name}: {valueY.formatNumber('#,###')}€",
+                tooltipText: "{name}: {valueY.formatNumber('#,###')}€ (incl. BTW)",
                 tooltipY: 0,
                 fill: color,
                 stroke: color,

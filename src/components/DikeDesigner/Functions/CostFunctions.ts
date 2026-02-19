@@ -147,6 +147,7 @@ export const handleCostCalculation = async (
 
             
             model.costModel.risicoreservering = Number(risicoreservering['value'] ?? 0);
+            model.costModel.risicoreserveringIncludingBTW = Number(risicoreservering['value_incl_BTW'] ?? 0);
             model.costModel.directCostGroundWork.fromApi(directeBouwkosten["Directe kosten grondwerk"]);
             model.costModel.directCostStructures.fromApi(directeBouwkosten["Directe kosten constructies"]);
             model.costModel.directCostInfrastructure.fromApi(directeBouwkosten["Directe kosten infrastructuur"]);
@@ -196,7 +197,8 @@ type CostExportRow = {
     Eenheidsprijs?: number;
     "Opslag (%)"?: number;
     Basis?: number;
-    Totaal: number;
+    "Totaal excl. BTW": number;
+    "Totaal incl. BTW": number;
 };
 
 const toNumber = (value: unknown): number => {
@@ -210,6 +212,21 @@ const getSurchargePercent = (raw: unknown): number | undefined => {
     return num <= 1 ? num * 100 : num;
 };
 
+const getInclusiveTotal = (value: unknown, explicitInclusive?: unknown): number => {
+    if (explicitInclusive !== undefined && explicitInclusive !== null) {
+        return toNumber(explicitInclusive);
+    }
+
+    if (value && typeof value === "object") {
+        const maybe: any = value;
+        if (maybe.value_incl_BTW !== undefined) {
+            return toNumber(maybe.value_incl_BTW);
+        }
+    }
+
+    return 0;
+};
+
 const isSurchargeItem = (item: any): item is { value?: unknown; base_cost?: unknown; surcharge_percentage?: unknown } => {
     return !!item && typeof item === "object" && "surcharge_percentage" in item;
 };
@@ -217,11 +234,18 @@ const isSurchargeItem = (item: any): item is { value?: unknown; base_cost?: unkn
 export const downloadCostTableExcel = (model: any) => {
     const rows: CostExportRow[] = [];
 
-    const addSubtotal = (path: string, total: unknown, type: CostExportRow["Type"] = "Subtotaal") => {
+    const addSubtotal = (
+        path: string,
+        totalExcl: unknown,
+        type: CostExportRow["Type"] = "Subtotaal",
+        totalIncl?: unknown
+    ) => {
+        const excl = toNumber(totalExcl);
         rows.push({
             Pad: path,
             Type: type,
-            Totaal: toNumber(total),
+            "Totaal excl. BTW": excl,
+            "Totaal incl. BTW": getInclusiveTotal(totalExcl, totalIncl),
         });
     };
 
@@ -229,17 +253,20 @@ export const downloadCostTableExcel = (model: any) => {
         if (!item) return;
 
         if (isSurchargeItem(item)) {
+            const excl = toNumber(item.value);
             rows.push({
                 Pad: path,
                 Kostenpost: label,
                 Type: "Item",
                 "Opslag (%)": getSurchargePercent(item.surcharge_percentage),
                 Basis: item.base_cost !== undefined ? toNumber(item.base_cost) : undefined,
-                Totaal: toNumber(item.value),
+                "Totaal excl. BTW": excl,
+                "Totaal incl. BTW": getInclusiveTotal(item),
             });
             return;
         }
 
+        const excl = toNumber(item.value);
         rows.push({
             Pad: path,
             Kostenpost: label,
@@ -247,16 +274,19 @@ export const downloadCostTableExcel = (model: any) => {
             Hoeveelheid: item.quantity !== undefined ? toNumber(item.quantity) : undefined,
             Eenheid: item.unit ?? undefined,
             Eenheidsprijs: item.unit_cost !== undefined ? toNumber(item.unit_cost) : undefined,
-            Totaal: toNumber(item.value),
+            "Totaal excl. BTW": excl,
+            "Totaal incl. BTW": getInclusiveTotal(item),
         });
     };
 
-    const addValueItem = (path: string, label: string, value: unknown) => {
+    const addValueItem = (path: string, label: string, valueExcl: unknown, valueIncl?: unknown) => {
+        const excl = toNumber(valueExcl);
         rows.push({
             Pad: path,
             Kostenpost: label,
             Type: "Item",
-            Totaal: toNumber(value),
+            "Totaal excl. BTW": excl,
+            "Totaal incl. BTW": getInclusiveTotal(valueExcl, valueIncl),
         });
     };
 
@@ -270,8 +300,18 @@ export const downloadCostTableExcel = (model: any) => {
     }
 
     // Bouwkosten
-    addSubtotal("Bouwkosten (BK)", costModel.constructionCost?.totalConstructionCost);
-    addSubtotal("Bouwkosten (BK) > Directe Bouwkosten (DBK)", costModel.indirectConstructionCosts?.totalDirectCosts);
+    addSubtotal(
+        "Bouwkosten (BK)",
+        costModel.constructionCost?.totalConstructionCost,
+        "Subtotaal",
+        costModel.constructionCost?.totalConstructionCostIncludingBTW
+    );
+    addSubtotal(
+        "Bouwkosten (BK) > Directe Bouwkosten (DBK)",
+        costModel.indirectConstructionCosts?.totalDirectCosts,
+        "Subtotaal",
+        costModel.indirectConstructionCosts?.totalDirectCostsIncludingBTW
+    );
     addSubtotal(
         "Bouwkosten (BK) > Directe Bouwkosten (DBK) > Grondversterking",
         costModel.directCostGroundWork?.totaleBDBKGrondwerk
@@ -309,28 +349,63 @@ export const downloadCostTableExcel = (model: any) => {
     addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur", "Verwijderen fietspad", costModel.directCostInfrastructure?.verwijderenFietspad);
     addItem("Bouwkosten (BK) > Directe Bouwkosten (DBK) > Infrastructuur", "Aanleggen fietspad", costModel.directCostInfrastructure?.aanleggenFietspad);
 
-    addSubtotal("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", costModel.indirectConstructionCosts?.totalIndirectCosts);
+    addSubtotal(
+        "Bouwkosten (BK) > Indirecte Bouwkosten (IBK)",
+        costModel.indirectConstructionCosts?.totalIndirectCosts,
+        "Subtotaal",
+        costModel.indirectConstructionCosts?.totalIndirectCostsIncludingBTW
+    );
     addItem("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", "Eenmalige algemene bouwplaats-, uitvoerings- en projectmanagementkosten", costModel.indirectConstructionCosts?.pmCost);
     addItem("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", "Algemene kosten (AK)", costModel.indirectConstructionCosts?.generalCost);
     addItem("Bouwkosten (BK) > Indirecte Bouwkosten (IBK)", "Winst & risico (WR)", costModel.indirectConstructionCosts?.riskProfit);
 
     // Engineeringkosten
-    addSubtotal("Engineeringkosten (EK)", costModel.engineeringCosts?.totalEngineeringCosts);
-    addSubtotal("Engineeringkosten (EK) > Directe engineeringkosten", costModel.engineeringCosts?.totalDirectEngineeringCost);
+    addSubtotal(
+        "Engineeringkosten (EK)",
+        costModel.engineeringCosts?.totalEngineeringCosts,
+        "Subtotaal",
+        costModel.engineeringCosts?.totalEngineeringCostsIncludingBTW
+    );
+    addSubtotal(
+        "Engineeringkosten (EK) > Directe engineeringkosten",
+        costModel.engineeringCosts?.totalDirectEngineeringCost,
+        "Subtotaal",
+        costModel.engineeringCosts?.totalDirectEngineeringCostIncludingBTW
+    );
     addItem("Engineeringkosten (EK) > Directe engineeringkosten", "Engineeringskosten opdrachtgever (EPK)", costModel.engineeringCosts?.epkCost);
     addItem("Engineeringkosten (EK) > Directe engineeringkosten", "Engineeringkosten opdrachtnemer (schets-, voor-, definitief ontwerp)", costModel.engineeringCosts?.designCost);
     addItem("Engineeringkosten (EK) > Directe engineeringkosten", "Onderzoeken (archeologie, explosieven, LNC)", costModel.engineeringCosts?.researchCost);
-    addSubtotal("Engineeringkosten (EK) > Indirecte engineering kosten", costModel.engineeringCosts?.totalIndirectEngineeringCosts);
+    addSubtotal(
+        "Engineeringkosten (EK) > Indirecte engineering kosten",
+        costModel.engineeringCosts?.totalIndirectEngineeringCosts,
+        "Subtotaal",
+        costModel.engineeringCosts?.totalIndirectEngineeringCostsIncludingBTW
+    );
     addItem("Engineeringkosten (EK) > Indirecte engineering kosten", "Algemene kosten (AK)", costModel.engineeringCosts?.generalCost);
     addItem("Engineeringkosten (EK) > Indirecte engineering kosten", "Risico & winst (WR)", costModel.engineeringCosts?.riskProfit);
 
     // Overige bijkomende kosten
-    addSubtotal("Overige bijkomende kosten", costModel.otherCosts?.totalGeneralCosts);
-    addSubtotal("Overige bijkomende kosten > Directe overige bijkomende kosten", costModel.otherCosts?.totalDirectGeneralCosts);
+    addSubtotal(
+        "Overige bijkomende kosten",
+        costModel.otherCosts?.totalGeneralCosts,
+        "Subtotaal",
+        costModel.otherCosts?.totalGeneralCostsIncludingBTW
+    );
+    addSubtotal(
+        "Overige bijkomende kosten > Directe overige bijkomende kosten",
+        costModel.otherCosts?.totalDirectGeneralCosts,
+        "Subtotaal",
+        costModel.otherCosts?.totalDirectGeneralCostsIncludingBTW
+    );
     addItem("Overige bijkomende kosten > Directe overige bijkomende kosten", "Vergunningen, heffingen en verzekering", costModel.otherCosts?.insurances);
     addItem("Overige bijkomende kosten > Directe overige bijkomende kosten", "Kabels & leidingen", costModel.otherCosts?.cablesPipes);
     addItem("Overige bijkomende kosten > Directe overige bijkomende kosten", "Planschade & inpassingsmaatregelen", costModel.otherCosts?.damages);
-    addSubtotal("Overige bijkomende kosten > Indirecte overige bijkomende kosten", costModel.otherCosts?.totalIndirectGeneralCosts);
+    addSubtotal(
+        "Overige bijkomende kosten > Indirecte overige bijkomende kosten",
+        costModel.otherCosts?.totalIndirectGeneralCosts,
+        "Subtotaal",
+        costModel.otherCosts?.totalIndirectGeneralCostsIncludingBTW
+    );
     addItem("Overige bijkomende kosten > Indirecte overige bijkomende kosten", "Algemene kosten (AK)", costModel.otherCosts?.generalCost);
     addItem("Overige bijkomende kosten > Indirecte overige bijkomende kosten", "Risico & winst (WR)", costModel.otherCosts?.riskProfit);
 
@@ -339,15 +414,28 @@ export const downloadCostTableExcel = (model: any) => {
         toNumber(costModel.constructionCost?.totalConstructionCost) +
         toNumber(costModel.engineeringCosts?.totalEngineeringCosts) +
         toNumber(costModel.otherCosts?.totalGeneralCosts);
-    addSubtotal("Subtotaal investeringkosten", subtotalInvestment);
-    addValueItem("Subtotaal investeringkosten", "Objectoverstijgende risico's", costModel.risicoreservering);
+    const subtotalInvestmentIncl =
+        getInclusiveTotal(costModel.constructionCost?.totalConstructionCost, costModel.constructionCost?.totalConstructionCostIncludingBTW) +
+        getInclusiveTotal(costModel.engineeringCosts?.totalEngineeringCosts, costModel.engineeringCosts?.totalEngineeringCostsIncludingBTW) +
+        getInclusiveTotal(costModel.otherCosts?.totalGeneralCosts, costModel.otherCosts?.totalGeneralCostsIncludingBTW);
+    addSubtotal("Subtotaal investeringkosten", subtotalInvestment, "Subtotaal", subtotalInvestmentIncl);
+    addValueItem(
+        "Subtotaal investeringkosten",
+        "Objectoverstijgende risico's",
+        costModel.risicoreservering,
+        costModel.risicoreserveringIncludingBTW
+    );
 
     // Totalen
-    addSubtotal("Investeringskosten excl. BTW", costModel.totalExcludingBTW, "Totaal");
-    addSubtotal("Investeringskosten incl. BTW", costModel.totalIncludingBTW, "Totaal");
+    addSubtotal("Investeringskosten", costModel.totalExcludingBTW, "Totaal", costModel.totalIncludingBTW);
 
     // Vastgoedkosten
-    addSubtotal("Vastgoedkosten", costModel.realEstateCosts?.totalRealEstateCosts);
+    addSubtotal(
+        "Vastgoedkosten",
+        costModel.realEstateCosts?.totalRealEstateCosts,
+        "Subtotaal",
+        costModel.realEstateCosts?.totalRealEstateCostsIncludingBTW
+    );
     addItem("Vastgoedkosten", "Direct benoemd", costModel.realEstateCosts?.directBenoemdItem);
     addItem("Vastgoedkosten", "Direct niet benoemd", costModel.realEstateCosts?.directNietBenoemdItem);
     addItem("Vastgoedkosten", "Indirect", costModel.realEstateCosts?.indirectItem);
@@ -362,7 +450,8 @@ export const downloadCostTableExcel = (model: any) => {
         "Eenheidsprijs",
         "Opslag (%)",
         "Basis",
-        "Totaal",
+        "Totaal excl. BTW",
+        "Totaal incl. BTW",
     ];
 
     const ws = XLSX.utils.json_to_sheet(rows, { header: headerOrder as string[] });
