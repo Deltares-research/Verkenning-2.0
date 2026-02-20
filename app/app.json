@@ -52,6 +52,7 @@
             "percelenWaterschapLayerName": "BRK Kadaster eigendom WSRL",
             "pandenBufferDistance": 10,
             "uitvoeringszoneBufferDistance": 10,
+            "constructieBufferDistance": 10,
             "effectLayerMappings": {
                 "bag_panden": {
                     "query": "BAG 2D",

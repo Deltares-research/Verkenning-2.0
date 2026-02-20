@@ -206,21 +206,32 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
     useWatchAndRerender(model, "uitvoeringszoneNatura2000")
     useWatchAndRerender(model, "uitvoeringszoneGNN")
     useWatchAndRerender(model, "uitvoeringszoneBeheertypeArea")
+    useWatchAndRerender(model.constructionModel, "drawnConstructionLine")
 
-
-
+    const hasGrondlichaam = model.graphicsLayerRuimtebeslag?.graphics.length > 0;
+    const hasConstructie = !!model.constructionModel?.drawnConstructionLine;
 
     return (
         <Stack spacing={1}>
             <Stack spacing={2} sx={stackStyle}>
                 <FormLabel>Effectenanalyse</FormLabel>
+
+                {(hasGrondlichaam || hasConstructie) && (
+                    <Alert severity="info" sx={{ fontSize: "12px", py: 0.5 }}>
+                        Analyse omvat:{" "}
+                        {hasGrondlichaam && <strong>Grondlichaam</strong>}
+                        {hasGrondlichaam && hasConstructie && " + "}
+                        {hasConstructie && <strong>Constructie (buffer {model.constructieBufferDistance || 10}m)</strong>}
+                    </Alert>
+                )}
+
                 <Button
                     variant="contained"
                     color="primary"
                     startIcon={<AssessmentIcon />}
                     onClick={() => handleEffectAnalysis(model)}
                     fullWidth
-                    disabled={!model.graphicsLayerRuimtebeslag?.graphics.length}
+                    disabled={!model.graphicsLayerRuimtebeslag?.graphics.length && !model.constructionModel?.drawnConstructionLine}
                 >
                     Voer effectenanalyse uit
                 </Button>

@@ -584,6 +584,8 @@ const DikeDesigner = (
         // Reset calculation status when construction is cleared
         model.effectsCalculated = false;
         model.costsCalculated = false;
+        // Clear the execution zone visualization (it may contain the construction buffer)
+        model.graphicsLayerUitvoeringszone.removeAll();
         setConstructionChartVersion((prev) => prev + 1);
     };
 
