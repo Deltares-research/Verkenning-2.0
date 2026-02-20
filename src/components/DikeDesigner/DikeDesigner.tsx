@@ -842,7 +842,7 @@ const DikeDesigner = (
                                     mb: 0.5,
                                 }}
                             >
-                                Dijkontwerper
+                                Dijkontwerper Proof of Concept
                             </Typography>
                             <Typography
                                 sx={{
@@ -851,7 +851,7 @@ const DikeDesigner = (
                                     fontWeight: 400,
                                 }}
                             >
-                                versie 1.0.0
+                                versie 0.0.1
                             </Typography>
                         </Box>
 

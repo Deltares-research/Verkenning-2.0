@@ -39,9 +39,81 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
     // Use model property for persistent storage across tab switches
     useWatchAndRerender(model, "comparisonSnapshots");
     useWatchAndRerender(model, "activeSnapshotId");
-    const snapshots = model.comparisonSnapshots || [];
+    // Watch live model values so active snapshot stays in sync
+    useWatchAndRerender(model, "fillVolume");
+    useWatchAndRerender(model, "excavationVolume");
+    useWatchAndRerender(model, "totalVolumeDifference");
+    useWatchAndRerender(model, "lineLength");
+    useWatchAndRerender(model, "total2dArea");
+    useWatchAndRerender(model, "total3dArea");
+    useWatchAndRerender(model, "effectsCalculated");
+    useWatchAndRerender(model, "costsCalculated");
+    const rawSnapshots = model.comparisonSnapshots || [];
     const layerVisibility = model.comparisonModel.layerVisibility;
     const activeSnapshotId = model.activeSnapshotId || "";
+
+    // For the active snapshot, override projectJSON with live model values
+    const snapshots = rawSnapshots.map(s => {
+        if (s.id !== activeSnapshotId) return s;
+        return {
+            ...s,
+            projectJSON: {
+                ...s.projectJSON,
+                designValues: {
+                    trajectLength: model.lineLength,
+                    volumeDifference: model.totalVolumeDifference,
+                    excavationVolume: model.excavationVolume,
+                    fillVolume: model.fillVolume,
+                    area2d: model.total2dArea,
+                    area3d: model.total3dArea,
+                },
+                effects: {
+                    intersectingPanden: model.intersectingPanden || [],
+                    intersectingBomen: model.intersectingBomen || [],
+                    intersectingPercelen: model.intersectingPercelen || [],
+                    intersectingPercelenArea: model.intersectingPercelenArea || null,
+                    intersectingWegdelen2dRuimtebeslag: model.intersectingWegdelen2dRuimtebeslag || null,
+                    intersectingInritten2dRuimtebeslag: model.intersectingInritten2dRuimtebeslag || null,
+                    intersectingInritten2dRuimtebeslagCount: model.intersectingInritten2dRuimtebeslagCount || [],
+                    intersectingNatura2000: model.intersectingNatura2000 || null,
+                    intersectingGNN: model.intersectingGNN || null,
+                    intersectingBeheertypen: model.intersectingBeheertypen || [],
+                    intersectingBeheertypeArea: model.intersectingBeheertypeArea || null,
+                    intersectingPandenArea: model.intersectingPandenArea || null,
+                    intersectingPandenBuffer: model.intersectingPandenBuffer || [],
+                    intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
+                    intersectingErven: model.intersectingErven || [],
+                    intersectingErvenArea: model.intersectingErvenArea || null,
+                    uitvoeringszoneWegoppervlak: model.uitvoeringszoneWegoppervlak || null,
+                    uitvoeringszonePanden: model.uitvoeringszonePanden || [],
+                    uitvoeringszonePandenArea: model.uitvoeringszonePandenArea || null,
+                    uitvoeringszonePercelen: model.uitvoeringszonePercelen || [],
+                    uitvoeringszonePercelenArea: model.uitvoeringszonePercelenArea || null,
+                    uitvoeringszoneNatura2000: model.uitvoeringszoneNatura2000 || null,
+                    uitvoeringszoneGNN: model.uitvoeringszoneGNN || null,
+                    uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea || null,
+                },
+                costs: {
+                    complexity: model.costModel?.complexity || null,
+                    depth: model.costModel?.depth || null,
+                    directCostGroundWork: model.costModel?.directCostGroundWork?.toDict() || {},
+                    directCostStructures: model.costModel?.directCostStructures?.toDict() || {},
+                    indirectConstructionCosts: model.costModel?.indirectConstructionCosts?.toDict() || {},
+                    engineeringCosts: model.costModel?.engineeringCosts?.toDict() || {},
+                    otherCosts: model.costModel?.otherCosts?.toDict() || {},
+                    realEstateCosts: model.costModel?.realEstateCosts?.toDict() || {},
+                    risicoreservering: model.costModel?.risicoreservering || null,
+                },
+                constructions: {
+                    structureType: model.constructionModel?.structureType || null,
+                    depth: model.constructionModel?.depth || null,
+                    useOffset: model.constructionModel?.useOffset || false,
+                    offsetDistance: model.constructionModel?.offsetDistance || 0,
+                    offsetSide: model.constructionModel?.offsetSide || "right",
+                },
+            },
+        };
+    });
 
     const handleToggleVisibility = (snapshot: any, type: "ruimtebeslag2d" | "design3d" | "constructionLine" | "mesh") => {
         toggleSnapshotLayerVisibility(model, snapshot, type);

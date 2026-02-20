@@ -43,8 +43,81 @@ const ComparisonDataPanel: React.FC<ComparisonDataPanelProps> = ({ model, setPan
     const [currentTab, setCurrentTab] = useState(0);
     useWatchAndRerender(model, "comparisonSnapshots");
     useWatchAndRerender(model, "activeSnapshotId");
-    const snapshots = model.comparisonSnapshots || [];
+    // Watch live model values so active snapshot column stays in sync
+    useWatchAndRerender(model, "fillVolume");
+    useWatchAndRerender(model, "excavationVolume");
+    useWatchAndRerender(model, "totalVolumeDifference");
+    useWatchAndRerender(model, "lineLength");
+    useWatchAndRerender(model, "total2dArea");
+    useWatchAndRerender(model, "total3dArea");
+    useWatchAndRerender(model, "effectsCalculated");
+    useWatchAndRerender(model, "costsCalculated");
+    const rawSnapshots = model.comparisonSnapshots || [];
     const activeSnapshotId = model.activeSnapshotId || "";
+
+    // For the active snapshot, override projectJSON with live model values for
+    // designValues, effects, and costs so the table always matches the left panel.
+    const snapshots = rawSnapshots.map(s => {
+        if (s.id !== activeSnapshotId) return s;
+        return {
+            ...s,
+            projectJSON: {
+                ...s.projectJSON,
+                designValues: {
+                    trajectLength: model.lineLength,
+                    volumeDifference: model.totalVolumeDifference,
+                    excavationVolume: model.excavationVolume,
+                    fillVolume: model.fillVolume,
+                    area2d: model.total2dArea,
+                    area3d: model.total3dArea,
+                },
+                effects: {
+                    intersectingPanden: model.intersectingPanden || [],
+                    intersectingBomen: model.intersectingBomen || [],
+                    intersectingPercelen: model.intersectingPercelen || [],
+                    intersectingPercelenArea: model.intersectingPercelenArea || null,
+                    intersectingWegdelen2dRuimtebeslag: model.intersectingWegdelen2dRuimtebeslag || null,
+                    intersectingInritten2dRuimtebeslag: model.intersectingInritten2dRuimtebeslag || null,
+                    intersectingInritten2dRuimtebeslagCount: model.intersectingInritten2dRuimtebeslagCount || [],
+                    intersectingNatura2000: model.intersectingNatura2000 || null,
+                    intersectingGNN: model.intersectingGNN || null,
+                    intersectingBeheertypen: model.intersectingBeheertypen || [],
+                    intersectingBeheertypeArea: model.intersectingBeheertypeArea || null,
+                    intersectingPandenArea: model.intersectingPandenArea || null,
+                    intersectingPandenBuffer: model.intersectingPandenBuffer || [],
+                    intersectingPandenBufferArea: model.intersectingPandenBufferArea || null,
+                    intersectingErven: model.intersectingErven || [],
+                    intersectingErvenArea: model.intersectingErvenArea || null,
+                    uitvoeringszoneWegoppervlak: model.uitvoeringszoneWegoppervlak || null,
+                    uitvoeringszonePanden: model.uitvoeringszonePanden || [],
+                    uitvoeringszonePandenArea: model.uitvoeringszonePandenArea || null,
+                    uitvoeringszonePercelen: model.uitvoeringszonePercelen || [],
+                    uitvoeringszonePercelenArea: model.uitvoeringszonePercelenArea || null,
+                    uitvoeringszoneNatura2000: model.uitvoeringszoneNatura2000 || null,
+                    uitvoeringszoneGNN: model.uitvoeringszoneGNN || null,
+                    uitvoeringszoneBeheertypeArea: model.uitvoeringszoneBeheertypeArea || null,
+                },
+                costs: {
+                    complexity: model.costModel?.complexity || null,
+                    depth: model.costModel?.depth || null,
+                    directCostGroundWork: model.costModel?.directCostGroundWork?.toDict() || {},
+                    directCostStructures: model.costModel?.directCostStructures?.toDict() || {},
+                    indirectConstructionCosts: model.costModel?.indirectConstructionCosts?.toDict() || {},
+                    engineeringCosts: model.costModel?.engineeringCosts?.toDict() || {},
+                    otherCosts: model.costModel?.otherCosts?.toDict() || {},
+                    realEstateCosts: model.costModel?.realEstateCosts?.toDict() || {},
+                    risicoreservering: model.costModel?.risicoreservering || null,
+                },
+                constructions: {
+                    structureType: model.constructionModel?.structureType || null,
+                    depth: model.constructionModel?.depth || null,
+                    useOffset: model.constructionModel?.useOffset || false,
+                    offsetDistance: model.constructionModel?.offsetDistance || 0,
+                    offsetSide: model.constructionModel?.offsetSide || "right",
+                },
+            },
+        };
+    });
 
     const formatNumber = (value: any): string => {
         if (value == null) return "";
