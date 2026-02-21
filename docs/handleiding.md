@@ -236,4 +236,4 @@ De kaart is een 3D-weergave (SceneView) met de volgende interactiemogelijkheden:
 
 ---
 
-*Dit document beschrijft de huidige functionaliteit van de Dijkontwerp Verkenning 2.0 applicatie. De applicatie is in actieve ontwikkeling; het is een Proof of Concept (POC).*
+*Dit document beschrijft de huidige functionaliteit. De applicatie is in actieve ontwikkeling; het is een Proof of Concept (POC).*
