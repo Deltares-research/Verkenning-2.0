@@ -528,44 +528,38 @@ export async function calculateVolume(model): Promise<void> {
                     });
                     model.graphicsLayerRuimtebeslag.add(aboveGroundGraphic);
                     
-                    // Create 3D version by directly mapping rings with z-lookup (fastest approach)
-                    if (part.type === 'polygon' && 'rings' in part) {
-                        const polygon2D = part as Polygon;
-                        const rings3D = polygon2D.rings.map(ring => 
-                            ring.map(coord => {
-                                const key = `${coord[0].toFixed(1)},${coord[1].toFixed(1)}`;
-                                return [coord[0], coord[1], zValueMap[key] ?? 0];
-                            })
-                        );
-                        
-                        // Create a 3D symbol for the dike with realistic appearance
-                        const dikeSymbol = new PolygonSymbol3D({
-                            symbolLayers: [
-                                new FillSymbol3DLayer({
-                                    material: {
-                                        color: [85, 140, 75, 1],  // Green grass color, no transparency
-                                    },
-                                    castShadows: true
-                                })
-                            ]
-                        });
-
-                        const aboveGroundGraphic3d = new Graphic({
-                            geometry: new Polygon({
-                                rings: rings3D,
-                                spatialReference: polygon2D.spatialReference,
-                                hasZ: true
-                            }),
-                            symbol: dikeSymbol,
-                            attributes: { type: 'ruimtebeslag_above_ground_3d' }
-                        });
-
-                        model.graphicsLayerRuimtebeslag3d.add(aboveGroundGraphic3d);
-                    }
+                    // 3D ruimtebeslag is built below from the design polygons (not the alpha shape)
                     
                     console.log("Added above ground ruimtebeslag graphic with z-values in attributes:", aboveGroundGraphic)
                 });
             }
+
+            // Build 3D ruimtebeslag from the design 3D polygons (same geometry as the mesh)
+            const dikeSymbol = new PolygonSymbol3D({
+                symbolLayers: [
+                    new FillSymbol3DLayer({
+                        material: {
+                            color: [85, 140, 75, 1],
+                        },
+                        castShadows: true
+                    })
+                ]
+            });
+
+            model.graphicsLayer3dPolygon.graphics.forEach((graphic) => {
+                const polygon3d = graphic.geometry as Polygon;
+                if (polygon3d?.rings) {
+                    model.graphicsLayerRuimtebeslag3d.add(new Graphic({
+                        geometry: new Polygon({
+                            rings: polygon3d.rings,
+                            spatialReference: polygon3d.spatialReference,
+                            hasZ: true
+                        }),
+                        symbol: dikeSymbol,
+                        attributes: { type: 'ruimtebeslag_above_ground_3d' }
+                    }));
+                }
+            });
 
             console.log("Volume calculation complete:");
             console.log("Total volume difference:", result.volume.net_volume, "m³");
@@ -742,61 +736,24 @@ export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistance
         return;
     }
 
-    // part for graphiclayers
-    const pathAtotal = geomA.paths[0];
-    const pathBtotal = geomB.paths[0].slice().reverse();
-    let ring = pathAtotal.concat(pathBtotal);
-    ring.push(pathAtotal[0]);
+    // Build quads from corresponding vertex pairs for consistent geometry
+    // across graphics layers, meshes, and ruimtebeslag 3D
+    const pathA = geomA.paths[0];
+    const pathB = geomB.paths[0];
 
-    let ring2d = ring.map(point => [point[0], point[1]]);
+    const minLength = Math.min(pathA.length, pathB.length);
+    const trimmedPathA = pathA.slice(0, minLength);
+    const trimmedPathB = pathB.slice(0, minLength);
 
-    const polygon3d = new Polygon({
-        rings: [ring],
-        spatialReference: geomA.spatialReference
-    });
+    const symbol2D = model.designLayer2DGetSymbol?.(polygonName);
 
-    const polygon2d = new Polygon({
-        rings: [ring2d],
-        spatialReference: geomA.spatialReference
-    });
-
-    const graphics2D = new Graphic({
-        geometry: polygon2d,
-        attributes: { name: polygonName }
-    });
-
-    const graphic3d = new Graphic({
-        geometry: polygon3d,
-        attributes: { name: polygonName }
-    });
-
-    model.graphicsLayer3dPolygon.add(graphic3d);
-
-    // Add 2D polygon to graphics layer with styling
-    if (model.designLayer2DGetSymbol) {
-        const symbol = model.designLayer2DGetSymbol(polygonName);
-        graphics2D.symbol = symbol as any;
-    }
-    model.designLayer2D.add(graphics2D);
-
-    // part for meshes, taking care of proper triangulation
-    const pathAforMesh = geomA.paths[0];
-    const pathBforMesh = geomB.paths[0];
-
-    // Make sure both paths have the same number of vertices
-    const minLength = Math.min(pathAforMesh.length, pathBforMesh.length);
-    const trimmedPathA = pathAforMesh.slice(0, minLength);
-    const trimmedPathB = pathBforMesh.slice(0, minLength);
-
-    // Create segments by connecting corresponding vertex pairs
     for (let i = 0; i < minLength - 1; i++) {
-        // Create a quad (4-sided polygon) from two consecutive vertex pairs
         const quad = [
-            trimmedPathA[i],       // Vertex i on line A
-            trimmedPathA[i + 1],   // Vertex i+1 on line A  
-            trimmedPathB[i + 1],   // Vertex i+1 on line B
-            trimmedPathB[i],       // Vertex i on line B
-            trimmedPathA[i]        // Close the polygon
+            trimmedPathA[i],
+            trimmedPathA[i + 1],
+            trimmedPathB[i + 1],
+            trimmedPathB[i],
+            trimmedPathA[i]
         ];
 
         const segmentPolygon = new Polygon({
@@ -804,7 +761,27 @@ export function createPolygonBetweenDistances(args: CreatePolygonBetweenDistance
             spatialReference: geomA.spatialReference
         });
 
-        // Each quad will have simple, predictable triangulation
+        // 3D polygon layer (used for saving, API volume calc, and ruimtebeslag 3D)
+        model.graphicsLayer3dPolygon.add(new Graphic({
+            geometry: segmentPolygon,
+            attributes: { name: polygonName }
+        }));
+
+        // 2D polygon layer
+        const quad2d = quad.map(p => [p[0], p[1]]);
+        const graphic2D = new Graphic({
+            geometry: new Polygon({
+                rings: [quad2d],
+                spatialReference: geomA.spatialReference
+            }),
+            attributes: { name: polygonName }
+        });
+        if (symbol2D) {
+            graphic2D.symbol = symbol2D as any;
+        }
+        model.designLayer2D.add(graphic2D);
+
+        // Mesh (simple quad triangulation)
         createMeshFromPolygon(model, segmentPolygon, null);
     }
 }
