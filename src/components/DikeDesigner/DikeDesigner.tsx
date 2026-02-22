@@ -466,7 +466,7 @@ const DikeDesigner = (
     const handleClearAll = () => {
         handleClearGraphics();
         model.constructionModel.clearLine();
-        model.graphicsLayerUitvoeringszone.removeAll();
+        void model.clearUitvoeringszone();
     };
 
     const handleGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -592,7 +592,7 @@ const DikeDesigner = (
         model.effectsCalculated = false;
         model.costsCalculated = false;
         // Clear the execution zone visualization (it may contain the construction buffer)
-        model.graphicsLayerUitvoeringszone.removeAll();
+        void model.clearUitvoeringszone();
         setConstructionChartVersion((prev) => prev + 1);
     };
 
@@ -619,7 +619,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.graphicsLayerRuimtebeslag3d.removeAll();
-        model.graphicsLayerUitvoeringszone.removeAll();
+        void model.clearUitvoeringszone();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;

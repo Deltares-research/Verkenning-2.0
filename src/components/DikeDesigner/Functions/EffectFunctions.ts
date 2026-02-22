@@ -3,7 +3,6 @@ import type FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
-import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import * as XLSX from "xlsx";
 
 import * as intersectionOperator from "@arcgis/core/geometry/operators/intersectionOperator";
@@ -638,21 +637,16 @@ export async function handleEffectAnalysis(model) {
             const executionZone = geometryEngine.buffer(combinedAnalysisGeometry, uitvoeringBufferDistance, "meters");
             const executionZoneGeometry = Array.isArray(executionZone) ? executionZone[0] : executionZone;
 
-            // Clear existing graphics and add the execution zone to the map
-            model.graphicsLayerUitvoeringszone.graphics.removeAll();
-            
+            // Clear existing features and add the execution zone to the map
+            await model.clearUitvoeringszone();
+
             const executionZoneGraphic = new Graphic({
                 geometry: executionZoneGeometry,
-                symbol: new SimpleFillSymbol({
-                    color: [0, 255, 0, 0.15], // Green with 15% opacity
-                    outline: {
-                        color: [0, 255, 0, 0.8], // Green outline with 80% opacity
-                        width: 2
-                    }
-                })
             });
 
-            model.graphicsLayerUitvoeringszone.graphics.add(executionZoneGraphic);
+            await model.graphicsLayerUitvoeringszone.applyEdits({
+                addFeatures: [executionZoneGraphic],
+            });
             console.log("Execution zone visualization added to map");
     }
 

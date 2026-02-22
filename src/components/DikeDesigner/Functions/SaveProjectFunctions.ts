@@ -279,7 +279,7 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         model.graphicsLayerTemp?.removeAll();
         model.graphicsLayer3dPolygon?.removeAll();
         model.designLayer2D.removeAll();
-        model.graphicsLayerUitvoeringszone?.removeAll();
+        void model.clearUitvoeringszone();
         cleanFeatureLayer(model.designLayer2D);
         model.graphicsLayerRuimtebeslag?.removeAll();
         model.graphicsLayerRuimtebeslag3d?.removeAll();

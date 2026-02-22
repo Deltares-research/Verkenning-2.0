@@ -27,6 +27,8 @@ import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 import ElevationLayer from "@arcgis/core/layers/ElevationLayer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
+import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
+import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
@@ -120,7 +122,7 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
     graphicsLayer3dPolygon: GraphicsLayer;
     graphicsLayerRuimtebeslag: GraphicsLayer;
     graphicsLayerRuimtebeslag3d: GraphicsLayer;
-    graphicsLayerUitvoeringszone: GraphicsLayer;
+    graphicsLayerUitvoeringszone: FeatureLayer;
     elevationLayer: ElevationLayer;
 
     graphicsLayerControlPoints: GraphicsLayer;
@@ -675,13 +677,31 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 visible: false,
             });
 
-            this.graphicsLayerUitvoeringszone = new GraphicsLayer({
+            this.graphicsLayerUitvoeringszone = new FeatureLayer({
                 title: "Uitvoeringszone",
+                source: [],
+                objectIdField: "ObjectID",
+                geometryType: "polygon",
+                hasZ: true,
+                spatialReference: { wkid: 3857 },
+                fields: [
+                    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+                ],
+                renderer: new SimpleRenderer({
+                    symbol: new SimpleFillSymbol({
+                        color: [255, 165, 0, 0.3],
+                        outline: {
+                            color: [255, 140, 0, 0.9],
+                            width: 2.5
+                        }
+                    })
+                }),
                 elevationInfo: {
                     mode: "on-the-ground",
                     offset: 0
                 },
                 listMode: "show",
+                legendEnabled: true,
                 visible: true,
             });
 
@@ -861,5 +881,19 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
         }
         
         return missingCalculations;
+    }
+
+    async clearUitvoeringszone(): Promise<void> {
+        if (!this.graphicsLayerUitvoeringszone) return;
+        try {
+            const result = await this.graphicsLayerUitvoeringszone.queryFeatures();
+            if (result.features.length > 0) {
+                await this.graphicsLayerUitvoeringszone.applyEdits({
+                    deleteFeatures: result.features,
+                });
+            }
+        } catch (e) {
+            console.warn("Failed to clear uitvoeringszone:", e);
+        }
     }
 }
