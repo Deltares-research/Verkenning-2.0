@@ -100,9 +100,9 @@ export const handleCostCalculation = async (
 
 
 
-        // API request with 30s timeout
+        // API request with 120s timeout (cost calculation is slow)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
 
 
         const payload = {
@@ -167,7 +167,7 @@ export const handleCostCalculation = async (
         } catch (fetchError: unknown) {
             clearTimeout(timeoutId);
             if (fetchError instanceof Error && fetchError.name === "AbortError") {
-                throw new Error("API verzoek duurde te lang (timeout na 30s)");
+                throw new Error("API verzoek duurde te lang (timeout na 120s)");
             }
             throw fetchError;
         }
@@ -181,6 +181,10 @@ export const handleCostCalculation = async (
             errorMessage = error.message;
         }
 
+        model.messages.commands.ui.alert.execute({
+            message: `Fout bij kosten berekening: ${errorMessage}`,
+            title: "API Fout",
+        });
 
     } finally {
         model.loading = false;
