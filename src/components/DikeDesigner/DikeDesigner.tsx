@@ -17,6 +17,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 
 import Box from "@vertigis/web/ui/Box";
 import Button from "@vertigis/web/ui/Button";
@@ -462,6 +463,12 @@ const DikeDesigner = (
         handleClearDesign();
     };
 
+    const handleClearAll = () => {
+        handleClearGraphics();
+        model.constructionModel.clearLine();
+        void model.clearUitvoeringszone();
+    };
+
     const handleGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         model.gridSize = parseFloat(event.target.value);
     }
@@ -584,6 +591,8 @@ const DikeDesigner = (
         // Reset calculation status when construction is cleared
         model.effectsCalculated = false;
         model.costsCalculated = false;
+        // Clear the execution zone visualization (it may contain the construction buffer)
+        void model.clearUitvoeringszone();
         setConstructionChartVersion((prev) => prev + 1);
     };
 
@@ -610,7 +619,7 @@ const DikeDesigner = (
         model.graphicsLayerMesh.removeAll();
         model.graphicsLayerRuimtebeslag.removeAll();
         model.graphicsLayerRuimtebeslag3d.removeAll();
-        model.graphicsLayerUitvoeringszone.removeAll();
+        void model.clearUitvoeringszone();
         model.mergedMesh = null;
         model.totalVolumeDifference = null;
         model.excavationVolume = null;
@@ -653,17 +662,6 @@ const DikeDesigner = (
         model.uitvoeringszoneNatura2000 = 0;
         model.uitvoeringszoneGNN = 0;
         model.uitvoeringszoneBeheertypeArea = 0;
-        
-        // Construction resets
-        model.constructionModel.graphicsLayerConstructionLine?.removeAll();
-        model.constructionModel.drawnConstructionLine = null;
-        model.constructionModel.selectedLine = null;
-        model.constructionModel.structures = [];
-        model.constructionModel.useOffset = false;
-        model.constructionModel.offsetDistance = 0;
-        model.constructionModel.offsetSide = 'right';
-        model.constructionModel.structureType = "Heavescherm";
-        model.constructionModel.depth = null;
         
         cleanFeatureLayer(model.designLayer2D);
 
@@ -1108,6 +1106,48 @@ const DikeDesigner = (
                                     }}
                                 >
                                     {sidebarExpanded ? "Downloaden" : ""}
+                                </Button>
+                            </Box>
+                        </Tooltip>
+                        {/* Clear All Button */}
+                        <Tooltip title="Alles wissen (lijn, uitrol en constructie)" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<DeleteSweepIcon />}
+                                    onClick={handleClearAll}
+                                    disabled={!designName}
+                                    fullWidth={sidebarExpanded}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: "#fff",
+                                        color: designName ? "#d13438" : "#ccc",
+                                        textTransform: "none",
+                                        fontSize: sidebarExpanded ? "13px" : "0px",
+                                        fontWeight: 600,
+                                        boxShadow: "none",
+                                        transition: "all 0.2s ease",
+                                        borderColor: designName ? "#e5e7eb" : "#f0f0f0",
+                                        borderLeft: designName ? "3px solid #d13438" : "3px solid #e5e7eb",
+                                        justifyContent: sidebarExpanded ? "flex-start" : "center",
+                                        paddingLeft: sidebarExpanded ? 1.5 : 0.5,
+                                        minWidth: sidebarExpanded ? "auto" : "44px",
+                                        width: sidebarExpanded ? "100%" : "44px",
+                                        height: "44px",
+                                        "&:hover": designName ? {
+                                            backgroundColor: "#fdf2f2",
+                                            boxShadow: "none",
+                                            borderColor: "#d13438",
+                                        } : {},
+                                    }}
+                                >
+                                    {sidebarExpanded ? "Wis alles" : ""}
                                 </Button>
                             </Box>
                         </Tooltip>

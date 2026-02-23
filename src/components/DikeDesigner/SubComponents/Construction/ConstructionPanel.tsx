@@ -15,6 +15,7 @@ import Divider from "@vertigis/web/ui/Divider";
 import Checkbox from "@vertigis/web/ui/Checkbox";
 import FormControlLabel from "@vertigis/web/ui/FormControlLabel";
 
+import Alert from "@vertigis/web/ui/Alert";
 import React, { useEffect, useState } from "react";
 
 import { stackStyle } from "../../../styles";
@@ -37,6 +38,9 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
     useWatchAndRerender(model.constructionModel, "offsetDistance");
     useWatchAndRerender(model.constructionModel, "offsetSide");
     useWatchAndRerender(model, "loading");
+    useWatchAndRerender(model, "graphicsLayerLine.graphics.length");
+
+    const hasReferenceLine = model.graphicsLayerLine?.graphics.length > 0;
 
     const [depthInput, setDepthInput] = useState(() => {
         const depth = model.constructionModel.depth;
@@ -111,10 +115,15 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
         <Stack spacing={1}>
             <Stack spacing={1.5} sx={stackStyle}>
                 <FormLabel>Stap 1: constructielijn bepalen (kies een van de drie)</FormLabel>
+                {!hasReferenceLine && (
+                    <Alert severity="warning" sx={{ fontSize: "12px", py: 0.5 }}>
+                        Teken eerst een referentielijn in tab &quot;Dimensioneer grondlichaam&quot;.
+                    </Alert>
+                )}
                 <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                     <Tooltip title="Teken lijn" placement="bottom" slotProps={{ tooltip: { sx: { fontSize: '14px' } } }}>
                         <Button
-                            disabled={!model.sketchViewModel}
+                            disabled={!model.sketchViewModel || !hasReferenceLine}
                             color="primary"
                             onClick={handleDrawLine}
                             variant="contained"
@@ -129,7 +138,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                             color="primary"
                             onClick={() => document.getElementById('construction-geojson-upload')?.click()}
                             variant="contained"
-                            disabled={!model.map}
+                            disabled={!model.map || !hasReferenceLine}
                             size="large"
                             sx={{ flex: 1, height: '56px' }}
                         >
@@ -141,7 +150,7 @@ const ConstructionPanel: React.FC<ConstructionPanelProps> = ({ model, onCreateCo
                             color="primary"
                             onClick={handleSelectLine}
                             variant="contained"
-                            disabled={!model.map}
+                            disabled={!model.map || !hasReferenceLine}
                             size="large"
                             sx={{ flex: 1, height: '56px' }}
                         >

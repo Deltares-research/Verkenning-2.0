@@ -120,11 +120,16 @@ export default class ConstructionModel extends ModelBase {
     clearLine(): void {
         if (this.graphicsLayerConstructionLine) {
             this.graphicsLayerConstructionLine.removeAll();
-            this.drawnConstructionLine = null;
-            this.selectedLine = null;
-            this.structures = [];
-            console.log("Construction line cleared");
         }
+        this.drawnConstructionLine = null;
+        this.selectedLine = null;
+        this.structures = [];
+        this.useOffset = false;
+        this.offsetDistance = 0;
+        this.offsetSide = 'right';
+        this.structureType = "Heavescherm";
+        this.depth = null;
+        console.log("Construction cleared");
     }
 
     drawLine(): void {

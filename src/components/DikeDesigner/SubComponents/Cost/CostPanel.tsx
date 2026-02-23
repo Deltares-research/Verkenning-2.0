@@ -29,11 +29,25 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDo
   useWatchAndRerender(model.costModel, "engineeringCosts");
   useWatchAndRerender(model.costModel, "otherCosts");
   useWatchAndRerender(model.costModel, "realEstateCosts");
+  useWatchAndRerender(model.constructionModel, "drawnConstructionLine");
+
+  const hasGrondlichaam = model.graphicsLayerRuimtebeslag?.graphics.length > 0;
+  const hasConstructie = !!model.constructionModel?.drawnConstructionLine;
 
   return (
     <Stack spacing={1}>
       <Stack spacing={2} sx={stackStyle}>
         <FormLabel>Kosten berekening</FormLabel>
+
+        {(hasGrondlichaam || hasConstructie) && (
+          <Alert severity="info" sx={{ fontSize: "12px", py: 0.5 }}>
+            Berekening omvat:{" "}
+            {hasGrondlichaam && <strong>Grondlichaam</strong>}
+            {hasGrondlichaam && hasConstructie && " + "}
+            {hasConstructie && <strong>Constructie (buffer {model.constructieBufferDistance || 10}m)</strong>}
+          </Alert>
+        )}
+
         <Button
           variant="contained"
           color="primary"
@@ -43,7 +57,7 @@ const CostCalculationPanel: React.FC<CostCalculationPanelProps> = ({ model, onDo
             await handleCostCalculation(model);
           }}
           fullWidth
-          disabled={!model.graphicsLayerRuimtebeslag?.graphics.length || model.loading || !model.effectsCalculated}
+          disabled={(!model.graphicsLayerRuimtebeslag?.graphics.length && !model.constructionModel?.drawnConstructionLine) || model.loading || !model.effectsCalculated}
         >
           Bereken kosten
         </Button>
