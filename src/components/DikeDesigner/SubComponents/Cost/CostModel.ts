@@ -36,6 +36,25 @@ const toFiniteNumber = (value: unknown, fallback = 0): number => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const restoreCostItem = (val: unknown, current: CostItem): CostItem => {
+    if (typeof val === 'number') {
+        return { ...current, value: val };
+    }
+    if (val && typeof val === 'object') {
+        const obj = val as any;
+        return {
+            value: toFiniteNumber(obj.value, current.value),
+            value_incl_BTW: obj.value_incl_BTW !== undefined ? toFiniteNumber(obj.value_incl_BTW) : current.value_incl_BTW,
+            unit_cost: toFiniteNumber(obj.unit_cost, current.unit_cost),
+            quantity: toFiniteNumber(obj.quantity, current.quantity),
+            unit: String(obj.unit ?? current.unit ?? ''),
+            description: String(obj.description ?? current.description ?? ''),
+            dimensions: String(obj.dimensions ?? current.dimensions ?? ''),
+        };
+    }
+    return current;
+};
+
 const getCostValueExclBTW = (value: ApiCostValue | unknown, fallback = 0): number => {
     if (typeof value === "number") {
         return toFiniteNumber(value, fallback);
@@ -157,24 +176,42 @@ export class DirectCostGroundWork {
     get profielerenNieuweGraslaagValue() { return this.profielerenNieuweGraslaag.value }
     get inzaaienNieuweToplaagValue() { return this.inzaaienNieuweToplaag.value }
 
-    toDict(): Record<string, number> {
+    toDict(): Record<string, any> {
         return {
-            opruimenTerrein: this.opruimenTerrein.value,
-            maaienTerreinen: this.maaienTerreinen.value,
-            afgravenGrasbekleding: this.afgravenGrasbekleding.value,
-            afgravenKleilaag: this.afgravenKleilaag.value,
-            herkeurenKleilaag: this.herkeurenKleilaag.value,
-            aanvullenKern: this.aanvullenKern.value,
-            profielerenDijkkern: this.profielerenDijkkern.value,
-            aanbrengenNieuweKleilaag: this.aanbrengenNieuweKleilaag.value,
-            profielerenVanNieuweKleilaag: this.profielerenVanNieuweKleilaag.value,
-            hergebruikTeelaarde: this.hergebruikTeelaarde.value,
-            aanvullenTeelaarde: this.aanvullenTeelaarde.value,
-            profielerenNieuweGraslaag: this.profielerenNieuweGraslaag.value,
-            inzaaienNieuweToplaag: this.inzaaienNieuweToplaag.value,
+            opruimenTerrein: { ...this.opruimenTerrein },
+            maaienTerreinen: { ...this.maaienTerreinen },
+            afgravenGrasbekleding: { ...this.afgravenGrasbekleding },
+            afgravenKleilaag: { ...this.afgravenKleilaag },
+            herkeurenKleilaag: { ...this.herkeurenKleilaag },
+            aanvullenKern: { ...this.aanvullenKern },
+            profielerenDijkkern: { ...this.profielerenDijkkern },
+            aanbrengenNieuweKleilaag: { ...this.aanbrengenNieuweKleilaag },
+            profielerenVanNieuweKleilaag: { ...this.profielerenVanNieuweKleilaag },
+            hergebruikTeelaarde: { ...this.hergebruikTeelaarde },
+            aanvullenTeelaarde: { ...this.aanvullenTeelaarde },
+            profielerenNieuweGraslaag: { ...this.profielerenNieuweGraslaag },
+            inzaaienNieuweToplaag: { ...this.inzaaienNieuweToplaag },
             totaleBDBKGrondwerk: this.totaleBDBKGrondwerk,
             totaleBDBKGrondwerkIncludingBTW: this.totaleBDBKGrondwerkIncludingBTW,
         }
+    }
+
+    fromDict(dict: Record<string, any>) {
+        this.opruimenTerrein = restoreCostItem(dict.opruimenTerrein, this.opruimenTerrein);
+        this.maaienTerreinen = restoreCostItem(dict.maaienTerreinen, this.maaienTerreinen);
+        this.afgravenGrasbekleding = restoreCostItem(dict.afgravenGrasbekleding, this.afgravenGrasbekleding);
+        this.afgravenKleilaag = restoreCostItem(dict.afgravenKleilaag, this.afgravenKleilaag);
+        this.herkeurenKleilaag = restoreCostItem(dict.herkeurenKleilaag, this.herkeurenKleilaag);
+        this.aanvullenKern = restoreCostItem(dict.aanvullenKern, this.aanvullenKern);
+        this.profielerenDijkkern = restoreCostItem(dict.profielerenDijkkern, this.profielerenDijkkern);
+        this.aanbrengenNieuweKleilaag = restoreCostItem(dict.aanbrengenNieuweKleilaag, this.aanbrengenNieuweKleilaag);
+        this.profielerenVanNieuweKleilaag = restoreCostItem(dict.profielerenVanNieuweKleilaag, this.profielerenVanNieuweKleilaag);
+        this.hergebruikTeelaarde = restoreCostItem(dict.hergebruikTeelaarde, this.hergebruikTeelaarde);
+        this.aanvullenTeelaarde = restoreCostItem(dict.aanvullenTeelaarde, this.aanvullenTeelaarde);
+        this.profielerenNieuweGraslaag = restoreCostItem(dict.profielerenNieuweGraslaag, this.profielerenNieuweGraslaag);
+        this.inzaaienNieuweToplaag = restoreCostItem(dict.inzaaienNieuweToplaag, this.inzaaienNieuweToplaag);
+        this.totaleBDBKGrondwerk = toFiniteNumber(dict.totaleBDBKGrondwerk);
+        this.totaleBDBKGrondwerkIncludingBTW = toFiniteNumber(dict.totaleBDBKGrondwerkIncludingBTW);
     }
 }
 
@@ -189,12 +226,18 @@ export class DirectCostStructures {
         this.totaleBDBKConstructie = getCostValueExclBTW(api.totale_BDBK_constructie)
         this.totaleBDBKConstructieIncludingBTW = getCostValueInclBTW(api.totale_BDBK_constructie)
     }
-    toDict(): Record<string, number> {
+    toDict(): Record<string, any> {
         return {
-            structureDetails: this.structureDetails.value,
+            structureDetails: { ...this.structureDetails },
             totaleBDBKConstructie: this.totaleBDBKConstructie,
             totaleBDBKConstructieIncludingBTW: this.totaleBDBKConstructieIncludingBTW,
         };
+    }
+
+    fromDict(dict: Record<string, any>) {
+        this.structureDetails = restoreCostItem(dict.structureDetails, this.structureDetails);
+        this.totaleBDBKConstructie = toFiniteNumber(dict.totaleBDBKConstructie);
+        this.totaleBDBKConstructieIncludingBTW = toFiniteNumber(dict.totaleBDBKConstructieIncludingBTW);
     }
 }
 
@@ -214,15 +257,24 @@ export class DirectCostInfrastructure {
         this.totaleBDBKInfra = getCostValueExclBTW(api.totale_BDBK_infrastructuur)
         this.totaleBDBKInfraIncludingBTW = getCostValueInclBTW(api.totale_BDBK_infrastructuur)
     }
-    toDict(): Record<string, number> {
+    toDict(): Record<string, any> {
         return {
-            opbrekenRegionaleWeg: this.opbrekenRegionaleWeg.value,
-            leverenEnAanbrengenRegionaleWeg: this.leverenEnAanbrengenRegionaleWeg.value,
-            verwijderenFietspad: this.verwijderenFietspad.value,
-            aanleggenFietspad: this.aanleggenFietspad.value,
+            opbrekenRegionaleWeg: { ...this.opbrekenRegionaleWeg },
+            leverenEnAanbrengenRegionaleWeg: { ...this.leverenEnAanbrengenRegionaleWeg },
+            verwijderenFietspad: { ...this.verwijderenFietspad },
+            aanleggenFietspad: { ...this.aanleggenFietspad },
             totaleBDBKInfra: this.totaleBDBKInfra,
             totaleBDBKInfraIncludingBTW: this.totaleBDBKInfraIncludingBTW,
         };
+    }
+
+    fromDict(dict: Record<string, any>) {
+        this.opbrekenRegionaleWeg = restoreCostItem(dict.opbrekenRegionaleWeg, this.opbrekenRegionaleWeg);
+        this.leverenEnAanbrengenRegionaleWeg = restoreCostItem(dict.leverenEnAanbrengenRegionaleWeg, this.leverenEnAanbrengenRegionaleWeg);
+        this.verwijderenFietspad = restoreCostItem(dict.verwijderenFietspad, this.verwijderenFietspad);
+        this.aanleggenFietspad = restoreCostItem(dict.aanleggenFietspad, this.aanleggenFietspad);
+        this.totaleBDBKInfra = toFiniteNumber(dict.totaleBDBKInfra);
+        this.totaleBDBKInfraIncludingBTW = toFiniteNumber(dict.totaleBDBKInfraIncludingBTW);
     }
 }
 
@@ -487,15 +539,24 @@ export class RealEstateCosts {
         );
     }
 
-  toDict(): Record<string, number> {
+  toDict(): Record<string, any> {
     return {
-        directBenoemdItem: this.directBenoemdItem.value,
-        directNietBenoemdItem: this.directNietBenoemdItem.value,
-        indirectItem: this.indirectItem.value,
-        riskItem: this.riskItem.value,
+        directBenoemdItem: { ...this.directBenoemdItem },
+        directNietBenoemdItem: { ...this.directNietBenoemdItem },
+        indirectItem: { ...this.indirectItem },
+        riskItem: { ...this.riskItem },
         totalRealEstateCosts: this.totalRealEstateCosts,
-                totalRealEstateCostsIncludingBTW: this.totalRealEstateCostsIncludingBTW,
+        totalRealEstateCostsIncludingBTW: this.totalRealEstateCostsIncludingBTW,
     };
+  }
+
+  fromDict(dict: Record<string, any>) {
+    this.directBenoemdItem = restoreCostItem(dict.directBenoemdItem, this.directBenoemdItem);
+    this.directNietBenoemdItem = restoreCostItem(dict.directNietBenoemdItem, this.directNietBenoemdItem);
+    this.indirectItem = restoreCostItem(dict.indirectItem, this.indirectItem);
+    this.riskItem = restoreCostItem(dict.riskItem, this.riskItem);
+    this.totalRealEstateCosts = toFiniteNumber(dict.totalRealEstateCosts);
+    this.totalRealEstateCostsIncludingBTW = toFiniteNumber(dict.totalRealEstateCostsIncludingBTW);
   }
 }
 

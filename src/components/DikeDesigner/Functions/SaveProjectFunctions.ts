@@ -42,13 +42,17 @@ export interface ProjectJSON {
     costs: {
         complexity: string | null;
         depth: number | null;
-        directCostGroundWork: Record<string, number>;
-        directCostStructures: Record<string, number>;
-        indirectConstructionCosts: Record<string, number>;
-        engineeringCosts: Record<string, number>;
-        otherCosts: Record<string, number>;
-        realEstateCosts: Record<string, number>;
+        directCostGroundWork: Record<string, any>;
+        directCostStructures: Record<string, any>;
+        directCostInfrastructure?: Record<string, any>;
+        indirectConstructionCosts: Record<string, any>;
+        engineeringCosts: Record<string, any>;
+        otherCosts: Record<string, any>;
+        realEstateCosts: Record<string, any>;
         risicoreservering: number | null;
+        risicoreserveringIncludingBTW?: number | null;
+        totalConstructionCost?: number | null;
+        totalConstructionCostIncludingBTW?: number | null;
     };
     effects: {
         intersectingPanden: object[];
@@ -198,11 +202,15 @@ export const buildProjectJSON = (model: DikeDesignerModel): ProjectJSON => {
             depth: model.costModel?.depth || null,
             directCostGroundWork: model.costModel?.directCostGroundWork?.toDict() || {},
             directCostStructures: model.costModel?.directCostStructures?.toDict() || {},
+            directCostInfrastructure: model.costModel?.directCostInfrastructure?.toDict() || {},
             indirectConstructionCosts: model.costModel?.indirectConstructionCosts?.toDict() || {},
             engineeringCosts: model.costModel?.engineeringCosts?.toDict() || {},
             otherCosts: model.costModel?.otherCosts?.toDict() || {},
             realEstateCosts: model.costModel?.realEstateCosts?.toDict() || {},
             risicoreservering: model.costModel?.risicoreservering || null,
+            risicoreserveringIncludingBTW: model.costModel?.risicoreserveringIncludingBTW || null,
+            totalConstructionCost: model.costModel?.constructionCost?.totalConstructionCost || null,
+            totalConstructionCostIncludingBTW: model.costModel?.constructionCost?.totalConstructionCostIncludingBTW || null,
         },
         effects: {
             intersectingPanden: model.intersectingPanden || [],
@@ -401,13 +409,16 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
         if (costs && model.costModel) {
             model.costModel.complexity = costs.complexity || "makkelijke maatregel";
             model.costModel.depth = costs.depth ?? null;
-            
-            // Directly assign cost properties from saved dict format
+
+            // Use fromDict() for classes with CostItem properties (handles both old number format and new object format)
             if (costs.directCostGroundWork) {
-                Object.assign(model.costModel.directCostGroundWork, costs.directCostGroundWork);
+                model.costModel.directCostGroundWork.fromDict(costs.directCostGroundWork);
             }
             if (costs.directCostStructures) {
-                Object.assign(model.costModel.directCostStructures, costs.directCostStructures);
+                model.costModel.directCostStructures.fromDict(costs.directCostStructures);
+            }
+            if (costs.directCostInfrastructure) {
+                model.costModel.directCostInfrastructure.fromDict(costs.directCostInfrastructure);
             }
             if (costs.indirectConstructionCosts) {
                 Object.assign(model.costModel.indirectConstructionCosts, costs.indirectConstructionCosts);
@@ -419,9 +430,18 @@ export const loadProjectFromJSON = (model: DikeDesignerModel, jsonData: ProjectJ
                 Object.assign(model.costModel.otherCosts, costs.otherCosts);
             }
             if (costs.realEstateCosts) {
-                Object.assign(model.costModel.realEstateCosts, costs.realEstateCosts);
+                model.costModel.realEstateCosts.fromDict(costs.realEstateCosts);
             }
             model.costModel.risicoreservering = costs.risicoreservering || 0;
+            model.costModel.risicoreserveringIncludingBTW = costs.risicoreserveringIncludingBTW || 0;
+
+            // Restore construction cost totals (critical for grand total calculation)
+            if (costs.totalConstructionCost != null) {
+                model.costModel.constructionCost.totalConstructionCost = costs.totalConstructionCost;
+            }
+            if (costs.totalConstructionCostIncludingBTW != null) {
+                model.costModel.constructionCost.totalConstructionCostIncludingBTW = costs.totalConstructionCostIncludingBTW;
+            }
         }
 
         // Load constructions
