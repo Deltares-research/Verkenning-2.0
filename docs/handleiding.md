@@ -31,11 +31,11 @@ Aan de linkerkant zit een inklapbare zijbalk met de volgende knoppen:
 
 | Knop | Omschrijving |
 |------|-------------|
-| **Laden** | Laad een eerder opgeslagen project (JSON) van je computer. |
-| **Opslaan** | Sla het huidige project lokaal op als JSON-bestand. |
-| **Titel wijzigen** | Pas de ontwerp-naam aan (vak en alternatief). |
-| **Downloaden** | Exporteer onderdelen van het ontwerp als losse bestanden (GeoJSON). Je kunt kiezen welke onderdelen je wilt downloaden: invoerlijn, 3D ontwerpdata, 2D ontwerpdata, 2D ruimtebeslag, constructielijn. |
-| **Wis alles** | Verwijdert alle data: lijn, uitrol, constructie en berekeningen. |
+| **Lokaal bestand laden** | Laad een eerder opgeslagen project (JSON) van je computer. |
+| **Project lokaal opslaan** | Sla het huidige project lokaal op als JSON-bestand. |
+| **Designnaam wijzigen** | Pas de naam van het ontwerp aan (vak en alternatief). |
+| **Geodata downloaden** | Exporteer onderdelen van het ontwerp als losse bestanden (GeoJSON). Je kunt kiezen welke onderdelen je wilt downloaden: invoerlijn, 3D ontwerpdata, 2D ontwerpdata, 2D ruimtebeslag, constructielijn. |
+| **Alles wissen** | Verwijdert alle data: lijn, uitrol, constructie en berekeningen. |
 
 Onderin de zijbalk staat een statusindicator:
 
@@ -43,11 +43,13 @@ Onderin de zijbalk staat een statusindicator:
 - Geel: *"Gedeeltelijk"* — alleen effecten zijn berekend.
 - Rood: *"Niet berekend"* — er zijn nog geen berekeningen uitgevoerd.
 
+Door over de indicator heen te gaan wordt aangegeven waarom deze bijv. rood is.
+
 ---
 
-## Tab 1: Dimensioneer grondlichaam
+## Tabblad 1: Dimensioneer grondlichaam
 
-In deze tab ontwerp je het dijklichaam (grondlichaam) in drie stappen.
+In dit tabblad kan in drie stappen een dijklichaam (grondlichaam) worden ontworpen.
 
 ### Stap 1: Referentielijn bepalen
 
@@ -63,12 +65,13 @@ Met **Verwijder lijn** verwijder je de huidige referentielijn.
 
 Klik op **Open 2D-ontwerpen** om het ontwerp-paneel te openen. Hier zie je:
 
-- Een **grafiek** met het dwarsprofiel (hoogte vs. afstand tot de referentielijn).
-- Een **tabel** waarin je punten kunt toevoegen, bewerken of verwijderen. Elk punt heeft:
+- Een **grafiek** Dwarsprofiel met daarin het dwarsprofiel visueel weergegeven (hoogte vs. afstand tot de referentielijn).
+- Een **tabel** Invoerdata waarin je punten kunt toevoegen, bewerken of verwijderen. Elk punt heeft:
   - *Locatie* — naam van het profielpunt (bijv. buitenteen, buitenkruin, binnenkruin, binnenteen).
   - *Afstand (m)* — horizontale afstand tot de referentielijn.
   - *Hoogte (m NAP)* — hoogte ten opzichte van NAP.
-  - *Rivierzijde* — geeft aan of het punt links of rechts van de referentielijn ligt.
+  - *Talud* — geeft het talud tussen 2 punten weer
+  - *Acties* — ...?
 
 Na het invullen wordt het dwarsprofiel automatisch over de hele lengte van de referentielijn uitgerold tot een 3D-model op de kaart.
 
@@ -76,11 +79,15 @@ Met **Verwijder uitrol** verwijder je het huidige dwarsprofiel en het 3D-model.
 
 ### Stap 3: Controleren dwarsprofiel
 
-Klik op **Controleer dwarsprofiel** om een doorsnede-weergave te openen. Hiermee kun je visueel controleren of het ontworpen profiel klopt ten opzichte van het bestaande maaiveld.
+Klik op **Controleer dwarsprofiel** om een doorsnede-weergave te openen. Hiermee kun je visueel controleren of het ontworpen profiel klopt ten opzichte van het bestaande maaiveld. Dit kan gedaan worden door een willekeurige lijn te tekenen. In de doorsnede-weergave wordt dan het AHN4 en het ontwerpprofiel samen weergegeven.
+
+> [!TIP]
+> Omdat bij het maken van een profiel 1 doorsnede wordt gebruikt is het goed om visueel te controleren of dit profiel ook voor de rest van het dijkvak logisch is.
+
 
 ### Ontwerp overzicht
 
-Onderaan de tab staat een tabel met berekende waarden:
+Onderaan het tabblad staat een tabel met berekende waarden. Deze worden berekend middels de backend tooling. De onderliggende bepalingen zijn verder beschreven in de technische documentatie.
 
 | Waarde | Eenheid |
 |--------|---------|
@@ -95,7 +102,7 @@ Onderaan de tab staat een tabel met berekende waarden:
 
 ## Tab 2: Dimensioneer constructie (Opbouwen in 3D)
 
-In deze tab voeg je een constructie toe aan het ontwerp, zoals een damwand of heavescherm. Dit is de "Opbouwen in 3D"-functionaliteit.
+In dit tabblad kan constructie toegevoegd worden aan het ontwerp, zoals een damwand of heavescherm.
 
 **Let op:** er moet eerst een referentielijn zijn getekend in Tab 1. Als deze ontbreekt verschijnt een waarschuwing.
 
@@ -122,9 +129,11 @@ Stel de eigenschappen van de constructie in:
   - *Offset afstand (m)* — de afstand van de constructie tot de referentielijn.
   - *Offset zijde* — links of rechts van de referentielijn.
 
+> [!TIP] Let op de door de pijl aangegeven richting van de referentielijn bij het bepalen van de offset zijde
+
 ### Stap 3: Maak constructie
 
-- **Maak constructie** — genereert de 3D-constructie op de kaart op basis van de ingevoerde parameters. De constructie wordt als verticaal vlak weergegeven langs de constructielijn.
+- **Maak constructie** — genereert de constructie op de kaart op basis van de ingevoerde parameters. De constructie wordt als lijn weergegeven op of parallel aan de constructielijn.
 - **Verwijder constructie** — verwijdert de constructie van de kaart.
 
 ---
