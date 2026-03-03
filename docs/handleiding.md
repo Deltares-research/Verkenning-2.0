@@ -1,14 +1,16 @@
 # Handleiding Dijkontwerp Verkenning 2.0 POC
 
+Deze pagina geeft een beknopte gebruikershandleiding bij de Dijkontwerper gemaakt als onderdeel van project Verkenning 2.0. Dit betreft een proof of concept wat verder wordt doorontwikkeld. Het gebruik van de belangrijkste functionaliteiten is hier toegelicht. Voor meer inhoudelijke details wordt verwezen naar de technische documentatie [hier komt een link].
+
 ## Inhoudsopgave
 
 1. [Opstarten](#opstarten)
 2. [Zijbalk: projectbeheer](#zijbalk-projectbeheer)
-3. [Tab 1: Dimensioneer grondlichaam](#tab-1-dimensioneer-grondlichaam)
-4. [Tab 2: Dimensioneer constructie (Opbouwen in 3D)](#tab-2-dimensioneer-constructie-opbouwen-in-3d)
-5. [Tab 3: Effecten](#tab-3-effecten)
-6. [Tab 4: Kosten](#tab-4-kosten)
-7. [Tab 5: Afwegen](#tab-5-afwegen)
+3. [Dimensioneer grondlichaam](#tab-1-dimensioneer-grondlichaam)
+4. [Dimensioneer constructie (Opbouwen in 3D)](#tab-2-dimensioneer-constructie-opbouwen-in-3d)
+5. [Effecten](#tab-3-effecten)
+6. [Kosten](#tab-4-kosten)
+7. [Afwegen](#tab-5-afwegen)
 8. [Kaartinteractie en lagen](#kaartinteractie-en-lagen)
 
 ---
@@ -47,7 +49,7 @@ Door over de indicator heen te gaan wordt aangegeven waarom deze bijv. rood is.
 
 ---
 
-## Tabblad 1: Dimensioneer grondlichaam
+## Dimensioneer grondlichaam
 
 In dit tabblad kan in drie stappen een dijklichaam (grondlichaam) worden ontworpen.
 
@@ -100,7 +102,7 @@ Onderaan het tabblad staat een tabel met berekende waarden. Deze worden berekend
 
 ---
 
-## Tab 2: Dimensioneer constructie (Opbouwen in 3D)
+## Dimensioneer constructie (Opbouwen in 3D)
 
 In dit tabblad kan constructie toegevoegd worden aan het ontwerp, zoals een damwand of heavescherm.
 
@@ -129,7 +131,11 @@ Stel de eigenschappen van de constructie in:
   - *Offset afstand (m)* — de afstand van de constructie tot de referentielijn.
   - *Offset zijde* — links of rechts van de referentielijn.
 
-> [!TIP] Let op de door de pijl aangegeven richting van de referentielijn bij het bepalen van de offset zijde
+
+> [!TIP] 
+> Let op de door de pijl aangegeven richting van de referentielijn bij het bepalen van de offset zijde
+
+Er zijn in principe geen restricties waar een constructie gedefinieerd kan worden, bijvoorbeeld limieten aan vakgrenzen of de locatie ten opzichte van het grondprofiel. Dit is de verantwoordelijkheid van de gebruiker.
 
 ### Stap 3: Maak constructie
 
@@ -138,9 +144,9 @@ Stel de eigenschappen van de constructie in:
 
 ---
 
-## Tab 3: Effecten
+## Effecten
 
-In deze tab analyseer je de ruimtelijke effecten van het ontwerp op de omgeving. Bovenaan staat aangegeven welke onderdelen worden meegenomen (grondlichaam en/of constructie met buffer).
+In deze tab analyseer je de ruimtelijke effecten van het ontwerp op de omgeving. Bovenaan staat aangegeven welke onderdelen worden meegenomen (grondlichaam en/of constructie met bufferzone daaromheen).
 
 ### Analyse uitvoeren
 
@@ -169,7 +175,10 @@ De resultaten zijn opgedeeld in vier categorieen:
 - Wegoppervlak in uitvoeringszone
 - Panden, percelen, natuurgebieden binnen de invloedscontour
 
-Bij elke rij kun je via het optiemenu de bijbehorende kaartlaag aan- of uitzetten om de resultaten op de kaart te bekijken.
+Bij elke rij kun je via het optiemenu de bijbehorende kaartlaag aan- of uitzetten om de relevante laag op de kaart te bekijken (bijv. BGT of BAG). 
+
+Voor de uitvoeringsaspecten wordt om zowel het grondlichaam als de constructie een buffer van 10 meter gemaakt en vervolgens worden deze samengevoegd. De aanwezige effecten worden dan voor die gezamenlijke zone weergegeven.
+
 
 ### Exporteren
 
@@ -188,6 +197,9 @@ In deze tab bereken je een indicatieve kostenraming voor het ontwerp.
 1. Selecteer de **complexiteit van de maatregel** via het dropdown-menu.
 2. Klik op **Bereken kosten**.
 
+> [!TIP]
+> De complexiteit slaat op de complexiteit van de uitvoering van de maatregelen. Bij een complexe dijkversterking worden hogere opslagfactoren gehanteerd voor bijvoorbeeld engineering en risico. Zie voor meer informatie de technische documentatie.
+
 ### Resultaten bekijken
 
 - **Toon kostenoverzicht & grafieken** — opent een paneel met een gedetailleerde kostentabel en bijbehorende grafieken.
@@ -199,16 +211,24 @@ De kostenopbouw bevat onder andere:
 - Vastgoedkosten
 - Subtotaal en totaal (excl. en incl. BTW)
 
-### Exporteren
+> [!TIP]
+> Door bij het paneel kostenoverzicht rechtsboven op het vierkantje te klikken kan deze worden vergroot, en zijn de grafieken beter zichtbaar.
 
-- **Download kostenoverzicht (Excel)** — exporteert de kostentabel naar Excel.
-- **Download kentallen (.csv)** — exporteert de gebruikte kentallen (eenheidsprijzen) als CSV.
+In het kostenoverzicht zijn 3 tabbladen gegeven:
+* **Overzicht** geeft een uitklapbare kostenopsplitsing van de verschillende kostencomponenten van de dijkversterking. Door subposten uit te klappen kunnen de deelkosten worden weergegeven.
+* **Kostenverdeling** geeft een taartdiagram van de verschillende kostencomponenten. Door op de linkertaart een andere post te selecteren wordt deze in het rechterdiagram verder uitgesplitst.
+* **Kostenbereik** geeft als aanvulling op de andere schermen een onder- en bovengrens van de kostenschatting. Deze is nu gebaseerd op een eenvoudige variatie van 10%, maar kan in de toekomst worden gebruikt om de onzekerheid in kostenramingen beter weer te geven.
+
+### Exporteren
+De resultaten en invoer van de kostenberekening kunnen ook worden geexporteerd. 
+- **Download kostenoverzicht (Excel)** — exporteert de kostentabel inclusief alle gebruikte hoeveelheden en eenheidsprijzen naar Excel.
+- **Download kentallen (.csv)** — exporteert de gebruikte kentallen (eenheidsprijzen en opslagfactoren) als CSV (2 losse bestanden). Deze zijn in het format zoals gebruikt in de kostenberekening. Hoe de opslagfactoren en eenheidsprijzen worden gebruikt is beschreven in de technische documentatie.
 
 ---
 
 ## Tab 5: Afwegen
 
-In deze tab kun je meerdere ontwerp-varianten naast elkaar vergelijken.
+In het tabblad *Afwegen* kun je meerdere ontwerp-varianten met elkaar vergelijken.
 
 Elk opgeslagen ontwerp verschijnt als kolom in de vergelijkingstabel. Het paneel opent onderin het scherm en kan gemaximaliseerd worden.
 
@@ -218,15 +238,15 @@ De tabel toont per ontwerp:
 
 **Ontwerpwaarden** — trajectlengte, volumes, oppervlaktes.
 
-**Constructie** — type, diepte, offset-instellingen.
+**Constructie** — type, diepte, offset-instellingen van eventueel toegepaste constructies.
 
-**Kosten** — bouwkosten, engineering, vastgoed, totalen.
+**Kosten** — Totale kosten opgesplitst in hoofdcategorieen (bouwkosten, engineering, vastgoed, totalen).
 
-**Effecten** — wonen & leefomgeving, natuur, verkeer, uitvoering.
+**Effecten** — Effecten zoals bepaald voor wonen & leefomgeving, natuur, verkeer, uitvoering.
 
 ### Grafieken
 
-Via de sub-tab **Grafieken** kun je de vergelijking ook visueel bekijken in grafiekvorm.
+Via de sub-tab **Grafieken** worden de effecten en kosten van alternatieven ook in grafiekvorm weergegeven.
 
 ---
 
