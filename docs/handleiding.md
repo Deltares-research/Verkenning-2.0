@@ -1,4 +1,4 @@
-# Handleiding Dijkontwerp Verkenning 2.0 POC
+# Handleiding Dijkontwerper Verkenning 2.0 Proof Of Concept
 
 Deze pagina geeft een beknopte gebruikershandleiding bij de Dijkontwerper gemaakt als onderdeel van project Verkenning 2.0. Dit betreft een proof of concept wat verder wordt doorontwikkeld. Het gebruik van de belangrijkste functionaliteiten is hier toegelicht. Voor meer inhoudelijke details wordt verwezen naar de technische documentatie [hier komt een link].
 
