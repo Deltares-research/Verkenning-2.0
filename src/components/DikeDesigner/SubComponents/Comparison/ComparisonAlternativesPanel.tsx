@@ -238,8 +238,6 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         const addRow = (label: string, values: (string | number)[]) => rows.push([label, ...values]);
         const num = (v: any): number | string => { if (v == null) return ""; const n = Number(v); return isNaN(n) ? "" : Math.round(n); };
         const count = (v: any[] | null | undefined): number | string => (v != null ? v.length : "");
-        const sumValues = (obj: any): number => Object.values(obj || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) as number;
-
         addSection("Ontwerpwaarden");
         addRow("Trajectlengte (m)", snapshots.map((s) => num(s.projectJSON.designValues.trajectLength)));
         addRow("Volumeverschil (m\u00B3)", snapshots.map((s) => num(s.projectJSON.designValues.volumeDifference)));
@@ -256,11 +254,50 @@ const ComparisonAlternativesPanel: React.FC<ComparisonAlternativesPanelProps> = 
         addRow("Offset zijde", snapshots.map((s) => s.projectJSON.constructions?.useOffset ? (s.projectJSON.constructions?.offsetSide === 'left' ? 'Links' : 'Rechts') : ""));
 
         addSection("Kosten");
-        addRow("Complexiteit", snapshots.map((s) => s.projectJSON.costs.complexity || ""));
-        addRow("Totale Directe Kosten (\u20AC)", snapshots.map((s) => Math.round(sumValues(s.projectJSON.costs.directCostGroundWork) + sumValues(s.projectJSON.costs.directCostStructures))));
-        addRow("Totale Indirecte Kosten (\u20AC)", snapshots.map((s) => Math.round(sumValues(s.projectJSON.costs.indirectConstructionCosts) + sumValues(s.projectJSON.costs.engineeringCosts) + sumValues(s.projectJSON.costs.otherCosts))));
-        addRow("Totale Kosten (\u20AC)", snapshots.map((s) => Math.round(sumValues(s.projectJSON.costs.directCostGroundWork) + sumValues(s.projectJSON.costs.directCostStructures) + sumValues(s.projectJSON.costs.indirectConstructionCosts) + sumValues(s.projectJSON.costs.engineeringCosts) + sumValues(s.projectJSON.costs.otherCosts))));
-        addRow("Risicoreservering (%)", snapshots.map((s) => num(s.projectJSON.costs.risicoreservering)));
+        addRow("Bouwkosten (\u20AC)", snapshots.map((s) => {
+            const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+            return num((Number(ic.totalDirectCosts) || 0) + (Number(ic.totalIndirectCosts) || 0));
+        }));
+        addRow("Engineeringkosten (\u20AC)", snapshots.map((s) => {
+            const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+            return num(Number(ec.totalEngineeringCosts) || 0);
+        }));
+        addRow("Overige bijkomende kosten (\u20AC)", snapshots.map((s) => {
+            const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+            return num(Number(oc.totalGeneralCosts) || 0);
+        }));
+        addRow("Subtotaal (\u20AC)", snapshots.map((s) => {
+            const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+            const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+            const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+            return num((Number(ic.totalDirectCosts) || 0) + (Number(ic.totalIndirectCosts) || 0)
+                + (Number(ec.totalEngineeringCosts) || 0)
+                + (Number(oc.totalGeneralCosts) || 0));
+        }));
+        addRow("Vastgoedkosten (\u20AC)", snapshots.map((s) => {
+            const re = s.projectJSON.costs.realEstateCosts as Record<string, any> || {};
+            return num(Number(re.totalRealEstateCosts) || 0);
+        }));
+        addRow("Totaal excl. BTW (\u20AC)", snapshots.map((s) => {
+            const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+            const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+            const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+            const re = s.projectJSON.costs.realEstateCosts as Record<string, any> || {};
+            return num((Number(ic.totalDirectCosts) || 0) + (Number(ic.totalIndirectCosts) || 0)
+                + (Number(ec.totalEngineeringCosts) || 0)
+                + (Number(oc.totalGeneralCosts) || 0)
+                + (Number(re.totalRealEstateCosts) || 0));
+        }));
+        addRow("Totaal incl. BTW (\u20AC)", snapshots.map((s) => {
+            const ic = s.projectJSON.costs.indirectConstructionCosts as Record<string, any> || {};
+            const ec = s.projectJSON.costs.engineeringCosts as Record<string, any> || {};
+            const oc = s.projectJSON.costs.otherCosts as Record<string, any> || {};
+            const re = s.projectJSON.costs.realEstateCosts as Record<string, any> || {};
+            return num((Number(ic.totalDirectCostsIncludingBTW) || 0) + (Number(ic.totalIndirectCostsIncludingBTW) || 0)
+                + (Number(ec.totalEngineeringCostsIncludingBTW) || 0)
+                + (Number(oc.totalGeneralCostsIncludingBTW) || 0)
+                + (Number(re.totalRealEstateCostsIncludingBTW) || 0));
+        }));
 
         addSection("1. Wonen en leefomgeving");
         addRow("BAG panden [aantal]", snapshots.map((s) => count(s.projectJSON.effects.intersectingPanden)));
