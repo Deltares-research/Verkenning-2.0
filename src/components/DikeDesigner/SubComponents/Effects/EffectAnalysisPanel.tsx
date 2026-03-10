@@ -432,7 +432,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
-                                    <LayerLabel label="Panden binnen invloedscontour" />
+                                    <LayerLabel label="Panden binnen uitvoeringszone" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePanden?.length}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePandenArea != null ? Math.round(model.uitvoeringszonePandenArea).toLocaleString("nl-NL") : ""}</TableCell>
@@ -442,7 +442,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
-                                    <LayerLabel label="Percelen binnen invloedscontour" />
+                                    <LayerLabel label="Percelen binnen uitvoeringszone" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelen?.length}</TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszonePercelenArea != null ? Math.round(model.uitvoeringszonePercelenArea).toLocaleString("nl-NL") : ""}</TableCell>
@@ -452,7 +452,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
-                                    <LayerLabel label="Natura 2000 binnen invloedscontour" />
+                                    <LayerLabel label="Natura 2000 binnen uitvoeringszone" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneNatura2000 != null ? Math.round(model.uitvoeringszoneNatura2000).toLocaleString("nl-NL") : ""}</TableCell>
@@ -462,7 +462,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
-                                    <LayerLabel label="GNN binnen invloedscontour" />
+                                    <LayerLabel label="GNN binnen uitvoeringszone" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneGNN != null ? Math.round(model.uitvoeringszoneGNN).toLocaleString("nl-NL") : ""}</TableCell>
@@ -472,7 +472,7 @@ const EffectAnalysisPanel: React.FC<EffectAnalysisPanelProps> = ({
                             </TableRow>
                             <TableRow sx={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }}>
-                                    <LayerLabel label="NBP beheertype binnen invloedscontour" />
+                                    <LayerLabel label="NBP beheertype binnen uitvoeringszone" />
                                 </TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">-</TableCell>
                                 <TableCell sx={{ fontSize: "12px", border: 0 }} align="right">{model.uitvoeringszoneBeheertypeArea != null ? Math.round(model.uitvoeringszoneBeheertypeArea).toLocaleString("nl-NL") : ""}</TableCell>
