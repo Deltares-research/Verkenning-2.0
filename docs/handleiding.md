@@ -158,7 +158,7 @@ De resultaten zijn opgedeeld in vier categorieen:
 
 **Uitvoering** (objecten binnen de uitvoeringsbuffer)
 - Wegoppervlak in uitvoeringszone
-- Panden, percelen, natuurgebieden binnen de invloedscontour
+- Panden, percelen, natuurgebieden binnen de uitvoeringszone
 
 Bij elke rij kun je via het optiemenu de bijbehorende kaartlaag aan- of uitzetten om de resultaten op de kaart te bekijken.
 

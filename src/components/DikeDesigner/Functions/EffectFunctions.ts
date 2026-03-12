@@ -882,11 +882,11 @@ export const downloadEffectsTableExcel = (model: any) => {
     addSection(`4. Uitvoering (buffer: ${model.uitvoeringszoneBufferDistance || 10}m)`);
     rows.push(["", "Aantal", "Oppervlakte [m\u00B2]"]);
     rows.push(["Wegoppervlak in uitvoeringszone", "-", num(model.uitvoeringszoneWegoppervlak)]);
-    rows.push(["Panden binnen invloedscontour", count(model.uitvoeringszonePanden), num(model.uitvoeringszonePandenArea)]);
-    rows.push(["Percelen binnen invloedscontour", count(model.uitvoeringszonePercelen), num(model.uitvoeringszonePercelenArea)]);
-    rows.push(["Natura 2000 binnen invloedscontour", "-", num(model.uitvoeringszoneNatura2000)]);
-    rows.push(["GNN binnen invloedscontour", "-", num(model.uitvoeringszoneGNN)]);
-    rows.push(["NBP beheertype binnen invloedscontour", "-", num(model.uitvoeringszoneBeheertypeArea)]);
+    rows.push(["Panden binnen uitvoeringszone", count(model.uitvoeringszonePanden), num(model.uitvoeringszonePandenArea)]);
+    rows.push(["Percelen binnen uitvoeringszone", count(model.uitvoeringszonePercelen), num(model.uitvoeringszonePercelenArea)]);
+    rows.push(["Natura 2000 binnen uitvoeringszone", "-", num(model.uitvoeringszoneNatura2000)]);
+    rows.push(["GNN binnen uitvoeringszone", "-", num(model.uitvoeringszoneGNN)]);
+    rows.push(["NBP beheertype binnen uitvoeringszone", "-", num(model.uitvoeringszoneBeheertypeArea)]);
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
 
