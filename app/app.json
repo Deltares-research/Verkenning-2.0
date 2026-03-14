@@ -79,7 +79,7 @@
                     "display": "BGT - wegdeel"
                 },
                 "kadastrale_percelen": {
-                    "query": "Kadastrale percelen",
+                    "query": "DKK - perceel",
                     "display": "DKK - perceel"
                 }
             }
