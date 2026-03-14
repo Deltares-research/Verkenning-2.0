@@ -602,6 +602,10 @@ export default class DikeDesignerModel extends ComponentModelBase<DikeDesignerMo
                 serializeModes: ["initial"],
                 default: 10,
             },
+            effectLayerMappings: {
+                serializeModes: ["initial"],
+                default: {},
+            },
         };
     }
 

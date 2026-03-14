@@ -18,6 +18,7 @@ function getQueryLayer(model: any, mappingKey: string, fallback: string): string
         console.log(`Using query layer for ${mappingKey}:`, mapping.query);
         return mapping.query;
     }
+    console.log(`No mapping found for ${mappingKey}, using fallback:`, fallback);
     return fallback;
 }
 
@@ -29,7 +30,7 @@ export async function getIntersectingFeatures(model, layerTitle, whereClause = n
     ) as FeatureLayer;
 
     if (!layerToQuery) {
-        console.warn("BAG panden layer not found!");
+        console.warn(`Layer "${layerTitle}" not found!`);
         return [];
     }
 
