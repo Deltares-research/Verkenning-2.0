@@ -12,12 +12,14 @@ const oauthInfo = new OAuthInfo({
 // IdentityManager.registerOAuthInfos([oauthInfo]);
 
 export async function signIn() {
+    IdentityManager.registerOAuthInfos([oauthInfo]);
+
     try {
-        IdentityManager.registerOAuthInfos([oauthInfo]);
-    } catch (e) {
-        console.log(e,"error")
+        const credential = await IdentityManager.checkSignInStatus(oauthInfo.portalUrl + "/sharing");
+        return credential;
+    } catch {
+        // Not signed in yet, trigger OAuth popup
+        const credential = await IdentityManager.getCredential(oauthInfo.portalUrl + "/sharing");
+        return credential;
     }
-
-    
-
 }
